@@ -1,17 +1,20 @@
 import { motion } from "framer-motion";
-import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, UserCog } from "lucide-react";
+import { Search, Plus, Phone, Mail, Loader2, UserCog, Pencil, Archive } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useInstructors } from "@/hooks/useInstructors";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { instructorStatusLabels, instructorStatusColors, activityTypeLabels, formatEur } from "@/lib/labels";
 import InstructorFormDialog from "@/components/instructors/InstructorFormDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 export default function Instructors() {
-  const { instructors, isLoading, create } = useInstructors();
+  const { instructors, isLoading, create, update } = useInstructors();
   const { log } = useAuditLog();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editInstructor, setEditInstructor] = useState<any>(null);
 
   const filtered = instructors.filter((i) =>
     `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase())
