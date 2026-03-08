@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrg } from "@/contexts/OrgContext";
+import { seedDemoData } from "@/lib/seedDemoData";
 import type { Database } from "@/integrations/supabase/types";
 
 type OrgMode = Database["public"]["Enums"]["org_mode"];
@@ -15,6 +16,7 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [mode, setMode] = useState<OrgMode>("independant");
+  const [withDemo, setWithDemo] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -74,6 +76,15 @@ export default function OnboardingPage() {
         details: `${name} — mode ${mode}`,
       });
 
+      // Seed demo data if requested
+      if (withDemo) {
+        try {
+          await seedDemoData(org.id, user.id);
+        } catch (e) {
+          console.warn("Demo seed partial failure:", e);
+        }
+      }
+
       await refreshOrg();
       navigate("/tableau-de-bord", { replace: true });
     } catch (err: any) {
@@ -124,12 +135,23 @@ export default function OnboardingPage() {
             </div>
           </div>
 
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
+            <input type="checkbox" id="withDemo" checked={withDemo} onChange={(e) => setWithDemo(e.target.checked)} className="rounded" />
+            <label htmlFor="withDemo" className="flex-1 cursor-pointer">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span className="text-sm font-medium text-foreground">Charger les données de démo</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">8 élèves, 3 formateurs, 4 véhicules, séances, factures et paiements réalistes</p>
+            </label>
+          </div>
+
           {error && <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
 
           <button type="submit" disabled={loading || !name.trim()}
             className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Créer mon organisation
+            {loading && withDemo ? "Création et chargement des données..." : "Créer mon organisation"}
           </button>
         </form>
       </motion.div>
