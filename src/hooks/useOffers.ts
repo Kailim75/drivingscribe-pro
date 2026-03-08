@@ -40,14 +40,14 @@ export function useOffers() {
     onError: () => toast.error("Erreur lors de la mise à jour"),
   });
 
-  const remove = useMutation({
+  const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("offers").delete().eq("id", id);
+      const { error } = await supabase.from("offers").update({ active: false }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["offers"] }); toast.success("Offre supprimée"); },
-    onError: () => toast.error("Erreur lors de la suppression"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["offers"] }); toast.success("Offre désactivée"); },
+    onError: () => toast.error("Erreur lors de la désactivation"),
   });
 
-  return { ...query, offers: query.data ?? [], create, update, remove };
+  return { ...query, offers: query.data ?? [], create, update, archive };
 }

@@ -63,20 +63,16 @@ export default function Invoicing() {
     const tvaAmount = totalHt * (tvaRate / 100);
     const totalTtc = totalHt + tvaAmount;
 
-    // Get fresh next number from DB to avoid duplicates
-    const { data: org } = await supabase
-      .from("organizations")
-      .select("invoice_prefix, invoice_next_number, quote_prefix, quote_next_number")
-      .eq("id", organization!.id)
-      .single();
-
-    const prefix = docType === "devis" ? (org?.quote_prefix || "D") : (org?.invoice_prefix || "F");
-    const nextNum = docType === "devis" ? (org?.quote_next_number || 1) : (org?.invoice_next_number || 1);
-    const number = `${prefix}-${new Date().getFullYear()}-${String(nextNum).padStart(3, "0")}`;
-
-    // Increment counter
-    const counterField = docType === "devis" ? "quote_next_number" : "invoice_next_number";
-    await supabase.from("organizations").update({ [counterField]: nextNum + 1 }).eq("id", organization!.id);
+    // Atomic counter — single DB call, no race condition
+    const { data: numberResult, error: numberError } = await supabase.rpc("next_document_number", {
+      _org_id: organization!.id,
+      _type: docType,
+    });
+    if (numberError || !numberResult) {
+      toast({ title: "Erreur", description: "Impossible de générer le numéro", variant: "destructive" });
+      return;
+    }
+    const number = numberResult as string;
 
     create.mutate({
       number,

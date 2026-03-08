@@ -49,5 +49,5 @@ export function useStudents() {
     onError: () => toast.error("Erreur lors de l'archivage"),
   });
 
-  return { ...query, students: query.data ?? [], create, update, remove };
+  return { ...query, students: query.data ?? [], create, update, archive };
 }

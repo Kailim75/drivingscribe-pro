@@ -40,14 +40,14 @@ export function useInstructors() {
     onError: () => toast.error("Erreur lors de la mise à jour"),
   });
 
-  const remove = useMutation({
+  const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("instructors").delete().eq("id", id);
+      const { error } = await supabase.from("instructors").update({ status: "archive" as any }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["instructors"] }); toast.success("Formateur supprimé"); },
-    onError: () => toast.error("Erreur lors de la suppression"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["instructors"] }); toast.success("Formateur archivé"); },
+    onError: () => toast.error("Erreur lors de l'archivage"),
   });
 
-  return { ...query, instructors: query.data ?? [], create, update, remove };
+  return { ...query, instructors: query.data ?? [], create, update, archive };
 }

@@ -134,12 +134,15 @@ export function useInvoices() {
     },
   });
 
-  const remove = useMutation({
+  const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("invoices").delete().eq("id", id);
+      const { error } = await supabase.from("invoices").update({ status: "archivé" as any }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["invoices"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      toast({ title: "Document archivé" });
+    },
   });
 
   return { invoices: invoicesQuery.data || [], isLoading: invoicesQuery.isLoading, create, update, convertToInvoice, remove };

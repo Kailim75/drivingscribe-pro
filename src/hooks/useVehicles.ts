@@ -40,14 +40,14 @@ export function useVehicles() {
     onError: () => toast.error("Erreur lors de la mise à jour"),
   });
 
-  const remove = useMutation({
+  const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("vehicles").delete().eq("id", id);
+      const { error } = await supabase.from("vehicles").update({ status: "archive" as any }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["vehicles"] }); toast.success("Véhicule supprimé"); },
-    onError: () => toast.error("Erreur lors de la suppression"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["vehicles"] }); toast.success("Véhicule archivé"); },
+    onError: () => toast.error("Erreur lors de l'archivage"),
   });
 
-  return { ...query, vehicles: query.data ?? [], create, update, remove };
+  return { ...query, vehicles: query.data ?? [], create, update, archive };
 }
