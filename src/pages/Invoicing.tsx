@@ -332,6 +332,24 @@ export default function Invoicing() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Send confirmation */}
+      <AlertDialog open={!!sendConfirm} onOpenChange={(v) => !v && setSendConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Marquer comme envoyée ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette facture sera marquée comme envoyée au client. Vous ne pourrez plus modifier les lignes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (sendConfirm) { update.mutate({ id: sendConfirm, status: "envoyé" }); setSendConfirm(null); } }}>
+              Confirmer l'envoi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

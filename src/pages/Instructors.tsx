@@ -140,6 +140,7 @@ export default function Instructors() {
       </motion.div>
 
       <InstructorFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
+      <InstructorFormDialog open={!!editInstructor} onClose={() => setEditInstructor(null)} onSubmit={handleEdit} loading={update.isPending} initial={editInstructor} />
     </div>
   );
 }

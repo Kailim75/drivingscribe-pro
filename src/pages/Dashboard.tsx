@@ -31,8 +31,11 @@ export default function Dashboard() {
   const [instructorFilter, setInstructorFilter] = useState("");
 
   const todayStr = new Date().toISOString().split("T")[0];
+  const range = useMemo(() => getDateRange(period), [period]);
+
+  // Only load today's lessons + period-scoped lessons (not ALL lessons)
   const { lessons: todayLessons, isLoading: loadingLessons } = useLessons({ date: todayStr });
-  const { lessons: allLessons } = useLessons();
+  const { lessons: periodLessonsRaw, isLoading: loadingPeriod } = useLessons({ dateFrom: range.start, dateTo: range.end });
   const { students, isLoading: loadingStudents } = useStudents();
   const { instructors } = useInstructors();
   const { vehicles } = useVehicles();
@@ -40,15 +43,12 @@ export default function Dashboard() {
   const { payments } = usePayments();
   const { expenses } = useExpenses();
 
-  const isLoading = loadingLessons || loadingStudents;
+  const isLoading = loadingLessons || loadingStudents || loadingPeriod;
 
-  const range = useMemo(() => getDateRange(period), [period]);
-
-  const periodLessons = useMemo(() => allLessons.filter((l: any) => {
-    const inRange = l.date >= range.start && l.date <= range.end;
-    const matchInstructor = !instructorFilter || l.instructor_id === instructorFilter;
-    return inRange && matchInstructor;
-  }), [allLessons, range, instructorFilter]);
+  const periodLessons = useMemo(() => {
+    if (!instructorFilter) return periodLessonsRaw;
+    return periodLessonsRaw.filter((l: any) => l.instructor_id === instructorFilter);
+  }, [periodLessonsRaw, instructorFilter]);
 
   const periodPayments = useMemo(() => payments.filter((p) => p.date >= range.start && p.date <= range.end), [payments, range]);
   const periodExpenses = useMemo(() => expenses.filter((e) => e.date >= range.start && e.date <= range.end), [expenses, range]);

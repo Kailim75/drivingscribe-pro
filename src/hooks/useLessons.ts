@@ -9,7 +9,7 @@ export interface LessonConflict {
   conflicting_label: string;
 }
 
-export function useLessons(filters?: { date?: string; instructorId?: string; studentId?: string }) {
+export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?: string; instructorId?: string; studentId?: string }) {
   const { organization } = useOrg();
   const orgId = organization?.id;
   const qc = useQueryClient();
@@ -25,6 +25,8 @@ export function useLessons(filters?: { date?: string; instructorId?: string; stu
         .order("start_time", { ascending: true });
 
       if (filters?.date) q = q.eq("date", filters.date);
+      if (filters?.dateFrom) q = q.gte("date", filters.dateFrom);
+      if (filters?.dateTo) q = q.lte("date", filters.dateTo);
       if (filters?.instructorId) q = q.eq("instructor_id", filters.instructorId);
       if (filters?.studentId) q = q.eq("student_id", filters.studentId);
 
