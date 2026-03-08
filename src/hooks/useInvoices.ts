@@ -125,9 +125,6 @@ export function useInvoices() {
       // Update devis status
       await supabase.from("invoices").update({ status: "archivé" as const }).eq("id", devisId);
 
-      // Increment invoice number
-      await supabase.from("organizations").update({ invoice_next_number: (org?.invoice_next_number || 1) + 1 }).eq("id", orgId!);
-
       return data;
     },
     onSuccess: (data) => {
