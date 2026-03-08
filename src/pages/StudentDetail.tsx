@@ -21,7 +21,7 @@ export default function StudentDetail() {
   const student = students.find((s) => s.id === id);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+    return <div className="flex items-center justify-center h-64"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
   }
 
   if (!student) {
@@ -33,7 +33,6 @@ export default function StudentDetail() {
     );
   }
 
-  // Compute hours from formulas + lessons
   const activeFormulas = formulas.filter((f) => f.active);
   const totalHoursBought = formulas.reduce((s, f) => s + Number(f.hours_bought), 0);
   const completedLessons = lessons.filter((l: any) => l.status === "effectue");
@@ -45,19 +44,19 @@ export default function StudentDetail() {
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-[1000px] mx-auto space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 max-w-[1000px] mx-auto space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate("/eleves")} className="p-2 rounded-lg hover:bg-secondary text-muted-foreground transition-colors">
+        <button onClick={() => navigate("/eleves")} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-foreground">{student.first_name} {student.last_name}</h1>
+          <h1 className="page-title">{student.first_name} {student.last_name}</h1>
           <div className="flex items-center gap-2 mt-1">
-            <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", studentStatusColors[student.status])}>
+            <span className={cn("status-badge", studentStatusColors[student.status])}>
               {studentStatusLabels[student.status]}
             </span>
-            <span className="text-xs text-muted-foreground">{activityTypeLabels[student.activity_type]}</span>
+            <span className="text-sm text-muted-foreground">{activityTypeLabels[student.activity_type]}</span>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => setShowEdit(true)}>
@@ -66,22 +65,22 @@ export default function StudentDetail() {
       </div>
 
       {/* Contact info */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
         {student.phone && (
-          <div className="flex items-center gap-2 text-sm">
-            <Phone className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center gap-2.5 text-sm">
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"><Phone className="w-4 h-4 text-muted-foreground" /></div>
             <span className="text-foreground">{student.phone}</span>
           </div>
         )}
         {student.email && (
-          <div className="flex items-center gap-2 text-sm">
-            <Mail className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center gap-2.5 text-sm">
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"><Mail className="w-4 h-4 text-muted-foreground" /></div>
             <span className="text-foreground">{student.email}</span>
           </div>
         )}
         {student.address && (
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center gap-2.5 text-sm">
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center"><MapPin className="w-4 h-4 text-muted-foreground" /></div>
             <span className="text-foreground">{student.address}</span>
           </div>
         )}
@@ -105,8 +104,8 @@ export default function StudentDetail() {
 
       {/* Formulas */}
       <div className="glass-card rounded-xl">
-        <div className="p-4 border-b border-border">
-          <h2 className="font-semibold text-foreground flex items-center gap-2"><Clock className="w-4 h-4" /> Formules</h2>
+        <div className="px-4 py-3 border-b border-border">
+          <h2 className="font-semibold text-foreground flex items-center gap-2 text-sm"><Clock className="w-4 h-4" /> Formules</h2>
         </div>
         <div className="p-4">
           {formulas.length === 0 ? (
@@ -117,17 +116,23 @@ export default function StudentDetail() {
                 const fLessons = lessons.filter((l: any) => l.formula_id === f.id && l.status === "effectue");
                 const done = fLessons.reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
                 const remaining = Number(f.hours_bought) - done;
+                const progress = Number(f.hours_bought) > 0 ? (done / Number(f.hours_bought)) * 100 : 0;
                 return (
-                  <div key={f.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{f.offer_name}</p>
-                      <p className="text-xs text-muted-foreground">{offerTypeLabels[f.offer_type]} · {f.active ? "Active" : "Inactive"}</p>
+                  <div key={f.id} className="p-3 rounded-lg bg-muted/40 border border-border/60">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{f.offer_name}</p>
+                        <p className="text-xs text-muted-foreground">{offerTypeLabels[f.offer_type]} · {f.active ? "Active" : "Inactive"}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-foreground">{done}/{f.hours_bought}h</p>
+                        <p className={cn("text-xs", remaining <= 3 && remaining > 0 ? "text-warning" : "text-muted-foreground")}>
+                          Reste {remaining}h
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-foreground">{done}/{f.hours_bought}h</p>
-                      <p className={cn("text-[10px]", remaining <= 3 && remaining > 0 ? "text-warning" : "text-muted-foreground")}>
-                        Reste {remaining}h
-                      </p>
+                    <div className="h-1.5 bg-border rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(100, progress)}%` }} />
                     </div>
                   </div>
                 );
@@ -139,8 +144,8 @@ export default function StudentDetail() {
 
       {/* Recent lessons */}
       <div className="glass-card rounded-xl">
-        <div className="p-4 border-b border-border">
-          <h2 className="font-semibold text-foreground flex items-center gap-2"><CalendarDays className="w-4 h-4" /> Séances récentes</h2>
+        <div className="px-4 py-3 border-b border-border">
+          <h2 className="font-semibold text-foreground flex items-center gap-2 text-sm"><CalendarDays className="w-4 h-4" /> Séances récentes</h2>
         </div>
         <div className="p-4">
           {lessons.length === 0 ? (
@@ -148,7 +153,7 @@ export default function StudentDetail() {
           ) : (
             <div className="space-y-1">
               {lessons.slice(0, 10).map((l: any) => (
-                <div key={l.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/30 transition-colors">
+                <div key={l.id} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/40 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="text-center w-14">
                       <p className="text-xs font-medium text-foreground">
@@ -165,7 +170,7 @@ export default function StudentDetail() {
                       </p>
                     </div>
                   </div>
-                  <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", lessonStatusColors[l.status])}>
+                  <span className={cn("status-badge", lessonStatusColors[l.status])}>
                     {lessonStatusLabels[l.status]}
                   </span>
                 </div>
@@ -178,8 +183,8 @@ export default function StudentDetail() {
       {/* Notes */}
       {student.notes && (
         <div className="glass-card rounded-xl p-4">
-          <h2 className="font-semibold text-foreground mb-2">Notes</h2>
-          <p className="text-sm text-muted-foreground">{student.notes}</p>
+          <h2 className="font-semibold text-foreground mb-2 text-sm">Notes</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">{student.notes}</p>
         </div>
       )}
 
