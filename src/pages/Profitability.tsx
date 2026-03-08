@@ -178,8 +178,8 @@ export default function Profitability() {
           <div className="h-4 bg-secondary rounded-full overflow-hidden">
             <div className="h-full bg-success transition-all" style={{ width: `${occupancyRate}%` }} />
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2">
-            Estimation basée sur {activeInstructors.length} formateur{activeInstructors.length > 1 ? "s" : ""} × 8h × {workingDays}j ouvrés
+          <p className="text-[10px] text-muted-foreground mt-2 italic">
+            ⚠ Estimation basée sur {activeInstructors.length} formateur{activeInstructors.length > 1 ? "s" : ""} × 8h/jour × {workingDays}j ouvrés ({Math.round(periodDays * 22/30)} jours estimés). Ajustez selon vos horaires réels.
           </p>
         </div>
       </div>
