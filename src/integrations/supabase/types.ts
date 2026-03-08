@@ -1058,6 +1058,10 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      next_document_number: {
+        Args: { _org_id: string; _type: string }
+        Returns: string
+      }
       user_is_owner: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
