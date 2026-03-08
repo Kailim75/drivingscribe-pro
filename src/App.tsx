@@ -24,6 +24,7 @@ import ActivityLog from "./pages/ActivityLog";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
+import PublicInvoice from "./pages/PublicInvoice";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
