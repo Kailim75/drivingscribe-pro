@@ -8,9 +8,6 @@ import {
   Zap, Target, PieChart, Menu, Loader2,
 } from "lucide-react";
 
-import screenshotDashboard from "@/assets/screenshot-dashboard.jpg";
-import screenshotPlanning from "@/assets/screenshot-planning.jpg";
-import screenshotRentabilite from "@/assets/screenshot-rentabilite.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,12 +85,168 @@ function Nav({ onCTA }: { onCTA: () => void }) {
   );
 }
 
-/* ──────────────── HERO SCREENSHOTS ──────────────── */
-const heroScreens = [
-  { src: screenshotDashboard, label: "Tableau de bord" },
-  { src: screenshotPlanning, label: "Planning" },
-  { src: screenshotRentabilite, label: "Rentabilité" },
-];
+/* ──────────────── HERO LIVE UI PREVIEWS ──────────────── */
+const heroTabs = [
+  { label: "Tableau de bord", key: "dashboard" },
+  { label: "Planning", key: "planning" },
+  { label: "Rentabilité", key: "profitability" },
+] as const;
+
+/* Mini KPI card used in dashboard preview */
+function MiniKPI({ label, value, sub, accent = false }: { label: string; value: string; sub?: string; accent?: boolean }) {
+  return (
+    <div className={`rounded-lg border p-3 sm:p-4 ${accent ? "border-primary/30 bg-primary/[0.06]" : "border-border/30 bg-card/60"}`}>
+      <div className="text-[10px] sm:text-xs text-muted-foreground mb-1 truncate">{label}</div>
+      <div className={`text-base sm:text-xl font-bold tabular-nums ${accent ? "text-primary" : "text-foreground"}`}>{value}</div>
+      {sub && <div className="text-[10px] text-muted-foreground/70 mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+/* Dashboard preview */
+function DashboardPreview() {
+  return (
+    <div className="p-4 sm:p-6 space-y-4">
+      {/* KPI row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        <MiniKPI label="Chiffre d'affaires" value="12 480 €" sub="Ce mois" accent />
+        <MiniKPI label="Séances réalisées" value="64" sub="Sur 72 planifiées" />
+        <MiniKPI label="Impayés" value="1 240 €" sub="3 élèves" />
+        <MiniKPI label="Heures restantes" value="38h" sub="Tous élèves" />
+      </div>
+      {/* Chart placeholder */}
+      <div className="rounded-lg border border-border/30 bg-card/40 p-4">
+        <div className="text-xs text-muted-foreground mb-3">Évolution du CA — 6 derniers mois</div>
+        <div className="flex items-end gap-1.5 h-20 sm:h-28">
+          {[40, 55, 48, 65, 72, 80].map((h, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <div className="w-full rounded-sm bg-primary/60" style={{ height: `${h}%` }} />
+              <span className="text-[8px] text-muted-foreground/60">{["Oct", "Nov", "Déc", "Jan", "Fév", "Mar"][i]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Recent activity */}
+      <div className="rounded-lg border border-border/30 bg-card/40 p-4">
+        <div className="text-xs text-muted-foreground mb-2">Dernières séances</div>
+        <div className="space-y-2">
+          {[
+            { name: "L. Martin", time: "14:00 – 16:00", status: "Effectuée" },
+            { name: "S. Durand", time: "16:30 – 18:30", status: "Planifiée" },
+            { name: "M. Bernard", time: "09:00 – 11:00", status: "Effectuée" },
+          ].map((s, i) => (
+            <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/20 last:border-0">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-secondary/60 flex items-center justify-center text-[10px] font-medium text-muted-foreground">{s.name[0]}</div>
+                <span className="text-xs text-foreground">{s.name}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground">{s.time}</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded ${s.status === "Effectuée" ? "bg-success/10 text-success" : "bg-primary/10 text-primary"}`}>{s.status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Planning preview */
+function PlanningPreview() {
+  const days = ["Lun 10", "Mar 11", "Mer 12", "Jeu 13", "Ven 14"];
+  const slots = [
+    { day: 0, top: "8%", height: "18%", label: "L. Martin", color: "bg-primary/20 border-primary/30 text-primary" },
+    { day: 0, top: "30%", height: "15%", label: "S. Durand", color: "bg-info/15 border-info/25 text-info" },
+    { day: 1, top: "12%", height: "22%", label: "M. Bernard", color: "bg-success/15 border-success/25 text-success" },
+    { day: 1, top: "50%", height: "18%", label: "A. Petit", color: "bg-primary/20 border-primary/30 text-primary" },
+    { day: 2, top: "5%", height: "25%", label: "P. Roux", color: "bg-warning/15 border-warning/25 text-warning" },
+    { day: 2, top: "40%", height: "15%", label: "L. Martin", color: "bg-info/15 border-info/25 text-info" },
+    { day: 3, top: "15%", height: "20%", label: "C. Lefèvre", color: "bg-success/15 border-success/25 text-success" },
+    { day: 3, top: "55%", height: "22%", label: "S. Durand", color: "bg-primary/20 border-primary/30 text-primary" },
+    { day: 4, top: "10%", height: "18%", label: "M. Bernard", color: "bg-warning/15 border-warning/25 text-warning" },
+    { day: 4, top: "38%", height: "20%", label: "A. Petit", color: "bg-info/15 border-info/25 text-info" },
+  ];
+  return (
+    <div className="p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-xs font-medium text-foreground">Semaine du 10 mars 2025</div>
+        <div className="flex items-center gap-1.5">
+          <div className="px-2 py-1 rounded text-[10px] bg-secondary/40 text-muted-foreground">Semaine</div>
+          <div className="px-2 py-1 rounded text-[10px] text-muted-foreground/60">Mois</div>
+        </div>
+      </div>
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+        {days.map((d, di) => (
+          <div key={di}>
+            <div className="text-center text-[10px] text-muted-foreground mb-1.5 font-medium">{d}</div>
+            <div className="relative rounded-lg border border-border/25 bg-card/30 h-40 sm:h-56">
+              {slots.filter(s => s.day === di).map((s, si) => (
+                <div
+                  key={si}
+                  className={`absolute left-1 right-1 rounded border text-[8px] sm:text-[10px] px-1.5 py-1 truncate ${s.color}`}
+                  style={{ top: s.top, height: s.height }}
+                >
+                  {s.label}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Profitability preview */
+function ProfitabilityPreview() {
+  const rows = [
+    { name: "L. Martin", ca: "2 400 €", cost: "960 €", margin: "60%", trend: "up" },
+    { name: "S. Durand", ca: "1 800 €", cost: "640 €", margin: "64%", trend: "up" },
+    { name: "M. Bernard", ca: "3 100 €", cost: "1 380 €", margin: "55%", trend: "down" },
+    { name: "A. Petit", ca: "1 200 €", cost: "480 €", margin: "60%", trend: "up" },
+  ];
+  return (
+    <div className="p-4 sm:p-6 space-y-4">
+      {/* Summary KPIs */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <MiniKPI label="CA total" value="8 500 €" accent />
+        <MiniKPI label="Charges" value="3 460 €" />
+        <MiniKPI label="Marge nette" value="59%" sub="+3% vs mois précédent" />
+      </div>
+      {/* Table */}
+      <div className="rounded-lg border border-border/30 bg-card/40 overflow-hidden">
+        <div className="grid grid-cols-5 gap-2 px-3 sm:px-4 py-2 border-b border-border/25 text-[10px] text-muted-foreground font-medium">
+          <span className="col-span-1">Élève</span>
+          <span>CA</span>
+          <span>Charges</span>
+          <span>Marge</span>
+          <span className="text-right">Tendance</span>
+        </div>
+        {rows.map((r, i) => (
+          <div key={i} className="grid grid-cols-5 gap-2 px-3 sm:px-4 py-2.5 border-b border-border/15 last:border-0 items-center">
+            <div className="col-span-1 flex items-center gap-1.5">
+              <div className="w-5 h-5 rounded-full bg-secondary/60 flex items-center justify-center text-[9px] font-medium text-muted-foreground shrink-0">{r.name[0]}</div>
+              <span className="text-xs text-foreground truncate">{r.name}</span>
+            </div>
+            <span className="text-xs text-foreground tabular-nums">{r.ca}</span>
+            <span className="text-xs text-muted-foreground tabular-nums">{r.cost}</span>
+            <span className="text-xs text-success tabular-nums font-medium">{r.margin}</span>
+            <div className="text-right">
+              <span className={`text-[10px] ${r.trend === "up" ? "text-success" : "text-destructive"}`}>
+                {r.trend === "up" ? "↑" : "↓"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const heroViews: Record<string, () => JSX.Element> = {
+  dashboard: DashboardPreview,
+  planning: PlanningPreview,
+  profitability: ProfitabilityPreview,
+};
 
 function HeroScreenshots() {
   const [active, setActive] = useState(0);
@@ -107,18 +260,19 @@ function HeroScreenshots() {
       const pct = (elapsed % INTERVAL) / INTERVAL;
       setProgress(pct * 100);
       if (elapsed > 0 && elapsed % INTERVAL < 20) {
-        setActive((prev) => (prev + 1) % heroScreens.length);
+        setActive((prev) => (prev + 1) % heroTabs.length);
       }
     };
     const id = setInterval(tick, 40);
     return () => clearInterval(id);
   }, []);
 
-  // Reset progress on manual click
   const handleTab = useCallback((i: number) => {
     setActive(i);
     setProgress(0);
   }, []);
+
+  const ActiveView = heroViews[heroTabs[active].key];
 
   return (
     <motion.div {...fade(0.2)} className="mt-14 md:mt-20 relative">
@@ -136,26 +290,24 @@ function HeroScreenshots() {
           </div>
         </div>
 
-        {/* Screenshot */}
-        <div className="relative aspect-[16/9] bg-background/50">
+        {/* Live UI preview */}
+        <div className="relative bg-background/80 min-h-[280px] sm:min-h-[360px]">
           <AnimatePresence mode="wait">
-            <motion.img
+            <motion.div
               key={active}
-              src={heroScreens[active].src}
-              alt={`DriveFlow — ${heroScreens[active].label}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="absolute inset-0 w-full h-full object-cover object-top"
-              loading="eager"
-            />
+              transition={{ duration: 0.2 }}
+            >
+              <ActiveView />
+            </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Tabs with progress */}
         <div className="flex items-center justify-center gap-2 p-3 border-t border-border/40 bg-secondary/15">
-          {heroScreens.map((s, i) => (
+          {heroTabs.map((s, i) => (
             <button
               key={i}
               onClick={() => handleTab(i)}
