@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
 
     const { data: invoice, error } = await supabase
       .from("invoices")
-      .select("number, type, status, total_ht, tva_amount, total_ttc, paid_amount, remaining_amount, issue_date, due_date, invoice_lines(description, quantity, unit_price, total_ht), students(first_name, last_name)")
+      .select("number, type, status, total_ht, tva_amount, total_ttc, paid_amount, remaining_amount, issue_date, due_date, organization_id, invoice_lines(description, quantity, unit_price, total_ht), students(first_name, last_name)")
       .eq("id", invoiceId)
       .single();
     if (error || !invoice) throw new Error("Invoice not found");
@@ -30,11 +30,14 @@ Deno.serve(async (req) => {
     const { data: org } = await supabase
       .from("organizations")
       .select("name, email, phone, address, siret, tva_number, currency")
-      .eq("id", (await supabase.from("invoices").select("organization_id").eq("id", invoiceId).single()).data?.organization_id || "")
+      .eq("id", invoice.organization_id)
       .single();
 
+    // Remove organization_id from response
+    const { organization_id, ...invoiceData } = invoice;
+
     return new Response(
-      JSON.stringify({ invoice, organization: org }),
+      JSON.stringify({ invoice: invoiceData, organization: org }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
