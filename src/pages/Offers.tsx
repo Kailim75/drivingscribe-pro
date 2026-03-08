@@ -110,8 +110,8 @@ export default function Offers() {
                         {offer.active ? <ToggleLeft className="w-4 h-4 mr-2" /> : <ToggleRight className="w-4 h-4 mr-2" />}
                         {offer.active ? "Désactiver" : "Activer"}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setDeleteOffer(offer)} className="text-destructive focus:text-destructive">
-                        <Trash2 className="w-4 h-4 mr-2" /> Supprimer
+                      <DropdownMenuItem onClick={() => setArchiveOffer(offer)} className="text-warning focus:text-warning">
+                        <Archive className="w-4 h-4 mr-2" /> Désactiver
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
