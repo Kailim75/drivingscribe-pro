@@ -4,7 +4,6 @@ import {
   FileText, CreditCard, Receipt, TrendingUp, FolderOpen, Bell,
   Settings, Upload, ClipboardList, ChevronLeft, Menu, LogOut,
 } from "lucide-react";
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,19 +59,19 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
+    <div className="flex flex-col h-full bg-sidebar">
       {/* Brand */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-            <span className="text-primary-foreground font-bold text-sm">DS</span>
+          <div className="w-8 h-8 rounded-lg bg-sidebar-primary/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-sidebar-primary font-bold text-sm">DF</span>
           </div>
           {!collapsed && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden">
-              <span className="font-semibold text-foreground text-sm block truncate">
-                {organization?.name || "DriveSync"}
+              <span className="font-semibold text-sidebar-accent-foreground text-sm block truncate">
+                {organization?.name || "DriveFlow"}
               </span>
-              <span className="text-[10px] text-muted-foreground capitalize">{organization?.mode || ""}</span>
+              <span className="text-[10px] text-sidebar-foreground/60 capitalize">{organization?.mode || ""}</span>
             </motion.div>
           )}
         </div>
@@ -82,29 +81,31 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-5">
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
         {navGroups.map((group) => {
           const visibleItems = group.items.filter(canSee);
           if (visibleItems.length === 0) return null;
           return (
             <div key={group.title}>
               {!collapsed && (
-                <span className="px-3 text-[10px] font-semibold tracking-widest text-sidebar-foreground/50 uppercase">
+                <span className="px-3 text-[10px] font-semibold tracking-widest text-sidebar-foreground/40 uppercase mb-1.5 block">
                   {group.title}
                 </span>
               )}
-              <div className="mt-1.5 space-y-0.5">
+              <div className="space-y-0.5">
                 {visibleItems.map((item) => {
-                  const isActive = location.pathname === item.path;
+                  const isActive = location.pathname === item.path || (item.path !== "/tableau-de-bord" && location.pathname.startsWith(item.path));
                   return (
                     <NavLink key={item.path} to={item.path} onClick={onMobileClose}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
-                        isActive ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+                        "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                       )}>
-                      <item.icon className={cn("w-[18px] h-[18px] flex-shrink-0", isActive && "text-primary")} />
+                      <item.icon className={cn("w-[17px] h-[17px] flex-shrink-0", isActive && "text-sidebar-primary")} />
                       {!collapsed && <span className="truncate">{item.label}</span>}
-                      {isActive && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                      {isActive && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-sidebar-primary" />}
                     </NavLink>
                   );
                 })}
@@ -119,16 +120,16 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
         {canSee(settingsItem) && (
           <NavLink to={settingsItem.path} onClick={onMobileClose}
             className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
-              location.pathname === settingsItem.path ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent/60"
+              "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150",
+              location.pathname === settingsItem.path ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent/50"
             )}>
-            <settingsItem.icon className="w-[18px] h-[18px] flex-shrink-0" />
+            <settingsItem.icon className="w-[17px] h-[17px] flex-shrink-0" />
             {!collapsed && <span>{settingsItem.label}</span>}
           </NavLink>
         )}
         <button onClick={signOut}
-          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/60 transition-colors w-full">
-          <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors w-full">
+          <LogOut className="w-[17px] h-[17px] flex-shrink-0" />
           {!collapsed && <span>Déconnexion</span>}
         </button>
       </div>
@@ -137,14 +138,14 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
 
   return (
     <>
-      <aside className={cn("hidden lg:flex flex-col h-screen sticky top-0 transition-all duration-300 z-30", collapsed ? "w-[68px]" : "w-[240px]")}>
+      <aside className={cn("hidden lg:flex flex-col h-screen sticky top-0 transition-all duration-300 z-30 border-r border-sidebar-border", collapsed ? "w-[68px]" : "w-[232px]")}>
         {sidebarContent}
       </aside>
       <AnimatePresence>
         {mobileOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden" onClick={onMobileClose} />
-            <motion.aside initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="fixed left-0 top-0 bottom-0 w-[260px] z-50 lg:hidden">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-40 lg:hidden" onClick={onMobileClose} />
+            <motion.aside initial={{ x: -260 }} animate={{ x: 0 }} exit={{ x: -260 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="fixed left-0 top-0 bottom-0 w-[260px] z-50 lg:hidden border-r border-sidebar-border">
               {sidebarContent}
             </motion.aside>
           </>
@@ -156,7 +157,7 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
 
 export function MobileMenuButton({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-secondary text-muted-foreground transition-colors">
+    <button onClick={onClick} className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
       <Menu className="w-5 h-5" />
     </button>
   );
