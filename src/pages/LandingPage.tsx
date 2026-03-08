@@ -1,12 +1,16 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Calendar, FileText, CreditCard, TrendingUp, Smartphone,
   ChevronDown, ChevronRight, ArrowRight, Check, X, Shield, Clock,
   Eye, AlertTriangle, BarChart3, Car, UserCheck, Receipt, Bell,
   Zap, Target, PieChart, Menu, ExternalLink,
 } from "lucide-react";
+
+import screenshotDashboard from "@/assets/screenshot-dashboard.jpg";
+import screenshotPlanning from "@/assets/screenshot-planning.jpg";
+import screenshotRentabilite from "@/assets/screenshot-rentabilite.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
