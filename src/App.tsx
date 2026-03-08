@@ -8,6 +8,7 @@ import { OrgProvider, useOrg } from "@/contexts/OrgContext";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
+import StudentDetail from "./pages/StudentDetail";
 import Instructors from "./pages/Instructors";
 import Vehicles from "./pages/Vehicles";
 import Planning from "./pages/Planning";
@@ -55,6 +56,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/tableau-de-bord" element={<Dashboard />} />
         <Route path="/eleves" element={<Students />} />
+        <Route path="/eleves/:id" element={<StudentDetail />} />
         <Route path="/formateurs" element={<Instructors />} />
         <Route path="/vehicules" element={<Vehicles />} />
         <Route path="/planning" element={<Planning />} />
