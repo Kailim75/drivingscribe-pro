@@ -27,14 +27,15 @@ export default function OnboardingPage() {
     setError("");
 
     try {
-      // 1. Create organization
-      const { data: org, error: orgError } = await supabase
+      // 1. Create organization (don't use .select() — RLS SELECT requires membership which doesn't exist yet)
+      const orgId = crypto.randomUUID();
+      const { error: orgError } = await supabase
         .from("organizations")
-        .insert({ name: name.trim(), mode })
-        .select()
-        .single();
+        .insert({ id: orgId, name: name.trim(), mode });
 
       if (orgError) throw orgError;
+
+      const org = { id: orgId };
 
       // 2. Add user as member
       const { error: memberError } = await supabase
