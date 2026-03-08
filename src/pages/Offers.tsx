@@ -140,18 +140,18 @@ export default function Offers() {
       <OfferFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
       <OfferFormDialog open={!!editOffer} onClose={() => setEditOffer(null)} onSubmit={handleEdit} loading={update.isPending} initial={editOffer} />
 
-      <AlertDialog open={!!deleteOffer} onOpenChange={(v) => !v && setDeleteOffer(null)}>
+      <AlertDialog open={!!archiveOffer} onOpenChange={(v) => !v && setArchiveOffer(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer l'offre</AlertDialogTitle>
+            <AlertDialogTitle>Désactiver l'offre</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer « {deleteOffer?.name} » ? Cette action est irréversible.
+              « {archiveOffer?.name} » sera désactivée et ne sera plus proposée. Vous pourrez la réactiver à tout moment.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Supprimer
+            <AlertDialogAction onClick={handleArchive}>
+              Désactiver
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
