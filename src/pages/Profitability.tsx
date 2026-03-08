@@ -96,14 +96,14 @@ export default function Profitability() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Rentabilité</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Analyse de performance</p>
+          <h1 className="page-title">Rentabilité</h1>
+          <p className="page-subtitle">Analyse de performance</p>
         </div>
-        <div className="flex items-center bg-secondary rounded-lg p-0.5">
+        <div className="flex items-center bg-card rounded-lg p-0.5 border border-border">
           {(["month", "quarter", "year", "all"] as Period[]).map((p) => (
-            <button key={p} onClick={() => setPeriod(p)} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", period === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+            <button key={p} onClick={() => setPeriod(p)} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", period === p ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
               {periodLabels[p]}
             </button>
           ))}
@@ -120,12 +120,12 @@ export default function Profitability() {
           { label: "Heures perdues", value: `${lostHours}h`, sub: `${cancelledLessons.length} séances`, icon: XCircle, color: lostHours > 0 ? "text-warning" : "text-muted-foreground" },
         ].map((kpi) => (
           <div key={kpi.label} className="glass-card rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-1.5">
+            <div className="flex items-center gap-2 mb-2">
               <kpi.icon className="w-4 h-4 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground">{kpi.label}</span>
+              <span className="text-xs text-muted-foreground">{kpi.label}</span>
             </div>
             <p className={cn("text-xl font-bold", (kpi as any).color || "text-foreground")}>{kpi.value}</p>
-            {(kpi as any).sub && <p className="text-[10px] text-muted-foreground mt-0.5">{(kpi as any).sub}</p>}
+            {(kpi as any).sub && <p className="text-xs text-muted-foreground mt-0.5">{(kpi as any).sub}</p>}
           </div>
         ))}
       </motion.div>
@@ -133,7 +133,7 @@ export default function Profitability() {
       {/* Revenue vs expenses */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="glass-card rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4" /> Revenus vs Charges</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-primary" /> Revenus vs Charges</h2>
           <div className="space-y-3">
             {[
               { label: "Revenus encaissés", value: totalRevenue, color: "bg-success", pct: 100 },
@@ -143,9 +143,9 @@ export default function Profitability() {
               <div key={item.label}>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-muted-foreground">{item.label}</span>
-                  <span className="font-medium">{formatEur(item.value)}</span>
+                  <span className="font-semibold">{formatEur(item.value)}</span>
                 </div>
-                <div className="h-3 bg-secondary rounded-full overflow-hidden">
+                <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
                   <div className={cn("h-full rounded-full transition-all", item.color)} style={{ width: `${Math.min(100, item.pct)}%` }} />
                 </div>
               </div>
@@ -158,54 +158,54 @@ export default function Profitability() {
         </div>
 
         <div className="glass-card rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Clock className="w-4 h-4" /> Temps productif</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> Temps productif</h2>
           <div className="flex items-center gap-6 mb-4">
             <div className="text-center">
               <p className="text-3xl font-bold text-success">{totalHoursDone}h</p>
-              <p className="text-[10px] text-muted-foreground">Productif</p>
+              <p className="text-xs text-muted-foreground">Productif</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-bold text-muted-foreground">{nonProductiveHours}h</p>
-              <p className="text-[10px] text-muted-foreground">Non productif</p>
+              <p className="text-xs text-muted-foreground">Non productif</p>
             </div>
             {lostHours > 0 && (
               <div className="text-center">
                 <p className="text-3xl font-bold text-warning">{lostHours}h</p>
-                <p className="text-[10px] text-muted-foreground">Perdues</p>
+                <p className="text-xs text-muted-foreground">Perdues</p>
               </div>
             )}
           </div>
-          <div className="h-4 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-success transition-all" style={{ width: `${occupancyRate}%` }} />
+          <div className="h-3 bg-secondary rounded-full overflow-hidden">
+            <div className="h-full bg-success transition-all rounded-full" style={{ width: `${occupancyRate}%` }} />
           </div>
           <p className="text-[10px] text-muted-foreground mt-2 italic">
-            ⚠ Estimation basée sur {activeInstructors.length} formateur{activeInstructors.length > 1 ? "s" : ""} × 8h/jour × {workingDays}j ouvrés ({Math.round(periodDays * 22/30)} jours estimés). Ajustez selon vos horaires réels.
+            ⚠ Estimation basée sur {activeInstructors.length} formateur{activeInstructors.length > 1 ? "s" : ""} × 8h/jour × {workingDays}j ouvrés.
           </p>
         </div>
       </div>
 
       {/* Per instructor */}
       <div className="glass-card rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><UserCog className="w-4 h-4" /> Par formateur</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><UserCog className="w-4 h-4 text-primary" /> Par formateur</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full data-table">
             <thead>
-              <tr className="border-b border-border text-left">
-                <th className="pb-2 font-medium text-muted-foreground">Formateur</th>
-                <th className="pb-2 font-medium text-muted-foreground text-right">Heures</th>
-                <th className="pb-2 font-medium text-muted-foreground text-right">Revenus</th>
-                <th className="pb-2 font-medium text-muted-foreground text-right hidden sm:table-cell">Coûts</th>
-                <th className="pb-2 font-medium text-muted-foreground text-right">Marge</th>
+              <tr>
+                <th>Formateur</th>
+                <th className="text-right">Heures</th>
+                <th className="text-right">Revenus</th>
+                <th className="text-right hidden sm:table-cell">Coûts</th>
+                <th className="text-right">Marge</th>
               </tr>
             </thead>
             <tbody>
               {perInstructor.map((inst) => (
-                <tr key={inst.name} className="border-b border-border/50 last:border-0">
-                  <td className="py-2.5 font-medium text-foreground">{inst.name}</td>
-                  <td className="py-2.5 text-right text-muted-foreground">{inst.hours}h</td>
-                  <td className="py-2.5 text-right text-foreground">{formatEur(inst.revenue)}</td>
-                  <td className="py-2.5 text-right text-muted-foreground hidden sm:table-cell">{formatEur(inst.cost)}</td>
-                  <td className={cn("py-2.5 text-right font-semibold", inst.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(inst.margin)}</td>
+                <tr key={inst.name}>
+                  <td className="font-medium text-foreground">{inst.name}</td>
+                  <td className="text-right text-muted-foreground">{inst.hours}h</td>
+                  <td className="text-right text-foreground">{formatEur(inst.revenue)}</td>
+                  <td className="text-right text-muted-foreground hidden sm:table-cell">{formatEur(inst.cost)}</td>
+                  <td className={cn("text-right font-semibold", inst.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(inst.margin)}</td>
                 </tr>
               ))}
               {perInstructor.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Aucune donnée</td></tr>}
@@ -216,26 +216,26 @@ export default function Profitability() {
 
       {/* Per vehicle */}
       <div className="glass-card rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Car className="w-4 h-4" /> Par véhicule</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Car className="w-4 h-4 text-primary" /> Par véhicule</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full data-table">
             <thead>
-              <tr className="border-b border-border text-left">
-                <th className="pb-2 font-medium text-muted-foreground">Véhicule</th>
-                <th className="pb-2 font-medium text-muted-foreground text-right">Heures</th>
-                <th className="pb-2 font-medium text-muted-foreground text-right">Revenus</th>
-                <th className="pb-2 font-medium text-muted-foreground text-right hidden sm:table-cell">Coûts</th>
-                <th className="pb-2 font-medium text-muted-foreground text-right">Marge</th>
+              <tr>
+                <th>Véhicule</th>
+                <th className="text-right">Heures</th>
+                <th className="text-right">Revenus</th>
+                <th className="text-right hidden sm:table-cell">Coûts</th>
+                <th className="text-right">Marge</th>
               </tr>
             </thead>
             <tbody>
               {perVehicle.map((v) => (
-                <tr key={v.plate} className="border-b border-border/50 last:border-0">
-                  <td className="py-2.5"><p className="font-medium text-foreground">{v.name}</p><p className="text-[10px] text-muted-foreground font-mono">{v.plate}</p></td>
-                  <td className="py-2.5 text-right text-muted-foreground">{v.hours}h</td>
-                  <td className="py-2.5 text-right text-foreground">{formatEur(v.revenue)}</td>
-                  <td className="py-2.5 text-right text-muted-foreground hidden sm:table-cell">{formatEur(v.cost)}</td>
-                  <td className={cn("py-2.5 text-right font-semibold", v.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(v.margin)}</td>
+                <tr key={v.plate}>
+                  <td><p className="font-medium text-foreground">{v.name}</p><p className="text-[10px] text-muted-foreground font-mono">{v.plate}</p></td>
+                  <td className="text-right text-muted-foreground">{v.hours}h</td>
+                  <td className="text-right text-foreground">{formatEur(v.revenue)}</td>
+                  <td className="text-right text-muted-foreground hidden sm:table-cell">{formatEur(v.cost)}</td>
+                  <td className={cn("text-right font-semibold", v.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(v.margin)}</td>
                 </tr>
               ))}
               {perVehicle.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Aucune donnée</td></tr>}
@@ -246,12 +246,12 @@ export default function Profitability() {
 
       {/* Top students */}
       <div className="glass-card rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Users className="w-4 h-4" /> Top 5 élèves</h2>
-        <div className="space-y-2">
+        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Top 5 élèves</h2>
+        <div className="space-y-2.5">
           {perStudent.map((s, i) => (
             <div key={s.name} className="flex items-center gap-3">
-              <span className="w-5 text-xs text-muted-foreground text-right">{i + 1}.</span>
-              <span className="flex-1 text-sm text-foreground">{s.name}</span>
+              <span className="w-5 text-xs text-muted-foreground text-right font-medium">{i + 1}.</span>
+              <span className="flex-1 text-sm text-foreground font-medium">{s.name}</span>
               <span className="text-xs text-muted-foreground">{s.hours}h</span>
               <span className="text-sm font-semibold text-foreground">{formatEur(s.revenue)}</span>
             </div>

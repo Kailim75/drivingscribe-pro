@@ -57,41 +57,41 @@ export default function Expenses() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dépenses</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{expenses.length} dépenses · {formatEur(totalFixed + totalDirect)} total</p>
+          <h1 className="page-title">Dépenses</h1>
+          <p className="page-subtitle">{expenses.length} dépenses · {formatEur(totalFixed + totalDirect)} total</p>
         </div>
-        <button onClick={() => { setForm({ category: "Autre", description: "", amount: 0, type: "directe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" }); setDialogOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+        <button onClick={() => { setForm({ category: "Autre", description: "", amount: 0, type: "directe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" }); setDialogOpen(true); }} className="btn-primary">
           <Plus className="w-4 h-4" /> Nouvelle dépense
         </button>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="glass-card rounded-xl p-3.5 text-center">
+        <div className="glass-card rounded-xl p-4 text-center">
           <p className="text-lg font-bold text-foreground">{formatEur(totalFixed)}</p>
-          <p className="text-[10px] text-muted-foreground">Charges fixes</p>
+          <p className="text-xs text-muted-foreground mt-1">Charges fixes</p>
         </div>
-        <div className="glass-card rounded-xl p-3.5 text-center">
+        <div className="glass-card rounded-xl p-4 text-center">
           <p className="text-lg font-bold text-foreground">{formatEur(totalDirect)}</p>
-          <p className="text-[10px] text-muted-foreground">Charges directes</p>
+          <p className="text-xs text-muted-foreground mt-1">Charges directes</p>
         </div>
-        <div className="glass-card rounded-xl p-3.5 text-center">
+        <div className="glass-card rounded-xl p-4 text-center">
           <p className="text-lg font-bold text-foreground">{formatEur(totalFixed + totalDirect)}</p>
-          <p className="text-[10px] text-muted-foreground">Total</p>
+          <p className="text-xs text-muted-foreground mt-1">Total</p>
         </div>
       </div>
 
       {byCategory.length > 0 && (
-        <div className="glass-card rounded-xl p-4">
+        <div className="glass-card rounded-xl p-5">
           <h2 className="text-sm font-semibold text-foreground mb-3">Répartition par catégorie</h2>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {byCategory.map((c) => {
               const total = totalFixed + totalDirect;
               const pct = total > 0 ? ((c.total / total) * 100).toFixed(0) : "0";
               return (
                 <div key={c.category} className="flex items-center gap-3">
-                  <span className="text-xs text-foreground w-24 truncate">{c.category}</span>
+                  <span className="text-xs text-foreground w-24 truncate font-medium">{c.category}</span>
                   <div className="flex-1 h-2 bg-secondary rounded-full overflow-hidden">
                     <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
                   </div>
@@ -107,9 +107,9 @@ export default function Expenses() {
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="w-full bg-secondary text-secondary-foreground text-sm pl-9 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="w-full bg-card text-foreground text-sm pl-9 pr-4 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground transition-shadow" />
         </div>
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="bg-secondary text-secondary-foreground text-sm px-3 py-2 rounded-lg border border-border">
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="tous">Tous types</option>
           <option value="fixe">Charges fixes</option>
           <option value="directe">Charges directes</option>
@@ -118,15 +118,15 @@ export default function Expenses() {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full data-table">
             <thead>
-              <tr className="border-b border-border text-left">
-                <th className="px-4 py-3 font-medium text-muted-foreground">Date</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground">Description</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Catégorie</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Type</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Rattachement</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground text-right">Montant</th>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th className="hidden sm:table-cell">Catégorie</th>
+                <th className="hidden md:table-cell">Type</th>
+                <th className="hidden lg:table-cell">Rattachement</th>
+                <th className="text-right">Montant</th>
               </tr>
             </thead>
             <tbody>
@@ -135,18 +135,18 @@ export default function Expenses() {
                 const instructor = exp.instructors;
                 const attachment = vehicle ? `${vehicle.brand} ${vehicle.model}` : instructor ? `${instructor.first_name} ${instructor.last_name}` : "Global";
                 return (
-                  <tr key={exp.id} className="border-b border-border/50 last:border-0 hover:bg-secondary/30 transition-colors">
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(exp.date)}</td>
-                    <td className="px-4 py-3 font-medium text-foreground">
+                  <tr key={exp.id}>
+                    <td className="text-xs text-muted-foreground">{formatDate(exp.date)}</td>
+                    <td className="font-medium text-foreground">
                       {exp.description}
-                      {exp.recurring && <span className="ml-1.5 text-[10px] text-primary">↻ {exp.recurring_period}</span>}
+                      {exp.recurring && <span className="ml-1.5 status-badge rounded-md bg-primary/10 text-primary">↻ {exp.recurring_period}</span>}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground hidden sm:table-cell">{exp.category}</td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", exp.type === "fixe" ? "bg-info/10 text-info" : "bg-warning/10 text-warning")}>{exp.type === "fixe" ? "Fixe" : "Directe"}</span>
+                    <td className="text-xs text-muted-foreground hidden sm:table-cell">{exp.category}</td>
+                    <td className="hidden md:table-cell">
+                      <span className={cn("status-badge rounded-md", exp.type === "fixe" ? "bg-info/10 text-info" : "bg-warning/10 text-warning")}>{exp.type === "fixe" ? "Fixe" : "Directe"}</span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">{attachment}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-foreground">{formatEur(exp.amount)}</td>
+                    <td className="text-xs text-muted-foreground hidden lg:table-cell">{attachment}</td>
+                    <td className="text-right font-semibold text-foreground">{formatEur(exp.amount)}</td>
                   </tr>
                 );
               })}
@@ -168,13 +168,13 @@ export default function Expenses() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Catégorie</Label>
-                <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
                 <Label>Type</Label>
-                <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as any }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as any }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   <option value="directe">Directe</option>
                   <option value="fixe">Fixe</option>
                 </select>
@@ -197,31 +197,31 @@ export default function Expenses() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Véhicule (optionnel)</Label>
-                <select value={form.vehicle_id} onChange={(e) => setForm((f) => ({ ...f, vehicle_id: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                <select value={form.vehicle_id} onChange={(e) => setForm((f) => ({ ...f, vehicle_id: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   <option value="">Aucun</option>
                   {vehicles.map((v) => <option key={v.id} value={v.id}>{v.brand} {v.model} ({v.plate})</option>)}
                 </select>
               </div>
               <div>
                 <Label>Formateur (optionnel)</Label>
-                <select value={form.instructor_id} onChange={(e) => setForm((f) => ({ ...f, instructor_id: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                <select value={form.instructor_id} onChange={(e) => setForm((f) => ({ ...f, instructor_id: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   <option value="">Aucun</option>
                   {instructors.map((i) => <option key={i.id} value={i.id}>{i.first_name} {i.last_name}</option>)}
                 </select>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <input type="checkbox" id="recurring" checked={form.recurring} onChange={(e) => setForm((f) => ({ ...f, recurring: e.target.checked }))} className="rounded" />
+              <input type="checkbox" id="recurring" checked={form.recurring} onChange={(e) => setForm((f) => ({ ...f, recurring: e.target.checked }))} className="rounded border-border" />
               <Label htmlFor="recurring" className="text-sm cursor-pointer">Récurrente</Label>
               {form.recurring && (
-                <select value={form.recurring_period} onChange={(e) => setForm((f) => ({ ...f, recurring_period: e.target.value }))} className="bg-secondary text-sm px-2 py-1 rounded border border-border">
+                <select value={form.recurring_period} onChange={(e) => setForm((f) => ({ ...f, recurring_period: e.target.value }))} className="bg-card text-sm px-2 py-1.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   <option value="mensuel">Mensuel</option>
                   <option value="trimestriel">Trimestriel</option>
                   <option value="annuel">Annuel</option>
                 </select>
               )}
             </div>
-            <button onClick={handleSubmit} disabled={create.isPending || !form.description || !form.amount} className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
+            <button onClick={handleSubmit} disabled={create.isPending || !form.description || !form.amount} className="w-full btn-primary justify-center">
               {create.isPending ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>

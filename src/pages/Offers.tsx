@@ -58,18 +58,17 @@ export default function Offers() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Catalogue d'offres</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{offers.filter((o) => o.active).length} offre{offers.filter((o) => o.active).length > 1 ? "s" : ""} active{offers.filter((o) => o.active).length > 1 ? "s" : ""}</p>
+          <h1 className="page-title">Catalogue d'offres</h1>
+          <p className="page-subtitle">{offers.filter((o) => o.active).length} offre{offers.filter((o) => o.active).length > 1 ? "s" : ""} active{offers.filter((o) => o.active).length > 1 ? "s" : ""}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowInactive(!showInactive)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground rounded-lg border border-border hover:border-primary/20 transition-colors">
+          <button onClick={() => setShowInactive(!showInactive)} className="btn-secondary text-xs !py-2">
             {showInactive ? <ToggleRight className="w-4 h-4 text-primary" /> : <ToggleLeft className="w-4 h-4" />}
             Inactives
           </button>
-          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-sm">
+          <button onClick={() => setShowForm(true)} className="btn-primary">
             <Plus className="w-4 h-4" /> Nouvelle offre
           </button>
         </div>
@@ -85,12 +84,12 @@ export default function Offers() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filtered.map((offer) => (
-              <div key={offer.id} className={cn("glass-card rounded-xl p-4 transition-colors", offer.active ? "hover:border-primary/20" : "opacity-60")}>
+              <div key={offer.id} className={cn("glass-card rounded-xl p-4 transition-all duration-200", offer.active ? "hover:border-primary/20 hover:shadow-sm" : "opacity-60")}>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium text-foreground">{offer.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", offerTypeColors[offer.type])}>
+                    <p className="font-semibold text-foreground">{offer.name}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className={cn("status-badge rounded-md", offerTypeColors[offer.type])}>
                         {offerTypeLabels[offer.type]}
                       </span>
                       <span className="text-xs text-muted-foreground">{activityTypeLabels[offer.activity_type] || offer.activity_type}</span>
@@ -98,7 +97,7 @@ export default function Offers() {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                      <button className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
                         <MoreVertical className="w-4 h-4" />
                       </button>
                     </DropdownMenuTrigger>
@@ -116,7 +115,7 @@ export default function Offers() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <div className="mt-3 pt-3 border-t border-border/50">
+                <div className="mt-3 pt-3 border-t border-border/60">
                   <div className="flex items-center justify-between">
                     <span className="text-xl font-bold text-foreground">{formatEur(Number(offer.price))}</span>
                     {offer.hours && offer.type !== "heure" && (

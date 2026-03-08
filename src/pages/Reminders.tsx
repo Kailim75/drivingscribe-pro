@@ -49,12 +49,12 @@ export default function Reminders() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Rappels & Relances</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{planned.length} planifié{planned.length > 1 ? "s" : ""} · {sent.length} envoyé{sent.length > 1 ? "s" : ""}</p>
+          <h1 className="page-title">Rappels & Relances</h1>
+          <p className="page-subtitle">{planned.length} planifié{planned.length > 1 ? "s" : ""} · {sent.length} envoyé{sent.length > 1 ? "s" : ""}</p>
         </div>
-        <button onClick={() => { setForm({ type: "séance", student_id: "", invoice_id: "", message: "", scheduled_at: new Date().toISOString().split("T")[0] }); setDialogOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+        <button onClick={() => { setForm({ type: "séance", student_id: "", invoice_id: "", message: "", scheduled_at: new Date().toISOString().split("T")[0] }); setDialogOpen(true); }} className="btn-primary">
           <Plus className="w-4 h-4" /> Nouveau rappel
         </button>
       </div>
@@ -91,7 +91,7 @@ export default function Reminders() {
           <div className="space-y-4">
             <div>
               <Label>Type</Label>
-              <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+              <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 <option value="séance">Rappel séance</option>
                 <option value="impayé">Relance impayé</option>
                 <option value="document">Rappel document</option>
@@ -100,7 +100,7 @@ export default function Reminders() {
             </div>
             <div>
               <Label>Élève (optionnel)</Label>
-              <select value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+              <select value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 <option value="">Aucun</option>
                 {students.map((s) => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
               </select>
@@ -108,7 +108,7 @@ export default function Reminders() {
             {form.type === "impayé" && (
               <div>
                 <Label>Facture</Label>
-                <select value={form.invoice_id} onChange={(e) => setForm((f) => ({ ...f, invoice_id: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                <select value={form.invoice_id} onChange={(e) => setForm((f) => ({ ...f, invoice_id: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   <option value="">Aucune</option>
                   {invoices.filter((i) => i.remaining_amount > 0).map((i) => <option key={i.id} value={i.id}>{i.number}</option>)}
                 </select>
@@ -120,9 +120,9 @@ export default function Reminders() {
             </div>
             <div>
               <Label>Message</Label>
-              <textarea value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border h-20 resize-none" placeholder="Contenu du rappel..." />
+              <textarea value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-20 resize-none" placeholder="Contenu du rappel..." />
             </div>
-            <button onClick={handleSubmit} disabled={create.isPending} className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={create.isPending} className="w-full btn-primary justify-center">
               {create.isPending ? "Création..." : "Créer le rappel"}
             </button>
           </div>
@@ -137,26 +137,26 @@ function ReminderCard({ reminder, onSend }: { reminder: any; onSend?: () => void
   const Icon = cfg.icon;
   const studentName = reminder.students ? `${reminder.students.first_name} ${reminder.students.last_name}` : null;
   return (
-    <div className="glass-card rounded-xl p-4 flex items-start gap-4 hover:border-primary/20 transition-colors">
+    <div className="glass-card rounded-xl p-4 flex items-start gap-4 hover:border-primary/20 hover:shadow-sm transition-all duration-200">
       <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", cfg.color)}>
         <Icon className="w-4 h-4" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+          <span className="status-badge rounded-md bg-accent text-accent-foreground">
             {typeLabels[reminder.type] || reminder.type}
           </span>
-          <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", cfg.color)}>{cfg.label}</span>
+          <span className={cn("status-badge rounded-md", cfg.color)}>{cfg.label}</span>
           <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><Mail className="w-3 h-3" />Email</span>
         </div>
         <p className="text-sm text-foreground mt-1.5">{reminder.message}</p>
         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-          {studentName && <span>{studentName}</span>}
+          {studentName && <span className="font-medium">{studentName}</span>}
           <span>{reminder.sent_at ? `Envoyé le ${formatDate(reminder.sent_at)}` : `Prévu le ${formatDate(reminder.scheduled_at)}`}</span>
         </div>
       </div>
       {reminder.status === "planifié" && onSend && (
-        <button onClick={onSend} className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity">
+        <button onClick={onSend} className="flex-shrink-0 btn-primary text-xs !px-3 !py-1.5">
           <Send className="w-3 h-3" /> Envoyer
         </button>
       )}

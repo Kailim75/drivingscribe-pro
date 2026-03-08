@@ -79,7 +79,6 @@ export default function Vehicles() {
     });
   };
 
-  // Compute vehicle expenses
   const getVehicleExpenses = (vehicleId: string) => {
     return expenses.filter((e) => e.vehicle_id === vehicleId).reduce((s, e) => s + e.amount, 0);
   };
@@ -90,12 +89,12 @@ export default function Vehicles() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="page-header">
         <div>
-          <h1 className="text-xl md:text-3xl font-bold text-foreground">Véhicules</h1>
-          <p className="text-muted-foreground text-xs mt-0.5">{vehicles.length} véhicule{vehicles.length > 1 ? "s" : ""}</p>
+          <h1 className="page-title">Véhicules</h1>
+          <p className="page-subtitle">{vehicles.length} véhicule{vehicles.length > 1 ? "s" : ""}</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-sm active:scale-95">
+        <button onClick={() => setShowForm(true)} className="btn-primary">
           <Plus className="w-4 h-4" /> Nouveau véhicule
         </button>
       </div>
@@ -104,10 +103,10 @@ export default function Vehicles() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un véhicule..."
-            className="w-full bg-secondary text-secondary-foreground text-sm pl-9 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground" />
+            className="w-full bg-card text-foreground text-sm pl-9 pr-4 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground transition-shadow" />
         </div>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-secondary text-secondary-foreground text-sm px-3 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary">
+          className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="tous">Tous les statuts</option>
           <option value="actif">Actif</option>
           <option value="indisponible">Indisponible</option>
@@ -138,19 +137,19 @@ export default function Vehicles() {
               const hasAlert = maintenancePast || insurancePast || controlPast;
 
               return (
-                <div key={v.id} className={cn("glass-card rounded-xl p-4 transition-colors", hasAlert ? "border-warning/40" : "hover:border-primary/20")}>
+                <div key={v.id} className={cn("glass-card rounded-xl p-4 transition-all duration-200", hasAlert ? "border-warning/40" : "hover:border-primary/20 hover:shadow-sm")}>
                   <div className="flex items-start justify-between">
                     <div className="min-w-0">
-                      <p className="font-medium text-foreground truncate">{v.brand} {v.model}</p>
-                      <p className="text-sm text-muted-foreground mt-0.5 font-mono text-xs">{v.plate}</p>
+                      <p className="font-semibold text-foreground truncate">{v.brand} {v.model}</p>
+                      <p className="text-muted-foreground mt-0.5 font-mono text-xs">{v.plate}</p>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", vehicleStatusColors[v.status])}>
+                      <span className={cn("status-badge rounded-md", vehicleStatusColors[v.status])}>
                         {vehicleStatusLabels[v.status]}
                       </span>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="p-1 rounded-md hover:bg-secondary text-muted-foreground transition-colors">
+                          <button className="p-1.5 rounded-md hover:bg-accent text-muted-foreground transition-colors">
                             <MoreVertical className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
@@ -167,23 +166,21 @@ export default function Vehicles() {
                     </div>
                   </div>
 
-                  {/* Costs */}
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/60">
                     <span className="text-xs text-muted-foreground">{activityTypeLabels[v.category] || v.category}</span>
                     <div className="text-right">
-                      <span className="text-xs text-foreground font-medium">{formatEur(Number(v.monthly_cost))}/mois</span>
+                      <span className="text-xs text-foreground font-semibold">{formatEur(Number(v.monthly_cost))}/mois</span>
                       {totalExpenses > 0 && (
                         <span className="text-[10px] text-muted-foreground block">{formatEur(totalExpenses)} dépensés</span>
                       )}
                     </div>
                   </div>
 
-                  {/* Dates d'entretien */}
                   {(v.next_maintenance_date || v.insurance_expiry || v.technical_control_date) && (
-                    <div className="mt-2.5 pt-2.5 border-t border-border/50 space-y-1">
+                    <div className="mt-2.5 pt-2.5 border-t border-border/60 space-y-1.5">
                       {v.next_maintenance_date && (
                         <div className="flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1 text-muted-foreground">
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
                             <Wrench className="w-3 h-3" /> Entretien
                           </span>
                           <span className={cn("font-medium", maintenancePast ? "text-destructive" : maintenanceSoon ? "text-warning" : "text-foreground")}>
@@ -193,7 +190,7 @@ export default function Vehicles() {
                       )}
                       {v.technical_control_date && (
                         <div className="flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1 text-muted-foreground">
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
                             <CalendarClock className="w-3 h-3" /> CT
                           </span>
                           <span className={cn("font-medium", controlPast ? "text-destructive" : controlSoon ? "text-warning" : "text-foreground")}>
@@ -203,7 +200,7 @@ export default function Vehicles() {
                       )}
                       {v.insurance_expiry && (
                         <div className="flex items-center justify-between text-xs">
-                          <span className="flex items-center gap-1 text-muted-foreground">
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
                             <Shield className="w-3 h-3" /> Assurance
                           </span>
                           <span className={cn("font-medium", insurancePast ? "text-destructive" : insuranceSoon ? "text-warning" : "text-foreground")}>
@@ -222,19 +219,9 @@ export default function Vehicles() {
         )}
       </motion.div>
 
-      {/* Create dialog */}
       <VehicleFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
+      <VehicleFormDialog open={!!editVehicle} onClose={() => setEditVehicle(null)} onSubmit={handleUpdate} loading={update.isPending} initial={editVehicle} />
 
-      {/* Edit dialog */}
-      <VehicleFormDialog
-        open={!!editVehicle}
-        onClose={() => setEditVehicle(null)}
-        onSubmit={handleUpdate}
-        loading={update.isPending}
-        initial={editVehicle}
-      />
-
-      {/* Archive confirmation */}
       <AlertDialog open={!!archiveTarget} onOpenChange={(v) => !v && setArchiveTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
