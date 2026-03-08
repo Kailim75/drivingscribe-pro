@@ -24,6 +24,7 @@ import ActivityLog from "./pages/ActivityLog";
 import SettingsPage from "./pages/SettingsPage";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
+import PublicInvoice from "./pages/PublicInvoice";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -52,6 +53,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/connexion" element={<AuthPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/p/facture" element={<PublicInvoice />} />
       <Route path="/" element={<Navigate to="/tableau-de-bord" replace />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/tableau-de-bord" element={<Dashboard />} />

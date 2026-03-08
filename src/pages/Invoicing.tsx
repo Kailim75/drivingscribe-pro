@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, FileText, ArrowRight } from "lucide-react";
+import { Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useStudents } from "@/hooks/useStudents";
@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   brouillon: { label: "Brouillon", color: "bg-muted text-muted-foreground" },
@@ -81,6 +83,51 @@ export default function Invoicing() {
   const addLine = () => setForm((f) => ({ ...f, lines: [...f.lines, { description: "", quantity: 1, unit_price: 0 }] }));
   const updateLine = (idx: number, field: string, value: any) => {
     setForm((f) => ({ ...f, lines: f.lines.map((l, i) => i === idx ? { ...l, [field]: value } : l) }));
+  };
+
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadPdf = async (invoiceId: string) => {
+    setDownloadingId(invoiceId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-invoice-pdf`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ invoice_id: invoiceId }),
+      });
+      const result = await res.json();
+      if (result.error) throw new Error(result.error);
+
+      // Download the PDF
+      const byteCharacters = atob(result.pdf);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([new Uint8Array(byteNumbers)], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = result.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "PDF téléchargé" });
+    } catch (err: any) {
+      toast({ title: "Erreur PDF", description: err.message, variant: "destructive" });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleCopyPaymentLink = (invoiceId: string) => {
+    const url = `${window.location.origin}/p/facture?id=${invoiceId}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Lien copié", description: "Le lien de paiement a été copié dans le presse-papier" });
   };
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -174,7 +221,7 @@ export default function Invoicing() {
                       <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", cfg.color)}>{cfg.label}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 items-center">
                         {inv.type === "devis" && inv.status !== "archivé" && (
                           <button onClick={() => convertToInvoice.mutate(inv.id)} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-1">
                             <ArrowRight className="w-3 h-3" /> Convertir
@@ -185,6 +232,23 @@ export default function Invoicing() {
                             Envoyer
                           </button>
                         )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-1 rounded hover:bg-secondary transition-colors">
+                              <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleDownloadPdf(inv.id)} disabled={downloadingId === inv.id}>
+                              <Download className="w-3.5 h-3.5 mr-2" />
+                              {downloadingId === inv.id ? "Génération..." : "Télécharger PDF"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleCopyPaymentLink(inv.id)}>
+                              <Link2 className="w-3.5 h-3.5 mr-2" />
+                              Copier lien de paiement
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>
