@@ -221,7 +221,7 @@ export default function Invoicing() {
                       <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", cfg.color)}>{cfg.label}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 items-center">
                         {inv.type === "devis" && inv.status !== "archivé" && (
                           <button onClick={() => convertToInvoice.mutate(inv.id)} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-1">
                             <ArrowRight className="w-3 h-3" /> Convertir
@@ -232,6 +232,23 @@ export default function Invoicing() {
                             Envoyer
                           </button>
                         )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-1 rounded hover:bg-secondary transition-colors">
+                              <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleDownloadPdf(inv.id)} disabled={downloadingId === inv.id}>
+                              <Download className="w-3.5 h-3.5 mr-2" />
+                              {downloadingId === inv.id ? "Génération..." : "Télécharger PDF"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleCopyPaymentLink(inv.id)}>
+                              <Link2 className="w-3.5 h-3.5 mr-2" />
+                              Copier lien de paiement
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </td>
                   </tr>
