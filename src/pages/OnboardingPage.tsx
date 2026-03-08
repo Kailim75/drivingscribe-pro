@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrg } from "@/contexts/OrgContext";
+import { seedDemoData } from "@/lib/seedDemoData";
 import type { Database } from "@/integrations/supabase/types";
 
 type OrgMode = Database["public"]["Enums"]["org_mode"];
@@ -15,6 +16,7 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [mode, setMode] = useState<OrgMode>("independant");
+  const [withDemo, setWithDemo] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
