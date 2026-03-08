@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2 } from "lucide-react";
+import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLessons } from "@/hooks/useLessons";
 import { useStudents } from "@/hooks/useStudents";
@@ -9,6 +9,7 @@ import { useVehicles } from "@/hooks/useVehicles";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { lessonStatusLabels, lessonStatusColors } from "@/lib/labels";
 import LessonFormDialog from "@/components/lessons/LessonFormDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const statusIcons: Record<string, React.ElementType> = {
   prevu: Clock, effectue: CheckCircle2, annule: XCircle, absent: UserX,
@@ -20,9 +21,11 @@ export default function Planning() {
   const [view, setView] = useState<View>("jour");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showForm, setShowForm] = useState(false);
+  const [editLesson, setEditLesson] = useState<any>(null);
+  const [statusConfirm, setStatusConfirm] = useState<{ lessonId: string; status: string; label: string } | null>(null);
 
   const dateStr = selectedDate.toISOString().split("T")[0];
-  const { lessons, isLoading, checkConflicts, create, updateStatus } = useLessons(view === "jour" ? { date: dateStr } : undefined);
+  const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(view === "jour" ? { date: dateStr } : undefined);
   const { students } = useStudents();
   const { instructors } = useInstructors();
   const { vehicles } = useVehicles();
@@ -43,12 +46,28 @@ export default function Planning() {
     });
   };
 
+  const handleEdit = (data: any) => {
+    if (!editLesson) return;
+    update.mutate({ id: editLesson.id, ...data }, {
+      onSuccess: () => {
+        setEditLesson(null);
+        log({ action: "update", entity: "lesson", entity_id: editLesson.id, details: `Séance modifiée le ${data.date}` });
+      },
+    });
+  };
+
   const handleStatusChange = (lessonId: string, status: string) => {
     updateStatus.mutate({ id: lessonId, status }, {
       onSuccess: () => {
+        setStatusConfirm(null);
         log({ action: "update_status", entity: "lesson", entity_id: lessonId, details: `Statut → ${lessonStatusLabels[status]}` });
       },
     });
+  };
+
+  const confirmStatus = (lessonId: string, status: string) => {
+    const labels: Record<string, string> = { effectue: "Effectué", annule: "Annulé", absent: "Absent" };
+    setStatusConfirm({ lessonId, status, label: labels[status] || status });
   };
 
   const sortedLessons = [...lessons].sort((a: any, b: any) =>
@@ -64,7 +83,7 @@ export default function Planning() {
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h1 className="text-xl md:text-3xl font-bold text-foreground">Planning</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Planning</h1>
           <p className="text-muted-foreground text-xs mt-0.5 truncate">
             {sortedLessons.length} séance{sortedLessons.length > 1 ? "s" : ""}
             {view === "jour" && ` — ${selectedDate.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}`}
@@ -114,8 +133,7 @@ export default function Planning() {
           sortedLessons.map((lesson: any) => {
             const Icon = statusIcons[lesson.status] || Clock;
             return (
-              <div key={lesson.id} className="glass-card rounded-xl p-3 sm:p-4 hover:border-primary/20 transition-colors active:bg-card/90">
-                {/* Mobile: stacked layout / Desktop: inline */}
+              <div key={lesson.id} className="glass-card rounded-xl p-3 sm:p-4 hover:border-primary/20 transition-colors">
                 <div className="flex items-start gap-3">
                   {/* Time block */}
                   <div className="w-12 sm:w-16 flex-shrink-0 text-center">
@@ -148,23 +166,29 @@ export default function Planning() {
                         {new Date(lesson.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
                       </p>
                     )}
-                    {/* Quick actions — inline on mobile for easy thumb access */}
-                    {lesson.status === "prevu" && (
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <button onClick={() => handleStatusChange(lesson.id, "effectue")}
-                          className="text-[11px] px-3 py-1.5 rounded-lg bg-success/10 text-success hover:bg-success/20 active:bg-success/30 transition-colors font-medium">
-                          ✓ Effectué
-                        </button>
-                        <button onClick={() => handleStatusChange(lesson.id, "annule")}
-                          className="text-[11px] px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 active:bg-destructive/30 transition-colors font-medium">
-                          ✗ Annulé
-                        </button>
-                        <button onClick={() => handleStatusChange(lesson.id, "absent")}
-                          className="text-[11px] px-3 py-1.5 rounded-lg bg-warning/10 text-warning hover:bg-warning/20 active:bg-warning/30 transition-colors font-medium">
-                          ⚠ Absent
-                        </button>
-                      </div>
-                    )}
+                    {/* Quick actions */}
+                    <div className="flex items-center gap-1.5 mt-2">
+                      {lesson.status === "prevu" && (
+                        <>
+                          <button onClick={() => confirmStatus(lesson.id, "effectue")}
+                            className="text-[11px] px-3 py-1.5 rounded-lg bg-success/10 text-success hover:bg-success/20 active:bg-success/30 transition-colors font-medium">
+                            ✓ Effectué
+                          </button>
+                          <button onClick={() => confirmStatus(lesson.id, "annule")}
+                            className="text-[11px] px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 active:bg-destructive/30 transition-colors font-medium">
+                            ✗ Annulé
+                          </button>
+                          <button onClick={() => confirmStatus(lesson.id, "absent")}
+                            className="text-[11px] px-3 py-1.5 rounded-lg bg-warning/10 text-warning hover:bg-warning/20 active:bg-warning/30 transition-colors font-medium">
+                            ⚠ Absent
+                          </button>
+                        </>
+                      )}
+                      <button onClick={() => setEditLesson(lesson)}
+                        className="text-[11px] px-2.5 py-1.5 rounded-lg bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-colors font-medium ml-auto">
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -173,6 +197,7 @@ export default function Planning() {
         )}
       </motion.div>
 
+      {/* Create dialog */}
       <LessonFormDialog
         open={showForm}
         onClose={() => setShowForm(false)}
@@ -183,6 +208,38 @@ export default function Planning() {
         instructors={instructors.filter((i) => i.status === "actif")}
         vehicles={vehicles}
       />
+
+      {/* Edit dialog */}
+      <LessonFormDialog
+        open={!!editLesson}
+        onClose={() => setEditLesson(null)}
+        onSubmit={handleEdit}
+        onCheckConflicts={checkConflicts}
+        loading={update.isPending}
+        initial={editLesson}
+        students={students}
+        instructors={instructors.filter((i) => i.status === "actif")}
+        vehicles={vehicles}
+      />
+
+      {/* Status confirmation */}
+      <AlertDialog open={!!statusConfirm} onOpenChange={(v) => !v && setStatusConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmer le changement de statut</AlertDialogTitle>
+            <AlertDialogDescription>
+              Marquer cette séance comme « {statusConfirm?.label} » ?
+              {statusConfirm?.status === "annule" && " Par défaut, la séance annulée sera facturée à 100%."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => statusConfirm && handleStatusChange(statusConfirm.lessonId, statusConfirm.status)}>
+              Confirmer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -83,10 +83,12 @@ export default function Profitability() {
   });
 
   const perStudent = students.map((s) => {
-    const sFormula = formulas.find((sf) => sf.student_id === s.id);
+    const sFormulas = formulas.filter((sf) => sf.student_id === s.id);
     const sLessons = doneLessons.filter((l) => l.student_id === s.id);
     const hours = sLessons.reduce((sum, l) => sum + Number(l.duration_hours), 0);
-    const revenue = sFormula ? sFormula.total_price * (hours / (sFormula.hours_bought || 1)) : 0;
+    const totalBought = sFormulas.reduce((sum, f) => sum + Number(f.hours_bought), 0);
+    const totalPrice = sFormulas.reduce((sum, f) => sum + Number(f.total_price), 0);
+    const revenue = totalBought > 0 ? totalPrice * (hours / totalBought) : 0;
     return { name: `${s.first_name} ${s.last_name}`, hours, revenue };
   }).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
@@ -176,8 +178,8 @@ export default function Profitability() {
           <div className="h-4 bg-secondary rounded-full overflow-hidden">
             <div className="h-full bg-success transition-all" style={{ width: `${occupancyRate}%` }} />
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2">
-            Estimation basée sur {activeInstructors.length} formateur{activeInstructors.length > 1 ? "s" : ""} × 8h × {workingDays}j ouvrés
+          <p className="text-[10px] text-muted-foreground mt-2 italic">
+            ⚠ Estimation basée sur {activeInstructors.length} formateur{activeInstructors.length > 1 ? "s" : ""} × 8h/jour × {workingDays}j ouvrés ({Math.round(periodDays * 22/30)} jours estimés). Ajustez selon vos horaires réels.
           </p>
         </div>
       </div>
@@ -256,6 +258,9 @@ export default function Profitability() {
           ))}
           {perStudent.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Aucune donnée</p>}
         </div>
+        <p className="text-[10px] text-muted-foreground mt-3 italic">
+          ⚠ Revenus estimés au prorata des heures réalisées par rapport aux heures achetées dans les formules.
+        </p>
       </div>
     </div>
   );

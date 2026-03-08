@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, CreditCard, Banknote, Building2, Smartphone, Loader2 } from "lucide-react";
+import { Plus, Search, CreditCard, Banknote, Building2, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { usePayments } from "@/hooks/usePayments";
 import { useInvoices } from "@/hooks/useInvoices";
@@ -14,7 +14,7 @@ const methodConfig: Record<PaymentMethod, { label: string; icon: React.ElementTy
   espèces: { label: "Espèces", icon: Banknote, color: "bg-success/10 text-success" },
   virement: { label: "Virement", icon: Building2, color: "bg-info/10 text-info" },
   carte: { label: "Carte", icon: CreditCard, color: "bg-primary/10 text-primary" },
-  chèque: { label: "Chèque", icon: Smartphone, color: "bg-muted text-muted-foreground" },
+  chèque: { label: "Chèque", icon: FileText, color: "bg-muted text-muted-foreground" },
 };
 
 const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
