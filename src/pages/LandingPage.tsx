@@ -8,9 +8,6 @@ import {
   Zap, Target, PieChart, Menu, Loader2,
 } from "lucide-react";
 
-import screenshotDashboard from "@/assets/screenshot-dashboard.jpg";
-import screenshotPlanning from "@/assets/screenshot-planning.jpg";
-import screenshotRentabilite from "@/assets/screenshot-rentabilite.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
