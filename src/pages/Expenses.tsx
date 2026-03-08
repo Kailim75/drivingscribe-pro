@@ -1,15 +1,16 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus, Search, Loader2, Receipt } from "lucide-react";
 import { useState } from "react";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useInstructors } from "@/hooks/useInstructors";
+import { formatEur } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
+const CATEGORIES = ["Carburant", "Entretien", "Assurance", "Loyer", "Rémunération", "Logiciel", "Administratif", "Autre"];
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 
 export default function Expenses() {
@@ -19,7 +20,7 @@ export default function Expenses() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("tous");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ category: "", description: "", amount: 0, type: "directe" as "directe" | "fixe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" });
+  const [form, setForm] = useState({ category: "Autre", description: "", amount: 0, type: "directe" as "directe" | "fixe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" });
 
   const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
   const filtered = sorted.filter((e) => {
@@ -59,9 +60,9 @@ export default function Expenses() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dépenses</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{expenses.length} dépenses</p>
+          <p className="text-muted-foreground text-sm mt-0.5">{expenses.length} dépenses · {formatEur(totalFixed + totalDirect)} total</p>
         </div>
-        <button onClick={() => { setForm({ category: "", description: "", amount: 0, type: "directe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" }); setDialogOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+        <button onClick={() => { setForm({ category: "Autre", description: "", amount: 0, type: "directe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" }); setDialogOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" /> Nouvelle dépense
         </button>
       </div>
@@ -154,6 +155,7 @@ export default function Expenses() {
         </div>
         {filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Receipt className="w-8 h-8 opacity-40 mb-2" />
             <p className="text-sm">Aucune dépense trouvée</p>
           </div>
         )}
@@ -166,7 +168,9 @@ export default function Expenses() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Catégorie</Label>
-                <Input value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} placeholder="Carburant, Loyer..." className="mt-1" />
+                <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
               </div>
               <div>
                 <Label>Type</Label>
@@ -178,12 +182,12 @@ export default function Expenses() {
             </div>
             <div>
               <Label>Description</Label>
-              <Input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="mt-1" />
+              <Input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} className="mt-1" placeholder="Plein carburant, Loyer bureau..." />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Montant (€)</Label>
-                <Input type="number" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: Number(e.target.value) }))} className="mt-1" />
+                <Input type="number" value={form.amount || ""} onChange={(e) => setForm((f) => ({ ...f, amount: Number(e.target.value) }))} className="mt-1" />
               </div>
               <div>
                 <Label>Date</Label>
@@ -208,7 +212,7 @@ export default function Expenses() {
             </div>
             <div className="flex items-center gap-3">
               <input type="checkbox" id="recurring" checked={form.recurring} onChange={(e) => setForm((f) => ({ ...f, recurring: e.target.checked }))} className="rounded" />
-              <Label htmlFor="recurring" className="text-sm">Récurrente</Label>
+              <Label htmlFor="recurring" className="text-sm cursor-pointer">Récurrente</Label>
               {form.recurring && (
                 <select value={form.recurring_period} onChange={(e) => setForm((f) => ({ ...f, recurring_period: e.target.value }))} className="bg-secondary text-sm px-2 py-1 rounded border border-border">
                   <option value="mensuel">Mensuel</option>
@@ -217,7 +221,7 @@ export default function Expenses() {
                 </select>
               )}
             </div>
-            <button onClick={handleSubmit} disabled={create.isPending} className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={create.isPending || !form.description || !form.amount} className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity">
               {create.isPending ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>
