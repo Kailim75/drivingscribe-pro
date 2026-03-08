@@ -76,6 +76,15 @@ export default function OnboardingPage() {
         details: `${name} — mode ${mode}`,
       });
 
+      // Seed demo data if requested
+      if (withDemo) {
+        try {
+          await seedDemoData(org.id, user.id);
+        } catch (e) {
+          console.warn("Demo seed partial failure:", e);
+        }
+      }
+
       await refreshOrg();
       navigate("/tableau-de-bord", { replace: true });
     } catch (err: any) {
