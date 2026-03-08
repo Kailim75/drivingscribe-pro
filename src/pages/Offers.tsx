@@ -38,12 +38,12 @@ export default function Offers() {
     });
   };
 
-  const handleDelete = () => {
-    if (!deleteOffer) return;
-    remove.mutate(deleteOffer.id, {
+  const handleArchive = () => {
+    if (!archiveOffer) return;
+    archive.mutate(archiveOffer.id, {
       onSuccess: () => {
-        log({ action: "delete", entity: "offer", entity_id: deleteOffer.id, details: deleteOffer.name });
-        setDeleteOffer(null);
+        log({ action: "archive", entity: "offer", entity_id: archiveOffer.id, details: archiveOffer.name });
+        setArchiveOffer(null);
       },
     });
   };
