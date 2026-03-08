@@ -135,12 +135,23 @@ export default function OnboardingPage() {
             </div>
           </div>
 
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
+            <input type="checkbox" id="withDemo" checked={withDemo} onChange={(e) => setWithDemo(e.target.checked)} className="rounded" />
+            <label htmlFor="withDemo" className="flex-1 cursor-pointer">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span className="text-sm font-medium text-foreground">Charger les données de démo</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">8 élèves, 3 formateurs, 4 véhicules, séances, factures et paiements réalistes</p>
+            </label>
+          </div>
+
           {error && <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
 
           <button type="submit" disabled={loading || !name.trim()}
             className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Créer mon organisation
+            {loading && withDemo ? "Création et chargement des données..." : "Créer mon organisation"}
           </button>
         </form>
       </motion.div>
