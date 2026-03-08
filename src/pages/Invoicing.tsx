@@ -98,6 +98,7 @@ export default function Invoicing() {
   };
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [sendConfirm, setSendConfirm] = useState<string | null>(null);
 
   const handleDownloadPdf = async (invoiceId: string) => {
     setDownloadingId(invoiceId);
