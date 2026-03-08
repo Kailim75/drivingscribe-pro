@@ -40,13 +40,13 @@ export function useStudents() {
     onError: () => toast.error("Erreur lors de la mise à jour"),
   });
 
-  const remove = useMutation({
+  const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("students").delete().eq("id", id);
+      const { error } = await supabase.from("students").update({ status: "archive" as any }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["students"] }); toast.success("Élève supprimé"); },
-    onError: () => toast.error("Erreur lors de la suppression"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["students"] }); toast.success("Élève archivé"); },
+    onError: () => toast.error("Erreur lors de l'archivage"),
   });
 
   return { ...query, students: query.data ?? [], create, update, remove };
