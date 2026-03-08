@@ -145,5 +145,5 @@ export function useInvoices() {
     },
   });
 
-  return { invoices: invoicesQuery.data || [], isLoading: invoicesQuery.isLoading, create, update, convertToInvoice, remove };
+  return { invoices: invoicesQuery.data || [], isLoading: invoicesQuery.isLoading, create, update, convertToInvoice, archive };
 }
