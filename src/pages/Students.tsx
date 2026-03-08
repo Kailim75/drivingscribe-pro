@@ -32,21 +32,17 @@ export default function Students() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-64"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
   }
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Élèves</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{students.length} élève{students.length > 1 ? "s" : ""} enregistré{students.length > 1 ? "s" : ""}</p>
+          <h1 className="page-title">Élèves</h1>
+          <p className="page-subtitle">{students.length} élève{students.length > 1 ? "s" : ""} enregistré{students.length > 1 ? "s" : ""}</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-sm">
+        <button onClick={() => setShowForm(true)} className="btn-primary">
           <Plus className="w-4 h-4" /> Nouvel élève
         </button>
       </div>
@@ -55,10 +51,10 @@ export default function Students() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un élève..."
-            className="w-full bg-secondary text-secondary-foreground text-sm pl-9 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground" />
+            className="w-full bg-card text-foreground text-sm pl-9 pr-4 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground transition-colors" />
         </div>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-secondary text-secondary-foreground text-sm px-3 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary">
+          className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="tous">Tous les statuts</option>
           <option value="actif">Actif</option>
           <option value="en_pause">En pause</option>
@@ -70,46 +66,46 @@ export default function Students() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Users className="w-10 h-10 text-muted-foreground/40 mb-3" />
+            <Users className="w-10 h-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-medium text-foreground">{students.length === 0 ? "Aucun élève" : "Aucun résultat"}</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {students.length === 0 ? "Créez votre premier élève pour commencer" : "Essayez avec d'autres critères"}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm data-table">
               <thead>
                 <tr className="border-b border-border text-left">
-                  <th className="px-4 py-3 font-medium text-muted-foreground">Élève</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Activité</th>
-                  <th className="px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Statut</th>
-                  <th className="px-4 py-3 w-10"></th>
+                  <th>Élève</th>
+                  <th className="hidden md:table-cell">Activité</th>
+                  <th className="hidden sm:table-cell">Statut</th>
+                  <th className="w-10"></th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((student) => (
                   <tr key={student.id} onClick={() => navigate(`/eleves/${student.id}`)}
-                    className="border-b border-border/50 last:border-0 hover:bg-secondary/30 transition-colors cursor-pointer">
-                    <td className="px-4 py-3">
+                    className="cursor-pointer">
+                    <td>
                       <p className="font-medium text-foreground">{student.first_name} {student.last_name}</p>
                       <div className="flex items-center gap-3 mt-0.5">
                         {student.phone && <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>}
                         {student.email && <span className="text-xs text-muted-foreground items-center gap-1 hidden sm:flex"><Mail className="w-3 h-3" /> {student.email}</span>}
                       </div>
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
+                    <td className="hidden md:table-cell">
+                      <span className={cn("status-badge", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
                         {activityTypeLabels[student.activity_type] || student.activity_type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", studentStatusColors[student.status])}>
+                    <td className="hidden sm:table-cell">
+                      <span className={cn("status-badge", studentStatusColors[student.status])}>
                         {studentStatusLabels[student.status]}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground transition-colors">
+                    <td>
+                      <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
                         <MoreHorizontal className="w-4 h-4" />
                       </button>
                     </td>

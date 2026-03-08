@@ -18,14 +18,14 @@ export default function AppLayout() {
       />
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center h-14 px-4 border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-20">
+        <header className="lg:hidden flex items-center h-14 px-4 border-b border-border bg-card sticky top-0 z-20">
           <MobileMenuButton onClick={() => setMobileOpen(true)} />
           <div className="flex items-center gap-2 ml-3">
-            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-[10px]">DS</span>
+            <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
+              <span className="text-primary font-bold text-[10px]">DF</span>
             </div>
             <span className="font-semibold text-foreground text-sm truncate">
-              {organization?.name || "DriveSync"}
+              {organization?.name || "DriveFlow"}
             </span>
           </div>
         </header>

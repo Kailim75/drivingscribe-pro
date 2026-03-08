@@ -1,4 +1,4 @@
-// French labels & colors for DB enum values
+// French labels & colors for DB enum values — premium forest green palette
 
 export const studentStatusLabels: Record<string, string> = {
   actif: "Actif", en_pause: "En pause", termine: "Terminé", archive: "Archivé",
@@ -46,7 +46,7 @@ export const activityTypeLabels: Record<string, string> = {
   auto_ecole: "Auto-école", taxi: "Taxi", vtc: "VTC", vmdtr: "VMDTR",
 };
 export const activityTypeColors: Record<string, string> = {
-  auto_ecole: "bg-info/10 text-info", taxi: "bg-primary/10 text-primary",
+  auto_ecole: "bg-primary/10 text-primary", taxi: "bg-info/10 text-info",
   vtc: "bg-success/10 text-success", vmdtr: "bg-warning/10 text-warning",
 };
 
