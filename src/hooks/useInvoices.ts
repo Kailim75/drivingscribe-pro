@@ -86,14 +86,12 @@ export function useInvoices() {
       const devis = invoicesQuery.data?.find((i) => i.id === devisId);
       if (!devis) throw new Error("Devis introuvable");
 
-      // Get next invoice number
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("invoice_prefix, invoice_next_number")
-        .eq("id", orgId!)
-        .single();
-
-      const number = `${org?.invoice_prefix || "F"}-${new Date().getFullYear()}-${String(org?.invoice_next_number || 1).padStart(3, "0")}`;
+      // Atomic counter
+      const { data: number, error: numErr } = await supabase.rpc("next_document_number", {
+        _org_id: orgId!,
+        _type: "facture",
+      });
+      if (numErr || !number) throw new Error("Impossible de générer le numéro de facture");
 
       const { data, error } = await supabase
         .from("invoices")
