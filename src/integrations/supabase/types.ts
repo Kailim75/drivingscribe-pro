@@ -93,6 +93,214 @@ export type Database = {
           },
         ]
       }
+      instructors: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          hourly_cost: number
+          id: string
+          last_name: string
+          notes: string
+          organization_id: string
+          phone: string
+          specialties: string[]
+          status: Database["public"]["Enums"]["instructor_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          first_name: string
+          hourly_cost?: number
+          id?: string
+          last_name: string
+          notes?: string
+          organization_id: string
+          phone?: string
+          specialties?: string[]
+          status?: Database["public"]["Enums"]["instructor_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          hourly_cost?: number
+          id?: string
+          last_name?: string
+          notes?: string
+          organization_id?: string
+          phone?: string
+          specialties?: string[]
+          status?: Database["public"]["Enums"]["instructor_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          billable_amount: number
+          billed_amount: number
+          billing_rule: Database["public"]["Enums"]["billing_rule"]
+          created_at: string
+          date: string
+          duration_hours: number
+          end_time: string
+          formula_id: string | null
+          id: string
+          instructor_id: string
+          note: string
+          organization_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["lesson_status"]
+          student_id: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          billable_amount?: number
+          billed_amount?: number
+          billing_rule?: Database["public"]["Enums"]["billing_rule"]
+          created_at?: string
+          date: string
+          duration_hours?: number
+          end_time: string
+          formula_id?: string | null
+          id?: string
+          instructor_id: string
+          note?: string
+          organization_id: string
+          start_time: string
+          status?: Database["public"]["Enums"]["lesson_status"]
+          student_id: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          billable_amount?: number
+          billed_amount?: number
+          billing_rule?: Database["public"]["Enums"]["billing_rule"]
+          created_at?: string
+          date?: string
+          duration_hours?: number
+          end_time?: string
+          formula_id?: string | null
+          id?: string
+          instructor_id?: string
+          note?: string
+          organization_id?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["lesson_status"]
+          student_id?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_formula_id_fkey"
+            columns: ["formula_id"]
+            isOneToOne: false
+            referencedRelation: "student_formulas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offers: {
+        Row: {
+          active: boolean
+          activity_type: string
+          cancellation_policy: string
+          created_at: string
+          deposit_percent: number
+          hours: number | null
+          id: string
+          name: string
+          organization_id: string
+          price: number
+          tva_rate: number
+          type: Database["public"]["Enums"]["offer_type"]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          activity_type?: string
+          cancellation_policy?: string
+          created_at?: string
+          deposit_percent?: number
+          hours?: number | null
+          id?: string
+          name: string
+          organization_id: string
+          price?: number
+          tva_rate?: number
+          type?: Database["public"]["Enums"]["offer_type"]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          activity_type?: string
+          cancellation_policy?: string
+          created_at?: string
+          deposit_percent?: number
+          hours?: number | null
+          id?: string
+          name?: string
+          organization_id?: string
+          price?: number
+          tva_rate?: number
+          type?: Database["public"]["Enums"]["offer_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -224,6 +432,120 @@ export type Database = {
         }
         Relationships: []
       }
+      student_formulas: {
+        Row: {
+          active: boolean
+          created_at: string
+          hours_bought: number
+          id: string
+          offer_id: string | null
+          offer_name: string
+          offer_type: Database["public"]["Enums"]["offer_type"]
+          organization_id: string
+          student_id: string
+          total_price: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          hours_bought?: number
+          id?: string
+          offer_id?: string | null
+          offer_name: string
+          offer_type?: Database["public"]["Enums"]["offer_type"]
+          organization_id: string
+          student_id: string
+          total_price?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          hours_bought?: number
+          id?: string
+          offer_id?: string | null
+          offer_name?: string
+          offer_type?: Database["public"]["Enums"]["offer_type"]
+          organization_id?: string
+          student_id?: string
+          total_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_formulas_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_formulas_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_formulas_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          activity_type: string
+          address: string
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          notes: string
+          organization_id: string
+          phone: string
+          status: Database["public"]["Enums"]["student_status"]
+          updated_at: string
+        }
+        Insert: {
+          activity_type?: string
+          address?: string
+          created_at?: string
+          email?: string
+          first_name: string
+          id?: string
+          last_name: string
+          notes?: string
+          organization_id: string
+          phone?: string
+          status?: Database["public"]["Enums"]["student_status"]
+          updated_at?: string
+        }
+        Update: {
+          activity_type?: string
+          address?: string
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          notes?: string
+          organization_id?: string
+          phone?: string
+          status?: Database["public"]["Enums"]["student_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -256,11 +578,77 @@ export type Database = {
           },
         ]
       }
+      vehicles: {
+        Row: {
+          brand: string
+          category: string
+          created_at: string
+          id: string
+          model: string
+          monthly_cost: number
+          notes: string
+          organization_id: string
+          plate: string
+          status: Database["public"]["Enums"]["vehicle_status"]
+          updated_at: string
+        }
+        Insert: {
+          brand?: string
+          category?: string
+          created_at?: string
+          id?: string
+          model?: string
+          monthly_cost?: number
+          notes?: string
+          organization_id: string
+          plate: string
+          status?: Database["public"]["Enums"]["vehicle_status"]
+          updated_at?: string
+        }
+        Update: {
+          brand?: string
+          category?: string
+          created_at?: string
+          id?: string
+          model?: string
+          monthly_cost?: number
+          notes?: string
+          organization_id?: string
+          plate?: string
+          status?: Database["public"]["Enums"]["vehicle_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_lesson_conflicts: {
+        Args: {
+          _date: string
+          _end_time: string
+          _exclude_lesson_id?: string
+          _instructor_id: string
+          _organization_id: string
+          _start_time: string
+          _vehicle_id: string
+        }
+        Returns: {
+          conflict_type: string
+          conflicting_id: string
+          conflicting_label: string
+        }[]
+      }
       get_user_org_ids: { Args: { _user_id: string }; Returns: string[] }
       has_any_role: {
         Args: {
@@ -285,7 +673,13 @@ export type Database = {
     }
     Enums: {
       app_role: "owner" | "admin" | "instructor" | "accountant"
+      billing_rule: "totale" | "partielle" | "non_facturee"
+      instructor_status: "actif" | "inactif" | "archive"
+      lesson_status: "prevu" | "effectue" | "annule" | "absent"
+      offer_type: "heure" | "pack" | "forfait"
       org_mode: "independant" | "centre"
+      student_status: "actif" | "en_pause" | "termine" | "archive"
+      vehicle_status: "actif" | "indisponible" | "maintenance" | "archive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -414,7 +808,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "instructor", "accountant"],
+      billing_rule: ["totale", "partielle", "non_facturee"],
+      instructor_status: ["actif", "inactif", "archive"],
+      lesson_status: ["prevu", "effectue", "annule", "absent"],
+      offer_type: ["heure", "pack", "forfait"],
       org_mode: ["independant", "centre"],
+      student_status: ["actif", "en_pause", "termine", "archive"],
+      vehicle_status: ["actif", "indisponible", "maintenance", "archive"],
     },
   },
 } as const
