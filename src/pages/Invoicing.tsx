@@ -54,7 +54,7 @@ export default function Invoicing() {
     setDialogOpen(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.student_id || form.lines.every((l) => !l.description)) return;
     const tvaRate = organization?.tva_rate || 20;
     const lines = form.lines.filter((l) => l.description).map((l) => ({ ...l, total_ht: l.quantity * l.unit_price }));
@@ -62,9 +62,20 @@ export default function Invoicing() {
     const tvaAmount = totalHt * (tvaRate / 100);
     const totalTtc = totalHt + tvaAmount;
 
-    const prefix = docType === "devis" ? (organization?.quote_prefix || "D") : (organization?.invoice_prefix || "F");
-    const nextNum = docType === "devis" ? (organization?.quote_next_number || 1) : (organization?.invoice_next_number || 1);
+    // Get fresh next number from DB to avoid duplicates
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("invoice_prefix, invoice_next_number, quote_prefix, quote_next_number")
+      .eq("id", organization!.id)
+      .single();
+
+    const prefix = docType === "devis" ? (org?.quote_prefix || "D") : (org?.invoice_prefix || "F");
+    const nextNum = docType === "devis" ? (org?.quote_next_number || 1) : (org?.invoice_next_number || 1);
     const number = `${prefix}-${new Date().getFullYear()}-${String(nextNum).padStart(3, "0")}`;
+
+    // Increment counter
+    const counterField = docType === "devis" ? "quote_next_number" : "invoice_next_number";
+    await supabase.from("organizations").update({ [counterField]: nextNum + 1 }).eq("id", organization!.id);
 
     create.mutate({
       number,

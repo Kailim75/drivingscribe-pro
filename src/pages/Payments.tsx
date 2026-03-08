@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, CreditCard, Banknote, Building2, Smartphone, Loader2 } from "lucide-react";
+import { Plus, Search, CreditCard, Banknote, Building2, FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { usePayments } from "@/hooks/usePayments";
 import { useInvoices } from "@/hooks/useInvoices";

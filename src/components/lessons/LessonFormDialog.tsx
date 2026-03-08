@@ -80,8 +80,22 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
     e.preventDefault();
     if (!form.student_id || !form.instructor_id || !form.vehicle_id) return;
     // Check conflicts before submit
-    await handleCheck();
-    // Still submit but warn
+    if (form.instructor_id && form.vehicle_id) {
+      setChecking(true);
+      try {
+        const c = await onCheckConflicts({
+          instructor_id: form.instructor_id,
+          vehicle_id: form.vehicle_id,
+          date: form.date,
+          start_time: form.start_time,
+          end_time: form.end_time,
+          exclude_lesson_id: initial?.id,
+        });
+        setConflicts(c);
+        if (c.length > 0) { setChecking(false); return; }
+      } catch { /* proceed */ }
+      setChecking(false);
+    }
     onSubmit(form);
   };
 

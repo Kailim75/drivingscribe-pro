@@ -83,10 +83,12 @@ export default function Profitability() {
   });
 
   const perStudent = students.map((s) => {
-    const sFormula = formulas.find((sf) => sf.student_id === s.id);
+    const sFormulas = formulas.filter((sf) => sf.student_id === s.id);
     const sLessons = doneLessons.filter((l) => l.student_id === s.id);
     const hours = sLessons.reduce((sum, l) => sum + Number(l.duration_hours), 0);
-    const revenue = sFormula ? sFormula.total_price * (hours / (sFormula.hours_bought || 1)) : 0;
+    const totalBought = sFormulas.reduce((sum, f) => sum + Number(f.hours_bought), 0);
+    const totalPrice = sFormulas.reduce((sum, f) => sum + Number(f.total_price), 0);
+    const revenue = totalBought > 0 ? totalPrice * (hours / totalBought) : 0;
     return { name: `${s.first_name} ${s.last_name}`, hours, revenue };
   }).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 

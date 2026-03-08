@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppSidebar, { MobileMenuButton } from "./AppSidebar";
+import { useOrg } from "@/contexts/OrgContext";
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { organization } = useOrg();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -22,7 +24,9 @@ export default function AppLayout() {
             <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-[10px]">DS</span>
             </div>
-            <span className="font-semibold text-foreground text-sm">DriveSync</span>
+            <span className="font-semibold text-foreground text-sm truncate">
+              {organization?.name || "DriveSync"}
+            </span>
           </div>
         </header>
         {/* Page content */}
