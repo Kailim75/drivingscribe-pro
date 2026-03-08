@@ -1,76 +1,100 @@
 import { motion } from "framer-motion";
-import { Plus, Car, Wrench, AlertTriangle } from "lucide-react";
-import { vehicles, lessons, type VehicleStatus } from "@/data/mockData";
+import { Search, Plus, Car, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-
-const statusConfig: Record<VehicleStatus, { label: string; color: string; icon: React.ElementType }> = {
-  actif: { label: "Actif", color: "bg-success/10 text-success", icon: Car },
-  indisponible: { label: "Indisponible", color: "bg-warning/10 text-warning", icon: AlertTriangle },
-  maintenance: { label: "Maintenance", color: "bg-destructive/10 text-destructive", icon: Wrench },
-  archivé: { label: "Archivé", color: "bg-muted text-muted-foreground", icon: Car },
-};
+import { useVehicles } from "@/hooks/useVehicles";
+import { useAuditLog } from "@/hooks/useAuditLog";
+import { vehicleStatusLabels, vehicleStatusColors, activityTypeLabels, formatEur } from "@/lib/labels";
+import VehicleFormDialog from "@/components/vehicles/VehicleFormDialog";
 
 export default function Vehicles() {
-  const stats = vehicles.map((v) => {
-    const vLessons = lessons.filter((l) => l.vehicleId === v.id);
-    const done = vLessons.filter((l) => l.status === "effectué");
-    const planned = vLessons.filter((l) => l.status === "prévu");
-    const totalHours = done.reduce((s, l) => s + l.durationHours, 0);
-    return { ...v, totalHours, lessonsDone: done.length, lessonsPlanned: planned.length };
+  const { vehicles, isLoading, create } = useVehicles();
+  const { log } = useAuditLog();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("tous");
+  const [showForm, setShowForm] = useState(false);
+
+  const filtered = vehicles.filter((v) => {
+    const matchSearch = `${v.brand} ${v.model} ${v.plate}`.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "tous" || v.status === statusFilter;
+    return matchSearch && matchStatus;
   });
+
+  const handleCreate = (data: any) => {
+    create.mutate(data, {
+      onSuccess: () => {
+        setShowForm(false);
+        log({ action: "create", entity: "vehicle", details: `${data.brand} ${data.model} (${data.plate})` });
+      },
+    });
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+  }
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Véhicules</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{vehicles.length} véhicules</p>
+          <p className="text-muted-foreground text-sm mt-0.5">{vehicles.length} véhicule{vehicles.length > 1 ? "s" : ""}</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+        <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-sm">
           <Plus className="w-4 h-4" /> Nouveau véhicule
         </button>
       </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((v) => {
-          const cfg = statusConfig[v.status];
-          const Icon = cfg.icon;
-          return (
-            <div key={v.id} className="glass-card rounded-xl p-5 hover:border-primary/20 transition-colors cursor-pointer">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="font-semibold text-foreground">{v.brand} {v.model}</p>
-                  <p className="text-xs text-muted-foreground font-mono">{v.plate}</p>
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un véhicule..."
+            className="w-full bg-secondary text-secondary-foreground text-sm pl-9 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground" />
+        </div>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-secondary text-secondary-foreground text-sm px-3 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary">
+          <option value="tous">Tous les statuts</option>
+          <option value="actif">Actif</option>
+          <option value="indisponible">Indisponible</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="archive">Archivé</option>
+        </select>
+      </div>
+
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+        {filtered.length === 0 ? (
+          <div className="glass-card rounded-xl flex flex-col items-center justify-center py-16 text-center">
+            <Car className="w-10 h-10 text-muted-foreground/40 mb-3" />
+            <p className="text-sm font-medium text-foreground">{vehicles.length === 0 ? "Aucun véhicule" : "Aucun résultat"}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {vehicles.length === 0 ? "Ajoutez votre premier véhicule" : "Essayez avec d'autres critères"}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filtered.map((v) => (
+              <div key={v.id} className="glass-card rounded-xl p-4 hover:border-primary/20 transition-colors cursor-pointer">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">{v.brand} {v.model}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{v.plate}</p>
+                  </div>
+                  <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", vehicleStatusColors[v.status])}>
+                    {vehicleStatusLabels[v.status]}
+                  </span>
                 </div>
-                <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1", cfg.color)}>
-                  <Icon className="w-3 h-3" />{cfg.label}
-                </span>
-              </div>
-
-              <p className="text-[11px] text-muted-foreground mb-4 capitalize">{v.category}</p>
-
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="bg-secondary/50 rounded-lg p-2 text-center">
-                  <p className="text-base font-bold text-foreground">{v.totalHours}h</p>
-                  <p className="text-[10px] text-muted-foreground">Utilisé</p>
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+                  <span className="text-xs text-muted-foreground">{activityTypeLabels[v.category] || v.category}</span>
+                  <span className="text-xs text-foreground font-medium">{formatEur(Number(v.monthly_cost))}/mois</span>
                 </div>
-                <div className="bg-secondary/50 rounded-lg p-2 text-center">
-                  <p className="text-base font-bold text-foreground">{v.monthlyCost} €</p>
-                  <p className="text-[10px] text-muted-foreground">/mois</p>
-                </div>
+                {v.notes && <p className="text-xs text-muted-foreground mt-2">{v.notes}</p>}
               </div>
-
-              <div className="flex items-center gap-3 text-xs text-muted-foreground border-t border-border pt-3">
-                <span>{v.lessonsDone} effectuée{v.lessonsDone > 1 ? "s" : ""}</span>
-                <span>·</span>
-                <span>{v.lessonsPlanned} prévue{v.lessonsPlanned > 1 ? "s" : ""}</span>
-              </div>
-
-              {v.notes && <p className="text-xs text-muted-foreground mt-2">{v.notes}</p>}
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        )}
       </motion.div>
+
+      <VehicleFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
     </div>
   );
 }
