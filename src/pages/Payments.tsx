@@ -1,9 +1,15 @@
 import { motion } from "framer-motion";
-import { Plus, Search, CreditCard, Banknote, Building2, Smartphone } from "lucide-react";
+import { Plus, Search, CreditCard, Banknote, Building2, Smartphone, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { payments, getStudentName, invoices, formatEur, formatDate, type PaymentMethod } from "@/data/mockData";
+import { usePayments } from "@/hooks/usePayments";
+import { useInvoices } from "@/hooks/useInvoices";
+import { useStudents } from "@/hooks/useStudents";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
+type PaymentMethod = "espèces" | "virement" | "carte" | "chèque";
 const methodConfig: Record<PaymentMethod, { label: string; icon: React.ElementType; color: string }> = {
   espèces: { label: "Espèces", icon: Banknote, color: "bg-success/10 text-success" },
   virement: { label: "Virement", icon: Building2, color: "bg-info/10 text-info" },
@@ -11,18 +17,47 @@ const methodConfig: Record<PaymentMethod, { label: string; icon: React.ElementTy
   chèque: { label: "Chèque", icon: Smartphone, color: "bg-muted text-muted-foreground" },
 };
 
-export default function Payments() {
-  const [search, setSearch] = useState("");
+const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
+const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 
-  const sorted = [...payments].sort((a, b) => b.date.localeCompare(a.date));
-  const filtered = sorted.filter((p) => getStudentName(p.studentId).toLowerCase().includes(search.toLowerCase()) || p.reference.toLowerCase().includes(search.toLowerCase()));
+export default function Payments() {
+  const { payments, isLoading, create } = usePayments();
+  const { invoices } = useInvoices();
+  const { students } = useStudents();
+  const [search, setSearch] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [form, setForm] = useState({ student_id: "", invoice_id: "", amount: 0, method: "carte" as PaymentMethod, date: new Date().toISOString().split("T")[0], reference: "", notes: "" });
+
+  const filtered = payments.filter((p) => {
+    const name = p.students ? `${p.students.first_name} ${p.students.last_name}` : "";
+    return name.toLowerCase().includes(search.toLowerCase()) || p.reference.toLowerCase().includes(search.toLowerCase());
+  });
 
   const totalReceived = payments.reduce((s, p) => s + p.amount, 0);
-  const totalByMethod = (Object.keys(methodConfig) as PaymentMethod[]).map((m) => ({
+  const methods = (Object.keys(methodConfig) as PaymentMethod[]);
+  const totalByMethod = methods.map((m) => ({
     method: m,
     total: payments.filter((p) => p.method === m).reduce((s, p) => s + p.amount, 0),
     count: payments.filter((p) => p.method === m).length,
   }));
+
+  const handleSubmit = () => {
+    if (!form.student_id || !form.amount) return;
+    create.mutate({
+      student_id: form.student_id,
+      invoice_id: form.invoice_id || undefined,
+      amount: form.amount,
+      method: form.method,
+      date: form.date,
+      reference: form.reference,
+      notes: form.notes,
+    }, { onSuccess: () => setDialogOpen(false) });
+  };
+
+  // Filter invoices for selected student
+  const studentInvoices = invoices.filter((i) => i.student_id === form.student_id && i.type === "facture" && i.remaining_amount > 0);
+
+  if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
@@ -31,12 +66,11 @@ export default function Payments() {
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">Paiements</h1>
           <p className="text-muted-foreground text-sm mt-0.5">{payments.length} paiements · {formatEur(totalReceived)} encaissés</p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+        <button onClick={() => { setForm({ student_id: "", invoice_id: "", amount: 0, method: "carte", date: new Date().toISOString().split("T")[0], reference: "", notes: "" }); setDialogOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" /> Enregistrer un paiement
         </button>
       </div>
 
-      {/* Summary by method */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {totalByMethod.map(({ method, total, count }) => {
           const cfg = methodConfig[method];
@@ -55,13 +89,11 @@ export default function Payments() {
         })}
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un paiement..." className="w-full bg-secondary text-secondary-foreground text-sm pl-9 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground" />
       </div>
 
-      {/* Table */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -77,13 +109,14 @@ export default function Payments() {
             </thead>
             <tbody>
               {filtered.map((p) => {
-                const inv = invoices.find((i) => i.id === p.invoiceId);
-                const cfg = methodConfig[p.method];
+                const cfg = methodConfig[p.method as PaymentMethod] || methodConfig.carte;
+                const studentName = p.students ? `${p.students.first_name} ${p.students.last_name}` : "—";
+                const invNumber = p.invoices?.number || "—";
                 return (
                   <tr key={p.id} className="border-b border-border/50 last:border-0 hover:bg-secondary/30 transition-colors">
                     <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(p.date)}</td>
-                    <td className="px-4 py-3 font-medium text-foreground">{getStudentName(p.studentId)}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell">{inv?.number || "-"}</td>
+                    <td className="px-4 py-3 font-medium text-foreground">{studentName}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell">{invNumber}</td>
                     <td className="px-4 py-3 hidden sm:table-cell">
                       <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", cfg.color)}>{cfg.label}</span>
                     </td>
@@ -102,6 +135,62 @@ export default function Payments() {
           </div>
         )}
       </motion.div>
+
+      {/* Payment dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enregistrer un paiement</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Élève</Label>
+              <select value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value, invoice_id: "" }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                <option value="">Sélectionner...</option>
+                {students.map((s) => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
+              </select>
+            </div>
+            {studentInvoices.length > 0 && (
+              <div>
+                <Label>Facture (optionnel)</Label>
+                <select value={form.invoice_id} onChange={(e) => setForm((f) => ({ ...f, invoice_id: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                  <option value="">Sans facture</option>
+                  {studentInvoices.map((i) => <option key={i.id} value={i.id}>{i.number} — reste {formatEur(i.remaining_amount)}</option>)}
+                </select>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Montant</Label>
+                <Input type="number" value={form.amount} onChange={(e) => setForm((f) => ({ ...f, amount: Number(e.target.value) }))} className="mt-1" />
+              </div>
+              <div>
+                <Label>Mode</Label>
+                <select value={form.method} onChange={(e) => setForm((f) => ({ ...f, method: e.target.value as PaymentMethod }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                  {methods.map((m) => <option key={m} value={m}>{methodConfig[m].label}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Date</Label>
+                <Input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className="mt-1" />
+              </div>
+              <div>
+                <Label>Référence</Label>
+                <Input value={form.reference} onChange={(e) => setForm((f) => ({ ...f, reference: e.target.value }))} className="mt-1" />
+              </div>
+            </div>
+            <div>
+              <Label>Notes</Label>
+              <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="mt-1" />
+            </div>
+            <button onClick={handleSubmit} disabled={create.isPending} className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+              {create.isPending ? "Enregistrement..." : "Enregistrer"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
