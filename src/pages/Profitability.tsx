@@ -258,6 +258,9 @@ export default function Profitability() {
           ))}
           {perStudent.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Aucune donnée</p>}
         </div>
+        <p className="text-[10px] text-muted-foreground mt-3 italic">
+          ⚠ Revenus estimés au prorata des heures réalisées par rapport aux heures achetées dans les formules.
+        </p>
       </div>
     </div>
   );
