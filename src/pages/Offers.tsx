@@ -10,11 +10,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function Offers() {
-  const { offers, isLoading, create, update, remove } = useOffers();
+  const { offers, isLoading, create, update, archive } = useOffers();
   const { log } = useAuditLog();
   const [showForm, setShowForm] = useState(false);
   const [editOffer, setEditOffer] = useState<any>(null);
-  const [deleteOffer, setDeleteOffer] = useState<any>(null);
+  const [archiveOffer, setArchiveOffer] = useState<any>(null);
   const [showInactive, setShowInactive] = useState(false);
 
   const filtered = showInactive ? offers : offers.filter((o) => o.active);
