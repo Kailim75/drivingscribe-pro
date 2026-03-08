@@ -85,6 +85,65 @@ function Nav({ onCTA }: { onCTA: () => void }) {
 }
 
 /* ──────────────── S1 HERO ──────────────── */
+const heroScreens = [
+  { src: screenshotDashboard, label: "Tableau de bord" },
+  { src: screenshotPlanning, label: "Planning" },
+  { src: screenshotRentabilite, label: "Rentabilité" },
+];
+
+function HeroScreenshots() {
+  const [active, setActive] = useState(0);
+  return (
+    <motion.div {...fade(0.25)} className="mt-16 md:mt-20 relative">
+      <div className="absolute -inset-4 rounded-3xl bg-gradient-to-b from-primary/5 to-transparent blur-2xl" />
+      <div className="relative rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm overflow-hidden shadow-2xl shadow-primary/5">
+        {/* Browser chrome */}
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-secondary/30">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
+            <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
+            <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
+          </div>
+          <div className="flex-1 flex justify-center">
+            <div className="px-4 py-1 rounded-md bg-secondary/50 text-[11px] text-muted-foreground">app.driveflow.fr</div>
+          </div>
+        </div>
+
+        {/* Screenshot */}
+        <div className="relative aspect-[16/9] bg-background">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={active}
+              src={heroScreens[active].src}
+              alt={`DriveFlow — ${heroScreens[active].label}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="absolute inset-0 w-full h-full object-cover object-top"
+            />
+          </AnimatePresence>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center justify-center gap-1 p-3 border-t border-border/50 bg-secondary/20">
+          {heroScreens.map((s, i) => (
+            <button
+              key={i}
+              onClick={() => setActive(i)}
+              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                active === i ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function Hero({ onCTA }: { onCTA: () => void }) {
   return (
     <section className="pt-32 pb-20 md:pt-40 md:pb-28">
