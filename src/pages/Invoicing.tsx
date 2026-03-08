@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, FileText, ArrowRight } from "lucide-react";
+import { Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useStudents } from "@/hooks/useStudents";
@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   brouillon: { label: "Brouillon", color: "bg-muted text-muted-foreground" },
