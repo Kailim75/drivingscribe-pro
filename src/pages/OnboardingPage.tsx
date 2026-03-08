@@ -94,6 +94,11 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/connexion";
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-lg">
@@ -103,6 +108,9 @@ export default function OnboardingPage() {
           </div>
           <h1 className="text-2xl font-bold text-foreground">Créez votre organisation</h1>
           <p className="text-sm text-muted-foreground mt-1">Configurez votre espace de travail DriveSync</p>
+          <button onClick={handleSignOut} className="text-xs text-muted-foreground hover:text-foreground mt-2 underline transition-colors">
+            ← Changer de compte
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="glass-card rounded-xl p-6 space-y-5">
