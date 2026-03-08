@@ -34,7 +34,9 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch invoice with lines, student, org
+    const { invoice_id } = await req.json();
+    if (!invoice_id) throw new Error("invoice_id required");
+
     const { data: invoice, error } = await supabase
       .from("invoices")
       .select("*, invoice_lines(*), students(first_name, last_name, email, phone, address)")
