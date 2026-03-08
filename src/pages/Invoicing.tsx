@@ -241,11 +241,7 @@ export default function Invoicing() {
                           </button>
                         )}
                         {inv.type === "facture" && inv.status === "brouillon" && (
-                          <button onClick={() => {
-                            if (confirm("Marquer cette facture comme envoyée ?")) {
-                              update.mutate({ id: inv.id, status: "envoyé" });
-                            }
-                          }} className="text-[10px] px-2 py-0.5 rounded bg-info/10 text-info hover:bg-info/20 transition-colors">
+                          <button onClick={() => setSendConfirm(inv.id)} className="text-[10px] px-2 py-0.5 rounded bg-info/10 text-info hover:bg-info/20 transition-colors">
                             Envoyer
                           </button>
                         )}
