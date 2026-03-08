@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { TrendingUp, Users, UserCog, Car, Clock, Euro, Percent, BarChart3, Loader2 } from "lucide-react";
+import { TrendingUp, Users, UserCog, Car, Clock, Percent, BarChart3, Loader2, XCircle } from "lucide-react";
+import { useState, useMemo } from "react";
 import { useStudents } from "@/hooks/useStudents";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { useInstructors } from "@/hooks/useInstructors";
@@ -7,11 +8,27 @@ import { useVehicles } from "@/hooks/useVehicles";
 import { useLessons } from "@/hooks/useLessons";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useInvoices } from "@/hooks/useInvoices";
+import { formatEur } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
-const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
+type Period = "month" | "quarter" | "year" | "all";
+
+function getRange(period: Period): { start: string; end: string } {
+  const now = new Date();
+  const fmt = (d: Date) => d.toISOString().split("T")[0];
+  const end = fmt(now);
+  switch (period) {
+    case "month": { const s = new Date(now.getFullYear(), now.getMonth(), 1); return { start: fmt(s), end }; }
+    case "quarter": { const s = new Date(now); s.setMonth(s.getMonth() - 3); return { start: fmt(s), end }; }
+    case "year": { const s = new Date(now.getFullYear(), 0, 1); return { start: fmt(s), end }; }
+    case "all": return { start: "2020-01-01", end };
+  }
+}
 
 export default function Profitability() {
+  const [period, setPeriod] = useState<Period>("month");
+  const range = useMemo(() => getRange(period), [period]);
+
   const { students } = useStudents();
   const { formulas } = useStudentFormulas();
   const { instructors, isLoading: instLoading } = useInstructors();
@@ -22,12 +39,19 @@ export default function Profitability() {
 
   if (instLoading || lessonsLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
-  const doneLessons = lessons.filter((l) => l.status === "effectue");
+  const pLessons = lessons.filter((l) => l.date >= range.start && l.date <= range.end);
+  const pExpenses = expenses.filter((e) => e.date >= range.start && e.date <= range.end);
+  const pInvoices = invoices.filter((i) => i.issue_date >= range.start && i.issue_date <= range.end);
+
+  const doneLessons = pLessons.filter((l) => l.status === "effectue");
+  const cancelledLessons = pLessons.filter((l) => l.status === "annule" || l.status === "absent");
   const totalHoursDone = doneLessons.reduce((s, l) => s + Number(l.duration_hours), 0);
-  const totalRevenue = invoices.filter((i) => i.type === "facture").reduce((s, i) => s + i.paid_amount, 0);
-  const totalExpensesAmt = expenses.reduce((s, e) => s + e.amount, 0);
-  const fixedExpenses = expenses.filter((e) => e.type === "fixe").reduce((s, e) => s + e.amount, 0);
-  const directExpenses = expenses.filter((e) => e.type === "directe").reduce((s, e) => s + e.amount, 0);
+  const lostHours = cancelledLessons.reduce((s, l) => s + Number(l.duration_hours), 0);
+
+  const totalRevenue = pInvoices.filter((i) => i.type === "facture").reduce((s, i) => s + i.paid_amount, 0);
+  const totalExpensesAmt = pExpenses.reduce((s, e) => s + e.amount, 0);
+  const fixedExpenses = pExpenses.filter((e) => e.type === "fixe").reduce((s, e) => s + e.amount, 0);
+  const directExpenses = pExpenses.filter((e) => e.type === "directe").reduce((s, e) => s + e.amount, 0);
   const grossMargin = totalRevenue - directExpenses;
   const netMargin = totalRevenue - totalExpensesAmt;
   const avgRevenuePerHour = totalHoursDone > 0 ? totalRevenue / totalHoursDone : 0;
@@ -35,16 +59,18 @@ export default function Profitability() {
   const netMarginPct = totalRevenue > 0 ? (netMargin / totalRevenue) * 100 : 0;
 
   const activeInstructors = instructors.filter((i) => i.status === "actif");
-  const maxHours = activeInstructors.length * 8 * 22;
+  const periodDays = Math.max(1, Math.round((new Date(range.end).getTime() - new Date(range.start).getTime()) / 86400000));
+  const workingDays = Math.round(periodDays * (22 / 30));
+  const maxHours = activeInstructors.length * 8 * workingDays;
   const occupancyRate = maxHours > 0 ? (totalHoursDone / maxHours) * 100 : 0;
-  const nonProductiveHours = maxHours - totalHoursDone;
+  const nonProductiveHours = Math.max(0, maxHours - totalHoursDone);
 
   const perInstructor = instructors.map((inst) => {
     const instLessons = doneLessons.filter((l) => l.instructor_id === inst.id);
     const hours = instLessons.reduce((s, l) => s + Number(l.duration_hours), 0);
     const revenue = instLessons.reduce((s, l) => s + Number(l.billed_amount), 0);
     const cost = Number(inst.hourly_cost) * hours;
-    const instExpenses = expenses.filter((e) => e.instructor_id === inst.id).reduce((s, e) => s + e.amount, 0);
+    const instExpenses = pExpenses.filter((e) => e.instructor_id === inst.id).reduce((s, e) => s + e.amount, 0);
     return { name: `${inst.first_name} ${inst.last_name}`, hours, revenue, cost: cost + instExpenses, margin: revenue - cost - instExpenses };
   });
 
@@ -52,7 +78,7 @@ export default function Profitability() {
     const vLessons = doneLessons.filter((l) => l.vehicle_id === v.id);
     const hours = vLessons.reduce((s, l) => s + Number(l.duration_hours), 0);
     const revenue = vLessons.reduce((s, l) => s + Number(l.billed_amount), 0);
-    const vExpenses = expenses.filter((e) => e.vehicle_id === v.id).reduce((s, e) => s + e.amount, 0);
+    const vExpenses = pExpenses.filter((e) => e.vehicle_id === v.id).reduce((s, e) => s + e.amount, 0);
     return { name: `${v.brand} ${v.model}`, plate: v.plate, hours, revenue, cost: vExpenses + Number(v.monthly_cost), margin: revenue - vExpenses - Number(v.monthly_cost) };
   });
 
@@ -64,31 +90,45 @@ export default function Profitability() {
     return { name: `${s.first_name} ${s.last_name}`, hours, revenue };
   }).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
+  const periodLabels: Record<Period, string> = { month: "Ce mois", quarter: "3 mois", year: "Année", all: "Tout" };
+
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Rentabilité</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Analyse de performance</p>
+    <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Rentabilité</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Analyse de performance</p>
+        </div>
+        <div className="flex items-center bg-secondary rounded-lg p-0.5">
+          {(["month", "quarter", "year", "all"] as Period[]).map((p) => (
+            <button key={p} onClick={() => setPeriod(p)} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", period === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+              {periodLabels[p]}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Top KPIs */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {[
-          { label: "Revenu moyen / heure", value: formatEur(avgRevenuePerHour), icon: Euro },
-          { label: "Marge brute", value: `${grossMarginPct.toFixed(0)}%`, sub: formatEur(grossMargin), icon: TrendingUp, color: grossMarginPct >= 50 ? "text-success" : "text-warning" },
-          { label: "Marge nette estimée", value: `${netMarginPct.toFixed(0)}%`, sub: formatEur(netMargin), icon: Percent, color: netMarginPct >= 20 ? "text-success" : netMarginPct >= 0 ? "text-warning" : "text-destructive" },
-          { label: "Taux d'occupation", value: `${occupancyRate.toFixed(0)}%`, sub: `${totalHoursDone}h / ${maxHours}h`, icon: Clock },
+          { label: "Revenu / heure", value: formatEur(avgRevenuePerHour), icon: TrendingUp },
+          { label: "Marge brute", value: `${grossMarginPct.toFixed(0)}%`, sub: formatEur(grossMargin), icon: BarChart3, color: grossMarginPct >= 50 ? "text-success" : "text-warning" },
+          { label: "Marge nette", value: `${netMarginPct.toFixed(0)}%`, sub: formatEur(netMargin), icon: Percent, color: netMarginPct >= 20 ? "text-success" : netMarginPct >= 0 ? "text-warning" : "text-destructive" },
+          { label: "Occupation", value: `${occupancyRate.toFixed(0)}%`, sub: `${totalHoursDone}h / ${maxHours}h`, icon: Clock },
+          { label: "Heures perdues", value: `${lostHours}h`, sub: `${cancelledLessons.length} séances`, icon: XCircle, color: lostHours > 0 ? "text-warning" : "text-muted-foreground" },
         ].map((kpi) => (
           <div key={kpi.label} className="glass-card rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1.5">
               <kpi.icon className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">{kpi.label}</span>
+              <span className="text-[10px] text-muted-foreground">{kpi.label}</span>
             </div>
-            <p className={cn("text-2xl font-bold", (kpi as any).color || "text-foreground")}>{kpi.value}</p>
-            {(kpi as any).sub && <p className="text-xs text-muted-foreground mt-0.5">{(kpi as any).sub}</p>}
+            <p className={cn("text-xl font-bold", (kpi as any).color || "text-foreground")}>{kpi.value}</p>
+            {(kpi as any).sub && <p className="text-[10px] text-muted-foreground mt-0.5">{(kpi as any).sub}</p>}
           </div>
         ))}
       </motion.div>
 
+      {/* Revenue vs expenses */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="glass-card rounded-xl p-5">
           <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4" /> Revenus vs Charges</h2>
@@ -104,7 +144,7 @@ export default function Profitability() {
                   <span className="font-medium">{formatEur(item.value)}</span>
                 </div>
                 <div className="h-3 bg-secondary rounded-full overflow-hidden">
-                  <div className={cn("h-full rounded-full", item.color)} style={{ width: `${item.pct}%` }} />
+                  <div className={cn("h-full rounded-full transition-all", item.color)} style={{ width: `${Math.min(100, item.pct)}%` }} />
                 </div>
               </div>
             ))}
@@ -126,16 +166,23 @@ export default function Profitability() {
               <p className="text-3xl font-bold text-muted-foreground">{nonProductiveHours}h</p>
               <p className="text-[10px] text-muted-foreground">Non productif</p>
             </div>
+            {lostHours > 0 && (
+              <div className="text-center">
+                <p className="text-3xl font-bold text-warning">{lostHours}h</p>
+                <p className="text-[10px] text-muted-foreground">Perdues</p>
+              </div>
+            )}
           </div>
           <div className="h-4 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-success" style={{ width: `${occupancyRate}%` }} />
+            <div className="h-full bg-success transition-all" style={{ width: `${occupancyRate}%` }} />
           </div>
           <p className="text-[10px] text-muted-foreground mt-2">
-            Basé sur {activeInstructors.length} formateurs × 8h × 22j/mois
+            Estimation basée sur {activeInstructors.length} formateur{activeInstructors.length > 1 ? "s" : ""} × 8h × {workingDays}j ouvrés
           </p>
         </div>
       </div>
 
+      {/* Per instructor */}
       <div className="glass-card rounded-xl p-5">
         <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><UserCog className="w-4 h-4" /> Par formateur</h2>
         <div className="overflow-x-auto">
@@ -159,11 +206,13 @@ export default function Profitability() {
                   <td className={cn("py-2.5 text-right font-semibold", inst.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(inst.margin)}</td>
                 </tr>
               ))}
+              {perInstructor.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Aucune donnée</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* Per vehicle */}
       <div className="glass-card rounded-xl p-5">
         <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Car className="w-4 h-4" /> Par véhicule</h2>
         <div className="overflow-x-auto">
@@ -187,11 +236,13 @@ export default function Profitability() {
                   <td className={cn("py-2.5 text-right font-semibold", v.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(v.margin)}</td>
                 </tr>
               ))}
+              {perVehicle.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Aucune donnée</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* Top students */}
       <div className="glass-card rounded-xl p-5">
         <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Users className="w-4 h-4" /> Top 5 élèves</h2>
         <div className="space-y-2">
