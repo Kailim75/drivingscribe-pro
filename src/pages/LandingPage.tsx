@@ -118,64 +118,8 @@ function Hero({ onCTA }: { onCTA: () => void }) {
           </motion.p>
         </div>
 
-        {/* Dashboard preview mock */}
-        <motion.div {...fade(0.25)} className="mt-16 md:mt-20 relative">
-          <div className="absolute -inset-4 rounded-3xl bg-gradient-to-b from-primary/5 to-transparent blur-2xl" />
-          <div className="relative rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm overflow-hidden shadow-2xl shadow-primary/5">
-            {/* Browser chrome */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-secondary/30">
-              <div className="flex gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
-              </div>
-              <div className="flex-1 flex justify-center">
-                <div className="px-4 py-1 rounded-md bg-secondary/50 text-[11px] text-muted-foreground">app.driveflow.fr</div>
-              </div>
-            </div>
-
-            {/* Mock dashboard content */}
-            <div className="p-6 md:p-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Élèves actifs", value: "24", icon: Users, color: "text-info" },
-                { label: "Séances ce mois", value: "87", icon: Calendar, color: "text-success" },
-                { label: "CA mensuel", value: "4 280 €", icon: TrendingUp, color: "text-primary" },
-                { label: "Taux d'occupation", value: "78%", icon: BarChart3, color: "text-primary" },
-              ].map((s, i) => (
-                <div key={i} className="rounded-xl border border-border/40 bg-secondary/20 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <s.icon className={`w-4 h-4 ${s.color}`} />
-                    <span className="text-xs text-muted-foreground">{s.label}</span>
-                  </div>
-                  <p className="text-xl md:text-2xl font-bold text-foreground">{s.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Mock planning row */}
-            <div className="px-6 md:px-8 pb-6">
-              <div className="rounded-xl border border-border/40 bg-secondary/20 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium text-foreground">Planning du jour</span>
-                </div>
-                <div className="space-y-2">
-                  {[
-                    { time: "09:00 – 10:00", student: "Marie D.", vehicle: "208 · AB-123-CD" },
-                    { time: "10:30 – 12:00", student: "Karim B.", vehicle: "Clio · EF-456-GH" },
-                    { time: "14:00 – 15:00", student: "Lucas T.", vehicle: "208 · AB-123-CD" },
-                  ].map((l, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-background/40 text-sm">
-                      <span className="text-muted-foreground font-mono text-xs">{l.time}</span>
-                      <span className="text-foreground font-medium">{l.student}</span>
-                      <span className="text-muted-foreground text-xs hidden sm:block">{l.vehicle}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        {/* App screenshots carousel */}
+        <HeroScreenshots />
       </div>
     </section>
   );
