@@ -6,6 +6,7 @@ import { useStudents } from "@/hooks/useStudents";
 import { useOrg } from "@/contexts/OrgContext";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -97,6 +98,7 @@ export default function Invoicing() {
   };
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [sendConfirm, setSendConfirm] = useState<string | null>(null);
 
   const handleDownloadPdf = async (invoiceId: string) => {
     setDownloadingId(invoiceId);
@@ -239,11 +241,7 @@ export default function Invoicing() {
                           </button>
                         )}
                         {inv.type === "facture" && inv.status === "brouillon" && (
-                          <button onClick={() => {
-                            if (confirm("Marquer cette facture comme envoyée ?")) {
-                              update.mutate({ id: inv.id, status: "envoyé" });
-                            }
-                          }} className="text-[10px] px-2 py-0.5 rounded bg-info/10 text-info hover:bg-info/20 transition-colors">
+                          <button onClick={() => setSendConfirm(inv.id)} className="text-[10px] px-2 py-0.5 rounded bg-info/10 text-info hover:bg-info/20 transition-colors">
                             Envoyer
                           </button>
                         )}
@@ -334,6 +332,24 @@ export default function Invoicing() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Send confirmation */}
+      <AlertDialog open={!!sendConfirm} onOpenChange={(v) => !v && setSendConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Marquer comme envoyée ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette facture sera marquée comme envoyée au client. Vous ne pourrez plus modifier les lignes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (sendConfirm) { update.mutate({ id: sendConfirm, status: "envoyé" }); setSendConfirm(null); } }}>
+              Confirmer l'envoi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

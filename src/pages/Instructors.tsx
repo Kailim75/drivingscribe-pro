@@ -1,17 +1,20 @@
 import { motion } from "framer-motion";
-import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, UserCog } from "lucide-react";
+import { Search, Plus, Phone, Mail, Loader2, UserCog, Pencil, Archive } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useInstructors } from "@/hooks/useInstructors";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { instructorStatusLabels, instructorStatusColors, activityTypeLabels, formatEur } from "@/lib/labels";
 import InstructorFormDialog from "@/components/instructors/InstructorFormDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 export default function Instructors() {
-  const { instructors, isLoading, create } = useInstructors();
+  const { instructors, isLoading, create, update } = useInstructors();
   const { log } = useAuditLog();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editInstructor, setEditInstructor] = useState<any>(null);
 
   const filtered = instructors.filter((i) =>
     `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase())
@@ -23,6 +26,23 @@ export default function Instructors() {
         setShowForm(false);
         log({ action: "create", entity: "instructor", details: `${data.first_name} ${data.last_name}` });
       },
+    });
+  };
+
+  const handleEdit = (data: any) => {
+    if (!editInstructor) return;
+    update.mutate({ id: editInstructor.id, ...data }, {
+      onSuccess: () => {
+        setEditInstructor(null);
+        log({ action: "update", entity: "instructor", entity_id: editInstructor.id, details: `${data.first_name} ${data.last_name}` });
+      },
+    });
+  };
+
+  const handleArchive = (inst: any) => {
+    const newStatus = inst.status === "archive" ? "actif" : "archive";
+    update.mutate({ id: inst.id, status: newStatus }, {
+      onSuccess: () => log({ action: "update_status", entity: "instructor", entity_id: inst.id, details: `Statut → ${instructorStatusLabels[newStatus]}` }),
     });
   };
 
@@ -94,10 +114,22 @@ export default function Instructors() {
                         {instructorStatusLabels[inst.status]}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground transition-colors">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditInstructor(inst)}>
+                            <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleArchive(inst)}>
+                            <Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Archiver"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -108,6 +140,7 @@ export default function Instructors() {
       </motion.div>
 
       <InstructorFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
+      <InstructorFormDialog open={!!editInstructor} onClose={() => setEditInstructor(null)} onSubmit={handleEdit} loading={update.isPending} initial={editInstructor} />
     </div>
   );
 }
