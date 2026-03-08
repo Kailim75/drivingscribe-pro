@@ -54,19 +54,18 @@ export default function Payments() {
     }, { onSuccess: () => setDialogOpen(false) });
   };
 
-  // Filter invoices for selected student
   const studentInvoices = invoices.filter((i) => i.student_id === form.student_id && i.type === "facture" && i.remaining_amount > 0);
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Paiements</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{payments.length} paiements · {formatEur(totalReceived)} encaissés</p>
+          <h1 className="page-title">Paiements</h1>
+          <p className="page-subtitle">{payments.length} paiements · {formatEur(totalReceived)} encaissés</p>
         </div>
-        <button onClick={() => { setForm({ student_id: "", invoice_id: "", amount: 0, method: "carte", date: new Date().toISOString().split("T")[0], reference: "", notes: "" }); setDialogOpen(true); }} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+        <button onClick={() => { setForm({ student_id: "", invoice_id: "", amount: 0, method: "carte", date: new Date().toISOString().split("T")[0], reference: "", notes: "" }); setDialogOpen(true); }} className="btn-primary">
           <Plus className="w-4 h-4" /> Enregistrer un paiement
         </button>
       </div>
@@ -76,13 +75,13 @@ export default function Payments() {
           const cfg = methodConfig[method];
           const Icon = cfg.icon;
           return (
-            <div key={method} className="glass-card rounded-xl p-3.5 flex items-center gap-3">
+            <div key={method} className="glass-card rounded-xl p-4 flex items-center gap-3">
               <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", cfg.color)}>
                 <Icon className="w-4 h-4" />
               </div>
               <div>
                 <p className="text-sm font-bold text-foreground">{formatEur(total)}</p>
-                <p className="text-[10px] text-muted-foreground">{cfg.label} · {count}</p>
+                <p className="text-xs text-muted-foreground">{cfg.label} · {count}</p>
               </div>
             </div>
           );
@@ -91,20 +90,20 @@ export default function Payments() {
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un paiement..." className="w-full bg-secondary text-secondary-foreground text-sm pl-9 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground" />
+        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un paiement..." className="w-full bg-card text-foreground text-sm pl-9 pr-4 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground transition-shadow" />
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full data-table">
             <thead>
-              <tr className="border-b border-border text-left">
-                <th className="px-4 py-3 font-medium text-muted-foreground">Date</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground">Élève</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Facture</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Mode</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground text-right">Montant</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Référence</th>
+              <tr>
+                <th>Date</th>
+                <th>Élève</th>
+                <th className="hidden md:table-cell">Facture</th>
+                <th className="hidden sm:table-cell">Mode</th>
+                <th className="text-right">Montant</th>
+                <th className="hidden lg:table-cell">Référence</th>
               </tr>
             </thead>
             <tbody>
@@ -113,15 +112,15 @@ export default function Payments() {
                 const studentName = p.students ? `${p.students.first_name} ${p.students.last_name}` : "—";
                 const invNumber = p.invoices?.number || "—";
                 return (
-                  <tr key={p.id} className="border-b border-border/50 last:border-0 hover:bg-secondary/30 transition-colors">
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(p.date)}</td>
-                    <td className="px-4 py-3 font-medium text-foreground">{studentName}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden md:table-cell">{invNumber}</td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", cfg.color)}>{cfg.label}</span>
+                  <tr key={p.id}>
+                    <td className="text-xs text-muted-foreground">{formatDate(p.date)}</td>
+                    <td className="font-medium text-foreground">{studentName}</td>
+                    <td className="font-mono text-xs text-muted-foreground hidden md:table-cell">{invNumber}</td>
+                    <td className="hidden sm:table-cell">
+                      <span className={cn("status-badge rounded-md", cfg.color)}>{cfg.label}</span>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-success">{formatEur(p.amount)}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground hidden lg:table-cell">{p.reference}</td>
+                    <td className="text-right font-semibold text-success">{formatEur(p.amount)}</td>
+                    <td className="font-mono text-xs text-muted-foreground hidden lg:table-cell">{p.reference}</td>
                   </tr>
                 );
               })}
@@ -145,7 +144,7 @@ export default function Payments() {
           <div className="space-y-4">
             <div>
               <Label>Élève</Label>
-              <select value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value, invoice_id: "" }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+              <select value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value, invoice_id: "" }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 <option value="">Sélectionner...</option>
                 {students.map((s) => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
               </select>
@@ -153,7 +152,7 @@ export default function Payments() {
             {studentInvoices.length > 0 && (
               <div>
                 <Label>Facture (optionnel)</Label>
-                <select value={form.invoice_id} onChange={(e) => setForm((f) => ({ ...f, invoice_id: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                <select value={form.invoice_id} onChange={(e) => setForm((f) => ({ ...f, invoice_id: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   <option value="">Sans facture</option>
                   {studentInvoices.map((i) => <option key={i.id} value={i.id}>{i.number} — reste {formatEur(i.remaining_amount)}</option>)}
                 </select>
@@ -166,7 +165,7 @@ export default function Payments() {
               </div>
               <div>
                 <Label>Mode</Label>
-                <select value={form.method} onChange={(e) => setForm((f) => ({ ...f, method: e.target.value as PaymentMethod }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+                <select value={form.method} onChange={(e) => setForm((f) => ({ ...f, method: e.target.value as PaymentMethod }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   {methods.map((m) => <option key={m} value={m}>{methodConfig[m].label}</option>)}
                 </select>
               </div>
@@ -185,7 +184,7 @@ export default function Payments() {
               <Label>Notes</Label>
               <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="mt-1" />
             </div>
-            <button onClick={handleSubmit} disabled={create.isPending} className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={create.isPending} className="w-full btn-primary justify-center">
               {create.isPending ? "Enregistrement..." : "Enregistrer"}
             </button>
           </div>

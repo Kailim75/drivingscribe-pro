@@ -105,25 +105,24 @@ export default function SettingsPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[900px] mx-auto space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Paramètres</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Configuration de votre organisation</p>
+          <h1 className="page-title">Paramètres</h1>
+          <p className="page-subtitle">Configuration de votre organisation</p>
         </div>
         {isOwnerOrAdmin && (tab === "organisation" || tab === "facturation") && (
-          <button onClick={handleSave} disabled={saving}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
+          <button onClick={handleSave} disabled={saving} className="btn-primary">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Enregistrer
           </button>
         )}
       </div>
 
-      <div className="flex gap-1 bg-secondary rounded-lg p-0.5 overflow-x-auto">
+      <div className="flex gap-1 bg-card rounded-lg p-0.5 overflow-x-auto border border-border">
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={cn("flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-md transition-colors whitespace-nowrap",
-              tab === t.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+              tab === t.key ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
             <t.icon className="w-3.5 h-3.5" /> {t.label}
           </button>
         ))}
@@ -144,8 +143,8 @@ export default function SettingsPage() {
             <div className="flex gap-3">
               {(["independant", "centre"] as const).map((mode) => (
                 <button key={mode} type="button" onClick={() => isOwnerOrAdmin && update("mode", mode)}
-                  className={cn("flex-1 p-4 rounded-xl border-2 text-center transition-colors",
-                    form.mode === mode ? "border-primary bg-primary/5" : "border-border hover:border-primary/30",
+                  className={cn("flex-1 p-4 rounded-xl border-2 text-center transition-all duration-200",
+                    form.mode === mode ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/30",
                     !isOwnerOrAdmin && "opacity-50 cursor-not-allowed")}>
                   <p className="text-sm font-semibold text-foreground capitalize">{mode === "independant" ? "Indépendant" : "Centre"}</p>
                   <p className="text-[10px] text-muted-foreground mt-1">{mode === "independant" ? "Un seul utilisateur" : "Multi-formateurs et rôles"}</p>
@@ -158,7 +157,7 @@ export default function SettingsPage() {
               <h3 className="text-sm font-medium text-foreground mb-3">Types d'activité</h3>
               <div className="flex flex-wrap gap-2">
                 {activityTypes.map((at) => (
-                  <span key={at.id} className={cn("text-xs px-3 py-1 rounded-full font-medium", at.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
+                  <span key={at.id} className={cn("text-xs px-3 py-1 rounded-md font-medium", at.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
                     {at.name}
                   </span>
                 ))}
@@ -183,7 +182,7 @@ export default function SettingsPage() {
             <h3 className="text-sm font-medium text-foreground mb-2">Politique d'annulation par défaut</h3>
             <textarea value={form.cancellation_policy || ""} onChange={(e) => update("cancellation_policy", e.target.value)}
               disabled={!isOwnerOrAdmin}
-              className="w-full bg-secondary text-secondary-foreground text-sm px-3 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary h-20 resize-none disabled:opacity-50" />
+              className="w-full bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-20 resize-none disabled:opacity-50" />
           </div>
         </motion.div>
       )}
@@ -196,8 +195,8 @@ export default function SettingsPage() {
           ) : (
             <div className="space-y-2">
               {members.map((m) => (
-                <div key={m.user_id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30">
-                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground">
+                <div key={m.user_id} className="flex items-center gap-3 p-3 rounded-lg bg-accent/50 border border-border/60">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
                     {(m.profile?.first_name?.[0] || "?")}{(m.profile?.last_name?.[0] || "")}
                   </div>
                   <div className="flex-1">
@@ -208,7 +207,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex gap-1">
                     {m.roles.map((r: string) => (
-                      <span key={r} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary capitalize">{r}</span>
+                      <span key={r} className="status-badge rounded-md bg-primary/10 text-primary capitalize">{r}</span>
                     ))}
                   </div>
                 </div>
@@ -228,7 +227,7 @@ export default function SettingsPage() {
               { role: "Formateur", desc: "Accès limité à ses propres données", perms: ["Ses séances", "Ses élèves", "Son planning", "Ses statistiques", "Notes"] },
               { role: "Comptable", desc: "Accès financier uniquement", perms: ["Factures", "Paiements", "Dépenses", "Reporting financier"] },
             ].map((r) => (
-              <div key={r.role} className="p-4 rounded-lg bg-secondary/30 border border-border/50">
+              <div key={r.role} className="p-4 rounded-xl bg-accent/50 border border-border/60">
                 <div className="flex items-center gap-2 mb-1">
                   <Shield className="w-4 h-4 text-primary" />
                   <span className="font-semibold text-foreground text-sm">{r.role}</span>
@@ -236,7 +235,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground mb-2">{r.desc}</p>
                 <div className="flex flex-wrap gap-1">
                   {r.perms.map((p) => (
-                    <span key={p} className="text-[10px] px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full">{p}</span>
+                    <span key={p} className="status-badge rounded-md bg-accent text-accent-foreground">{p}</span>
                   ))}
                 </div>
               </div>
@@ -253,9 +252,9 @@ function Field({ label, value, onChange, className, disabled }: {
 }) {
   return (
     <div className={className}>
-      <label className="text-xs text-muted-foreground mb-1 block">{label}</label>
+      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{label}</label>
       <input type="text" value={value} onChange={(e) => onChange?.(e.target.value)} disabled={disabled}
-        className="w-full bg-secondary text-secondary-foreground text-sm px-3 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50" />
+        className="w-full bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50 transition-shadow" />
     </div>
   );
 }

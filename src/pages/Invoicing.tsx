@@ -36,7 +36,6 @@ export default function Invoicing() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [docType, setDocType] = useState<"devis" | "facture">("facture");
 
-  // Form state
   const [form, setForm] = useState({ student_id: "", due_date: "", notes: "", lines: [{ description: "", quantity: 1, unit_price: 0 }] });
 
   const filtered = invoices.filter((inv) => {
@@ -63,7 +62,6 @@ export default function Invoicing() {
     const tvaAmount = totalHt * (tvaRate / 100);
     const totalTtc = totalHt + tvaAmount;
 
-    // Atomic counter — single DB call, no race condition
     const { data: numberResult, error: numberError } = await supabase.rpc("next_document_number", {
       _org_id: organization!.id,
       _type: docType,
@@ -112,7 +110,6 @@ export default function Invoicing() {
       const result = await res.json();
       if (result.error) throw new Error(result.error);
 
-      // Download the PDF
       const byteCharacters = atob(result.pdf);
       const byteNumbers = new Array(byteCharacters.length);
       for (let i = 0; i < byteCharacters.length; i++) {
@@ -143,16 +140,16 @@ export default function Invoicing() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Devis & Factures</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{invoices.length} documents · {formatEur(totalUnpaid)} impayés</p>
+          <h1 className="page-title">Devis & Factures</h1>
+          <p className="page-subtitle">{invoices.length} documents · {formatEur(totalUnpaid)} impayés</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => openCreate("devis")} className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors border border-border">
+          <button onClick={() => openCreate("devis")} className="btn-secondary">
             <FileText className="w-4 h-4" /> Devis
           </button>
-          <button onClick={() => openCreate("facture")} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+          <button onClick={() => openCreate("facture")} className="btn-primary">
             <Plus className="w-4 h-4" /> Facture
           </button>
         </div>
@@ -166,9 +163,9 @@ export default function Invoicing() {
           { label: "Reste à encaisser", value: formatEur(totalUnpaid), alert: totalUnpaid > 0 },
           { label: "En retard", value: `${invoices.filter((i) => i.status === "en_retard").length}`, alert: true },
         ].map((k) => (
-          <div key={k.label} className={cn("glass-card rounded-xl p-3.5 text-center", k.alert && totalUnpaid > 0 && "border-destructive/20")}>
+          <div key={k.label} className={cn("glass-card rounded-xl p-4 text-center", k.alert && totalUnpaid > 0 && "border-destructive/20")}>
             <p className={cn("text-lg font-bold", k.alert && totalUnpaid > 0 ? "text-destructive" : "text-foreground")}>{k.value}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5">{k.label}</p>
+            <p className="text-xs text-muted-foreground mt-1">{k.label}</p>
           </div>
         ))}
       </div>
@@ -177,14 +174,14 @@ export default function Invoicing() {
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="w-full bg-secondary text-secondary-foreground text-sm pl-9 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher..." className="w-full bg-card text-foreground text-sm pl-9 pr-4 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground transition-shadow" />
         </div>
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="bg-secondary text-secondary-foreground text-sm px-3 py-2 rounded-lg border border-border">
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="tous">Tous types</option>
           <option value="devis">Devis</option>
           <option value="facture">Factures</option>
         </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-secondary text-secondary-foreground text-sm px-3 py-2 rounded-lg border border-border">
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="tous">Tous statuts</option>
           <option value="brouillon">Brouillon</option>
           <option value="envoyé">Envoyé</option>
@@ -197,17 +194,17 @@ export default function Invoicing() {
       {/* Table */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full data-table">
             <thead>
-              <tr className="border-b border-border text-left">
-                <th className="px-4 py-3 font-medium text-muted-foreground">N°</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground">Type</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground">Élève</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Date</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground text-right">TTC</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground text-right hidden sm:table-cell">Reste</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground">Statut</th>
-                <th className="px-4 py-3 font-medium text-muted-foreground">Actions</th>
+              <tr>
+                <th>N°</th>
+                <th>Type</th>
+                <th>Élève</th>
+                <th className="hidden md:table-cell">Date</th>
+                <th className="text-right">TTC</th>
+                <th className="text-right hidden sm:table-cell">Reste</th>
+                <th>Statut</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -215,35 +212,35 @@ export default function Invoicing() {
                 const cfg = statusConfig[inv.status] || statusConfig.brouillon;
                 const studentName = inv.students ? `${inv.students.first_name} ${inv.students.last_name}` : "—";
                 return (
-                  <tr key={inv.id} className="border-b border-border/50 last:border-0 hover:bg-secondary/30 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-foreground">{inv.number}</td>
-                    <td className="px-4 py-3">
-                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", inv.type === "devis" ? "bg-info/10 text-info" : "bg-primary/10 text-primary")}>
+                  <tr key={inv.id}>
+                    <td className="font-mono text-xs text-foreground">{inv.number}</td>
+                    <td>
+                      <span className={cn("status-badge rounded-md", inv.type === "devis" ? "bg-info/10 text-info" : "bg-primary/10 text-primary")}>
                         {inv.type === "devis" ? "Devis" : "Facture"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-medium text-foreground">{studentName}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs hidden md:table-cell">{formatDate(inv.issue_date)}</td>
-                    <td className="px-4 py-3 text-right font-medium text-foreground">{formatEur(inv.total_ttc)}</td>
-                    <td className={cn("px-4 py-3 text-right font-medium hidden sm:table-cell", inv.remaining_amount > 0 ? "text-destructive" : "text-success")}>{formatEur(inv.remaining_amount)}</td>
-                    <td className="px-4 py-3">
-                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full", cfg.color)}>{cfg.label}</span>
+                    <td className="font-medium text-foreground">{studentName}</td>
+                    <td className="text-muted-foreground text-xs hidden md:table-cell">{formatDate(inv.issue_date)}</td>
+                    <td className="text-right font-semibold text-foreground">{formatEur(inv.total_ttc)}</td>
+                    <td className={cn("text-right font-semibold hidden sm:table-cell", inv.remaining_amount > 0 ? "text-destructive" : "text-success")}>{formatEur(inv.remaining_amount)}</td>
+                    <td>
+                      <span className={cn("status-badge rounded-md", cfg.color)}>{cfg.label}</span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <div className="flex gap-1 items-center">
                         {inv.type === "devis" && inv.status !== "archivé" && (
-                          <button onClick={() => convertToInvoice.mutate(inv.id)} className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-1">
+                          <button onClick={() => convertToInvoice.mutate(inv.id)} className="status-badge rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-1">
                             <ArrowRight className="w-3 h-3" /> Convertir
                           </button>
                         )}
                         {inv.type === "facture" && inv.status === "brouillon" && (
-                          <button onClick={() => setSendConfirm(inv.id)} className="text-[10px] px-2 py-0.5 rounded bg-info/10 text-info hover:bg-info/20 transition-colors">
+                          <button onClick={() => setSendConfirm(inv.id)} className="status-badge rounded-md bg-info/10 text-info hover:bg-info/20 transition-colors">
                             Envoyer
                           </button>
                         )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button className="p-1 rounded hover:bg-secondary transition-colors">
+                            <button className="p-1.5 rounded-md hover:bg-accent transition-colors">
                               <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
                             </button>
                           </DropdownMenuTrigger>
@@ -283,7 +280,7 @@ export default function Invoicing() {
           <div className="space-y-4">
             <div>
               <Label>Élève</Label>
-              <select value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border">
+              <select value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 <option value="">Sélectionner...</option>
                 {students.map((s) => (
                   <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>
@@ -310,39 +307,35 @@ export default function Invoicing() {
 
             <div>
               <Label>Notes</Label>
-              <textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="w-full mt-1 bg-secondary text-sm px-3 py-2 rounded-lg border border-border h-16 resize-none" />
+              <textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 h-16 resize-none" />
             </div>
 
             <div className="glass-card rounded-lg p-3 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Total HT</span><span>{formatEur(form.lines.reduce((s, l) => s + l.quantity * l.unit_price, 0))}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">TVA ({organization?.tva_rate || 20}%)</span><span>{formatEur(form.lines.reduce((s, l) => s + l.quantity * l.unit_price, 0) * ((organization?.tva_rate || 20) / 100))}</span></div>
-              <div className="flex justify-between font-bold border-t border-border mt-1 pt-1">
+              <div className="flex justify-between"><span className="text-muted-foreground">Total HT</span><span className="font-medium">{formatEur(form.lines.reduce((s, l) => s + l.quantity * l.unit_price, 0))}</span></div>
+              <div className="flex justify-between mt-1"><span className="text-muted-foreground">TVA ({organization?.tva_rate || 20}%)</span><span className="font-medium">{formatEur(form.lines.reduce((s, l) => s + l.quantity * l.unit_price, 0) * ((organization?.tva_rate || 20) / 100))}</span></div>
+              <div className="flex justify-between mt-1 pt-1 border-t border-border font-bold">
                 <span>Total TTC</span>
                 <span>{formatEur(form.lines.reduce((s, l) => s + l.quantity * l.unit_price, 0) * (1 + (organization?.tva_rate || 20) / 100))}</span>
               </div>
             </div>
 
-            <button onClick={handleSubmit} disabled={create.isPending} className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
+            <button onClick={handleSubmit} disabled={create.isPending} className="w-full btn-primary justify-center">
               {create.isPending ? "Création..." : `Créer le ${docType}`}
             </button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Send confirmation */}
+      {/* Send confirm */}
       <AlertDialog open={!!sendConfirm} onOpenChange={(v) => !v && setSendConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Marquer comme envoyée ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette facture sera marquée comme envoyée au client. Vous ne pourrez plus modifier les lignes.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Le statut de la facture passera à « envoyé ».</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (sendConfirm) { update.mutate({ id: sendConfirm, status: "envoyé" }); setSendConfirm(null); } }}>
-              Confirmer l'envoi
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => { if (sendConfirm) { update.mutate({ id: sendConfirm, status: "envoyé" }); setSendConfirm(null); } }}>Confirmer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
