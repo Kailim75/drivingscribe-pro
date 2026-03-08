@@ -93,6 +93,137 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_size: string
+          id: string
+          invoice_id: string | null
+          name: string
+          notes: string
+          organization_id: string
+          student_id: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          file_path?: string
+          file_size?: string
+          id?: string
+          invoice_id?: string | null
+          name: string
+          notes?: string
+          organization_id: string
+          student_id?: string | null
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_size?: string
+          id?: string
+          invoice_id?: string | null
+          name?: string
+          notes?: string
+          organization_id?: string
+          student_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          instructor_id: string | null
+          notes: string
+          organization_id: string
+          recurring: boolean
+          recurring_period: string | null
+          type: Database["public"]["Enums"]["expense_type"]
+          vehicle_id: string | null
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          instructor_id?: string | null
+          notes?: string
+          organization_id: string
+          recurring?: boolean
+          recurring_period?: string | null
+          type?: Database["public"]["Enums"]["expense_type"]
+          vehicle_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          instructor_id?: string | null
+          notes?: string
+          organization_id?: string
+          recurring?: boolean
+          recurring_period?: string | null
+          type?: Database["public"]["Enums"]["expense_type"]
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instructors: {
         Row: {
           created_at: string
@@ -145,6 +276,126 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_lines: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          total_ht: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          total_ht?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          total_ht?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          converted_from_id: string | null
+          created_at: string
+          due_date: string
+          id: string
+          issue_date: string
+          notes: string
+          number: string
+          organization_id: string
+          paid_amount: number
+          remaining_amount: number
+          status: Database["public"]["Enums"]["invoice_status"]
+          student_id: string
+          total_ht: number
+          total_ttc: number
+          tva_amount: number
+          type: Database["public"]["Enums"]["invoice_type"]
+          updated_at: string
+        }
+        Insert: {
+          converted_from_id?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          issue_date?: string
+          notes?: string
+          number: string
+          organization_id: string
+          paid_amount?: number
+          remaining_amount?: number
+          status?: Database["public"]["Enums"]["invoice_status"]
+          student_id: string
+          total_ht?: number
+          total_ttc?: number
+          tva_amount?: number
+          type?: Database["public"]["Enums"]["invoice_type"]
+          updated_at?: string
+        }
+        Update: {
+          converted_from_id?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          issue_date?: string
+          notes?: string
+          number?: string
+          organization_id?: string
+          paid_amount?: number
+          remaining_amount?: number
+          status?: Database["public"]["Enums"]["invoice_status"]
+          student_id?: string
+          total_ht?: number
+          total_ttc?: number
+          tva_amount?: number
+          type?: Database["public"]["Enums"]["invoice_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_converted_from_id_fkey"
+            columns: ["converted_from_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -399,6 +650,67 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          id: string
+          invoice_id: string | null
+          method: Database["public"]["Enums"]["payment_method"]
+          notes: string
+          organization_id: string
+          reference: string
+          student_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          invoice_id?: string | null
+          method?: Database["public"]["Enums"]["payment_method"]
+          notes?: string
+          organization_id: string
+          reference?: string
+          student_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          id?: string
+          invoice_id?: string | null
+          method?: Database["public"]["Enums"]["payment_method"]
+          notes?: string
+          organization_id?: string
+          reference?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -431,6 +743,70 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      reminders: {
+        Row: {
+          channel: Database["public"]["Enums"]["reminder_channel"]
+          created_at: string
+          id: string
+          invoice_id: string | null
+          message: string
+          organization_id: string
+          scheduled_at: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["reminder_status"]
+          student_id: string | null
+          type: Database["public"]["Enums"]["reminder_type"]
+        }
+        Insert: {
+          channel?: Database["public"]["Enums"]["reminder_channel"]
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          message?: string
+          organization_id: string
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["reminder_status"]
+          student_id?: string | null
+          type?: Database["public"]["Enums"]["reminder_type"]
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["reminder_channel"]
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          message?: string
+          organization_id?: string
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["reminder_status"]
+          student_id?: string | null
+          type?: Database["public"]["Enums"]["reminder_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_formulas: {
         Row: {
@@ -674,10 +1050,24 @@ export type Database = {
     Enums: {
       app_role: "owner" | "admin" | "instructor" | "accountant"
       billing_rule: "totale" | "partielle" | "non_facturee"
+      expense_type: "directe" | "fixe"
       instructor_status: "actif" | "inactif" | "archive"
+      invoice_status:
+        | "brouillon"
+        | "envoyé"
+        | "partiellement_payé"
+        | "payé"
+        | "en_retard"
+        | "annulé"
+        | "archivé"
+      invoice_type: "devis" | "facture"
       lesson_status: "prevu" | "effectue" | "annule" | "absent"
       offer_type: "heure" | "pack" | "forfait"
       org_mode: "independant" | "centre"
+      payment_method: "espèces" | "virement" | "carte" | "chèque"
+      reminder_channel: "email" | "sms" | "whatsapp"
+      reminder_status: "planifié" | "envoyé" | "échoué"
+      reminder_type: "séance" | "impayé" | "document" | "autre"
       student_status: "actif" | "en_pause" | "termine" | "archive"
       vehicle_status: "actif" | "indisponible" | "maintenance" | "archive"
     }
@@ -809,10 +1199,25 @@ export const Constants = {
     Enums: {
       app_role: ["owner", "admin", "instructor", "accountant"],
       billing_rule: ["totale", "partielle", "non_facturee"],
+      expense_type: ["directe", "fixe"],
       instructor_status: ["actif", "inactif", "archive"],
+      invoice_status: [
+        "brouillon",
+        "envoyé",
+        "partiellement_payé",
+        "payé",
+        "en_retard",
+        "annulé",
+        "archivé",
+      ],
+      invoice_type: ["devis", "facture"],
       lesson_status: ["prevu", "effectue", "annule", "absent"],
       offer_type: ["heure", "pack", "forfait"],
       org_mode: ["independant", "centre"],
+      payment_method: ["espèces", "virement", "carte", "chèque"],
+      reminder_channel: ["email", "sms", "whatsapp"],
+      reminder_status: ["planifié", "envoyé", "échoué"],
+      reminder_type: ["séance", "impayé", "document", "autre"],
       student_status: ["actif", "en_pause", "termine", "archive"],
       vehicle_status: ["actif", "indisponible", "maintenance", "archive"],
     },

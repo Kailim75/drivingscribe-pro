@@ -1,63 +1,76 @@
 import { motion } from "framer-motion";
-import { TrendingUp, Users, UserCog, Car, Clock, Euro, Percent, BarChart3 } from "lucide-react";
-import { students, studentFormulas, instructors, vehicles, lessons, expenses, invoices, payments, formatEur } from "@/data/mockData";
+import { TrendingUp, Users, UserCog, Car, Clock, Euro, Percent, BarChart3, Loader2 } from "lucide-react";
+import { useStudents } from "@/hooks/useStudents";
+import { useStudentFormulas } from "@/hooks/useStudentFormulas";
+import { useInstructors } from "@/hooks/useInstructors";
+import { useVehicles } from "@/hooks/useVehicles";
+import { useLessons } from "@/hooks/useLessons";
+import { useExpenses } from "@/hooks/useExpenses";
+import { useInvoices } from "@/hooks/useInvoices";
 import { cn } from "@/lib/utils";
 
+const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
+
 export default function Profitability() {
-  // Calculations
-  const doneLessons = lessons.filter((l) => l.status === "effectué");
-  const totalHoursDone = doneLessons.reduce((s, l) => s + l.durationHours, 0);
-  const totalRevenue = invoices.reduce((s, i) => s + i.paidAmount, 0);
-  const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const { students } = useStudents();
+  const { formulas } = useStudentFormulas();
+  const { instructors, isLoading: instLoading } = useInstructors();
+  const { vehicles } = useVehicles();
+  const { lessons, isLoading: lessonsLoading } = useLessons();
+  const { expenses } = useExpenses();
+  const { invoices } = useInvoices();
+
+  if (instLoading || lessonsLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+
+  const doneLessons = lessons.filter((l) => l.status === "effectue");
+  const totalHoursDone = doneLessons.reduce((s, l) => s + Number(l.duration_hours), 0);
+  const totalRevenue = invoices.filter((i) => i.type === "facture").reduce((s, i) => s + i.paid_amount, 0);
+  const totalExpensesAmt = expenses.reduce((s, e) => s + e.amount, 0);
   const fixedExpenses = expenses.filter((e) => e.type === "fixe").reduce((s, e) => s + e.amount, 0);
   const directExpenses = expenses.filter((e) => e.type === "directe").reduce((s, e) => s + e.amount, 0);
   const grossMargin = totalRevenue - directExpenses;
-  const netMargin = totalRevenue - totalExpenses;
+  const netMargin = totalRevenue - totalExpensesAmt;
   const avgRevenuePerHour = totalHoursDone > 0 ? totalRevenue / totalHoursDone : 0;
   const grossMarginPct = totalRevenue > 0 ? (grossMargin / totalRevenue) * 100 : 0;
   const netMarginPct = totalRevenue > 0 ? (netMargin / totalRevenue) * 100 : 0;
 
-  // Max possible hours (3 instructors × 8h × 22 days)
-  const maxHours = instructors.filter((i) => i.status === "actif").length * 8 * 22;
+  const activeInstructors = instructors.filter((i) => i.status === "actif");
+  const maxHours = activeInstructors.length * 8 * 22;
   const occupancyRate = maxHours > 0 ? (totalHoursDone / maxHours) * 100 : 0;
   const nonProductiveHours = maxHours - totalHoursDone;
 
-  // Per instructor
   const perInstructor = instructors.map((inst) => {
-    const instLessons = doneLessons.filter((l) => l.instructorId === inst.id);
-    const hours = instLessons.reduce((s, l) => s + l.durationHours, 0);
-    const revenue = instLessons.reduce((s, l) => s + l.billedAmount, 0);
-    const cost = inst.hourlyCost * hours;
-    const instExpenses = expenses.filter((e) => e.instructorId === inst.id).reduce((s, e) => s + e.amount, 0);
-    return { name: `${inst.firstName} ${inst.lastName}`, hours, revenue, cost: cost + instExpenses, margin: revenue - cost - instExpenses };
+    const instLessons = doneLessons.filter((l) => l.instructor_id === inst.id);
+    const hours = instLessons.reduce((s, l) => s + Number(l.duration_hours), 0);
+    const revenue = instLessons.reduce((s, l) => s + Number(l.billed_amount), 0);
+    const cost = Number(inst.hourly_cost) * hours;
+    const instExpenses = expenses.filter((e) => e.instructor_id === inst.id).reduce((s, e) => s + e.amount, 0);
+    return { name: `${inst.first_name} ${inst.last_name}`, hours, revenue, cost: cost + instExpenses, margin: revenue - cost - instExpenses };
   });
 
-  // Per vehicle
   const perVehicle = vehicles.map((v) => {
-    const vLessons = doneLessons.filter((l) => l.vehicleId === v.id);
-    const hours = vLessons.reduce((s, l) => s + l.durationHours, 0);
-    const revenue = vLessons.reduce((s, l) => s + l.billedAmount, 0);
-    const vExpenses = expenses.filter((e) => e.vehicleId === v.id).reduce((s, e) => s + e.amount, 0);
-    return { name: `${v.brand} ${v.model}`, plate: v.plate, hours, revenue, cost: vExpenses + v.monthlyCost, margin: revenue - vExpenses - v.monthlyCost };
+    const vLessons = doneLessons.filter((l) => l.vehicle_id === v.id);
+    const hours = vLessons.reduce((s, l) => s + Number(l.duration_hours), 0);
+    const revenue = vLessons.reduce((s, l) => s + Number(l.billed_amount), 0);
+    const vExpenses = expenses.filter((e) => e.vehicle_id === v.id).reduce((s, e) => s + e.amount, 0);
+    return { name: `${v.brand} ${v.model}`, plate: v.plate, hours, revenue, cost: vExpenses + Number(v.monthly_cost), margin: revenue - vExpenses - Number(v.monthly_cost) };
   });
 
-  // Per student (top 5)
   const perStudent = students.map((s) => {
-    const sFormula = studentFormulas.find((sf) => sf.studentId === s.id);
-    const sLessons = doneLessons.filter((l) => l.studentId === s.id);
-    const hours = sLessons.reduce((sum, l) => sum + l.durationHours, 0);
-    const revenue = sFormula ? sFormula.totalPrice * (hours / (sFormula.hoursBought || 1)) : 0;
-    return { name: `${s.firstName} ${s.lastName}`, hours, revenue };
+    const sFormula = formulas.find((sf) => sf.student_id === s.id);
+    const sLessons = doneLessons.filter((l) => l.student_id === s.id);
+    const hours = sLessons.reduce((sum, l) => sum + Number(l.duration_hours), 0);
+    const revenue = sFormula ? sFormula.total_price * (hours / (sFormula.hours_bought || 1)) : 0;
+    return { name: `${s.first_name} ${s.last_name}`, hours, revenue };
   }).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-foreground">Rentabilité</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Analyse de performance — données de démonstration</p>
+        <p className="text-muted-foreground text-sm mt-0.5">Analyse de performance</p>
       </div>
 
-      {/* Global KPIs */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Revenu moyen / heure", value: formatEur(avgRevenuePerHour), icon: Euro },
@@ -76,53 +89,34 @@ export default function Profitability() {
         ))}
       </motion.div>
 
-      {/* Revenue vs expenses */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="glass-card rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <BarChart3 className="w-4 h-4" /> Revenus vs Charges
-          </h2>
+          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4" /> Revenus vs Charges</h2>
           <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Revenus encaissés</span>
-                <span className="text-success font-medium">{formatEur(totalRevenue)}</span>
+            {[
+              { label: "Revenus encaissés", value: totalRevenue, color: "bg-success", pct: 100 },
+              { label: "Charges fixes", value: fixedExpenses, color: "bg-info", pct: totalRevenue > 0 ? (fixedExpenses / totalRevenue) * 100 : 0 },
+              { label: "Charges directes", value: directExpenses, color: "bg-warning", pct: totalRevenue > 0 ? (directExpenses / totalRevenue) * 100 : 0 },
+            ].map((item) => (
+              <div key={item.label}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">{item.label}</span>
+                  <span className="font-medium">{formatEur(item.value)}</span>
+                </div>
+                <div className="h-3 bg-secondary rounded-full overflow-hidden">
+                  <div className={cn("h-full rounded-full", item.color)} style={{ width: `${item.pct}%` }} />
+                </div>
               </div>
-              <div className="h-3 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-success rounded-full" style={{ width: "100%" }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Charges fixes</span>
-                <span className="text-foreground font-medium">{formatEur(fixedExpenses)}</span>
-              </div>
-              <div className="h-3 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-info rounded-full" style={{ width: `${(fixedExpenses / totalRevenue) * 100}%` }} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Charges directes</span>
-                <span className="text-foreground font-medium">{formatEur(directExpenses)}</span>
-              </div>
-              <div className="h-3 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-warning rounded-full" style={{ width: `${(directExpenses / totalRevenue) * 100}%` }} />
-              </div>
-            </div>
-            <div className="border-t border-border pt-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Résultat net</span>
-                <span className={cn("font-bold", netMargin >= 0 ? "text-success" : "text-destructive")}>{formatEur(netMargin)}</span>
-              </div>
+            ))}
+            <div className="border-t border-border pt-2 flex justify-between text-xs">
+              <span className="text-muted-foreground">Résultat net</span>
+              <span className={cn("font-bold", netMargin >= 0 ? "text-success" : "text-destructive")}>{formatEur(netMargin)}</span>
             </div>
           </div>
         </div>
 
         <div className="glass-card rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Clock className="w-4 h-4" /> Temps productif vs non productif
-          </h2>
+          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Clock className="w-4 h-4" /> Temps productif</h2>
           <div className="flex items-center gap-6 mb-4">
             <div className="text-center">
               <p className="text-3xl font-bold text-success">{totalHoursDone}h</p>
@@ -133,20 +127,17 @@ export default function Profitability() {
               <p className="text-[10px] text-muted-foreground">Non productif</p>
             </div>
           </div>
-          <div className="h-4 bg-secondary rounded-full overflow-hidden flex">
+          <div className="h-4 bg-secondary rounded-full overflow-hidden">
             <div className="h-full bg-success" style={{ width: `${occupancyRate}%` }} />
           </div>
           <p className="text-[10px] text-muted-foreground mt-2">
-            Basé sur {instructors.filter((i) => i.status === "actif").length} formateurs × 8h × 22j/mois (estimation)
+            Basé sur {activeInstructors.length} formateurs × 8h × 22j/mois
           </p>
         </div>
       </div>
 
-      {/* Per instructor */}
       <div className="glass-card rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <UserCog className="w-4 h-4" /> Rentabilité par formateur
-        </h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><UserCog className="w-4 h-4" /> Par formateur</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -173,11 +164,8 @@ export default function Profitability() {
         </div>
       </div>
 
-      {/* Per vehicle */}
       <div className="glass-card rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Car className="w-4 h-4" /> Rentabilité par véhicule
-        </h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Car className="w-4 h-4" /> Par véhicule</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -192,10 +180,7 @@ export default function Profitability() {
             <tbody>
               {perVehicle.map((v) => (
                 <tr key={v.plate} className="border-b border-border/50 last:border-0">
-                  <td className="py-2.5">
-                    <p className="font-medium text-foreground">{v.name}</p>
-                    <p className="text-[10px] text-muted-foreground font-mono">{v.plate}</p>
-                  </td>
+                  <td className="py-2.5"><p className="font-medium text-foreground">{v.name}</p><p className="text-[10px] text-muted-foreground font-mono">{v.plate}</p></td>
                   <td className="py-2.5 text-right text-muted-foreground">{v.hours}h</td>
                   <td className="py-2.5 text-right text-foreground">{formatEur(v.revenue)}</td>
                   <td className="py-2.5 text-right text-muted-foreground hidden sm:table-cell">{formatEur(v.cost)}</td>
@@ -207,11 +192,8 @@ export default function Profitability() {
         </div>
       </div>
 
-      {/* Top students */}
       <div className="glass-card rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Users className="w-4 h-4" /> Top 5 élèves par revenu
-        </h2>
+        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Users className="w-4 h-4" /> Top 5 élèves</h2>
         <div className="space-y-2">
           {perStudent.map((s, i) => (
             <div key={s.name} className="flex items-center gap-3">
@@ -221,6 +203,7 @@ export default function Profitability() {
               <span className="text-sm font-semibold text-foreground">{formatEur(s.revenue)}</span>
             </div>
           ))}
+          {perStudent.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Aucune donnée</p>}
         </div>
       </div>
     </div>

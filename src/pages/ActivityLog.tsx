@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
-import { ClipboardList, Search } from "lucide-react";
+import { ClipboardList, Search, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { auditLogs, formatDateTime } from "@/data/mockData";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 
 const entityIcons: Record<string, string> = {
   lesson: "📅",
@@ -10,15 +12,36 @@ const entityIcons: Record<string, string> = {
   reminder: "🔔",
   student: "👤",
   vehicle: "🚗",
+  document: "📎",
+  import: "📥",
 };
 
+const formatDateTime = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
 export default function ActivityLog() {
+  const { organization } = useOrg();
   const [search, setSearch] = useState("");
 
-  const sorted = [...auditLogs].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-  const filtered = sorted.filter((l) =>
-    l.action.toLowerCase().includes(search.toLowerCase()) || l.details.toLowerCase().includes(search.toLowerCase()) || l.userName.toLowerCase().includes(search.toLowerCase())
+  const { data: logs = [], isLoading } = useQuery({
+    queryKey: ["audit_logs", organization?.id],
+    enabled: !!organization?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("organization_id", organization!.id)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const filtered = logs.filter((l) =>
+    l.action.toLowerCase().includes(search.toLowerCase()) || (l.details || "").toLowerCase().includes(search.toLowerCase()) || (l.user_name || "").toLowerCase().includes(search.toLowerCase())
   );
+
+  if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1000px] mx-auto space-y-5">
@@ -37,14 +60,12 @@ export default function ActivityLog() {
           <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/30 transition-colors">
             <span className="text-lg flex-shrink-0 mt-0.5">{entityIcons[log.entity] || "📌"}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-foreground">
-                <span className="font-medium">{log.action}</span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">{log.details}</p>
+              <p className="text-sm text-foreground"><span className="font-medium">{log.action}</span></p>
+              {log.details && <p className="text-xs text-muted-foreground mt-0.5">{log.details}</p>}
               <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
-                <span>{log.userName}</span>
+                <span>{log.user_name || "Système"}</span>
                 <span>·</span>
-                <span>{formatDateTime(log.timestamp)}</span>
+                <span>{formatDateTime(log.created_at)}</span>
               </div>
             </div>
           </div>
