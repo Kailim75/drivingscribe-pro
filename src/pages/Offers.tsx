@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Package, Loader2, ToggleLeft, ToggleRight, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, Package, Loader2, ToggleLeft, ToggleRight, MoreVertical, Pencil, Archive } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useOffers } from "@/hooks/useOffers";
@@ -10,11 +10,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function Offers() {
-  const { offers, isLoading, create, update, remove } = useOffers();
+  const { offers, isLoading, create, update, archive } = useOffers();
   const { log } = useAuditLog();
   const [showForm, setShowForm] = useState(false);
   const [editOffer, setEditOffer] = useState<any>(null);
-  const [deleteOffer, setDeleteOffer] = useState<any>(null);
+  const [archiveOffer, setArchiveOffer] = useState<any>(null);
   const [showInactive, setShowInactive] = useState(false);
 
   const filtered = showInactive ? offers : offers.filter((o) => o.active);
@@ -38,12 +38,12 @@ export default function Offers() {
     });
   };
 
-  const handleDelete = () => {
-    if (!deleteOffer) return;
-    remove.mutate(deleteOffer.id, {
+  const handleArchive = () => {
+    if (!archiveOffer) return;
+    archive.mutate(archiveOffer.id, {
       onSuccess: () => {
-        log({ action: "delete", entity: "offer", entity_id: deleteOffer.id, details: deleteOffer.name });
-        setDeleteOffer(null);
+        log({ action: "archive", entity: "offer", entity_id: archiveOffer.id, details: archiveOffer.name });
+        setArchiveOffer(null);
       },
     });
   };
@@ -110,8 +110,8 @@ export default function Offers() {
                         {offer.active ? <ToggleLeft className="w-4 h-4 mr-2" /> : <ToggleRight className="w-4 h-4 mr-2" />}
                         {offer.active ? "Désactiver" : "Activer"}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setDeleteOffer(offer)} className="text-destructive focus:text-destructive">
-                        <Trash2 className="w-4 h-4 mr-2" /> Supprimer
+                      <DropdownMenuItem onClick={() => setArchiveOffer(offer)} className="text-warning focus:text-warning">
+                        <Archive className="w-4 h-4 mr-2" /> Désactiver
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -140,18 +140,18 @@ export default function Offers() {
       <OfferFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
       <OfferFormDialog open={!!editOffer} onClose={() => setEditOffer(null)} onSubmit={handleEdit} loading={update.isPending} initial={editOffer} />
 
-      <AlertDialog open={!!deleteOffer} onOpenChange={(v) => !v && setDeleteOffer(null)}>
+      <AlertDialog open={!!archiveOffer} onOpenChange={(v) => !v && setArchiveOffer(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer l'offre</AlertDialogTitle>
+            <AlertDialogTitle>Désactiver l'offre</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer « {deleteOffer?.name} » ? Cette action est irréversible.
+              « {archiveOffer?.name} » sera désactivée et ne sera plus proposée. Vous pourrez la réactiver à tout moment.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Supprimer
+            <AlertDialogAction onClick={handleArchive}>
+              Désactiver
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

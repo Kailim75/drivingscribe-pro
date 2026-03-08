@@ -90,14 +90,14 @@ export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?
     onError: () => toast.error("Erreur lors de la mise à jour"),
   });
 
-  const remove = useMutation({
+  const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("lessons").delete().eq("id", id);
+      const { error } = await supabase.from("lessons").update({ status: "annule" as any }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["lessons"] }); toast.success("Séance supprimée"); },
-    onError: () => toast.error("Erreur lors de la suppression"),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["lessons"] }); toast.success("Séance annulée"); },
+    onError: () => toast.error("Erreur lors de l'annulation"),
   });
 
-  return { ...query, lessons: query.data ?? [], checkConflicts, create, update, updateStatus, remove };
+  return { ...query, lessons: query.data ?? [], checkConflicts, create, update, updateStatus, archive };
 }
