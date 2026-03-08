@@ -40,13 +40,14 @@ export function useInvoices() {
       lines: { description: string; quantity: number; unit_price: number; total_ht: number }[];
     }) => {
       const { lines, ...invoiceData } = input;
+      const insertData = {
+        ...invoiceData,
+        organization_id: orgId!,
+        remaining_amount: input.total_ttc,
+      } as any;
       const { data, error } = await supabase
         .from("invoices")
-        .insert({
-          ...invoiceData,
-          organization_id: orgId!,
-          remaining_amount: input.total_ttc,
-        })
+        .insert(insertData)
         .select()
         .single();
       if (error) throw error;
