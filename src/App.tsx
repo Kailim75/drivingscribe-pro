@@ -53,6 +53,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/connexion" element={<AuthPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/p/facture" element={<PublicInvoice />} />
       <Route path="/" element={<Navigate to="/tableau-de-bord" replace />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/tableau-de-bord" element={<Dashboard />} />
