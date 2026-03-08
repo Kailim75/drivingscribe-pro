@@ -1,16 +1,20 @@
 import { motion } from "framer-motion";
-import { Plus, Package, Loader2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Package, Loader2, ToggleLeft, ToggleRight, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useOffers } from "@/hooks/useOffers";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { offerTypeLabels, offerTypeColors, activityTypeLabels, formatEur } from "@/lib/labels";
 import OfferFormDialog from "@/components/offers/OfferFormDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function Offers() {
-  const { offers, isLoading, create, update } = useOffers();
+  const { offers, isLoading, create, update, remove } = useOffers();
   const { log } = useAuditLog();
   const [showForm, setShowForm] = useState(false);
+  const [editOffer, setEditOffer] = useState<any>(null);
+  const [deleteOffer, setDeleteOffer] = useState<any>(null);
   const [showInactive, setShowInactive] = useState(false);
 
   const filtered = showInactive ? offers : offers.filter((o) => o.active);
@@ -20,6 +24,26 @@ export default function Offers() {
       onSuccess: () => {
         setShowForm(false);
         log({ action: "create", entity: "offer", details: data.name });
+      },
+    });
+  };
+
+  const handleEdit = (data: any) => {
+    if (!editOffer) return;
+    update.mutate({ id: editOffer.id, ...data }, {
+      onSuccess: () => {
+        setEditOffer(null);
+        log({ action: "update", entity: "offer", entity_id: editOffer.id, details: data.name });
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    if (!deleteOffer) return;
+    remove.mutate(deleteOffer.id, {
+      onSuccess: () => {
+        log({ action: "delete", entity: "offer", entity_id: deleteOffer.id, details: deleteOffer.name });
+        setDeleteOffer(null);
       },
     });
   };
@@ -72,10 +96,25 @@ export default function Offers() {
                       <span className="text-xs text-muted-foreground">{activityTypeLabels[offer.activity_type] || offer.activity_type}</span>
                     </div>
                   </div>
-                  <button onClick={() => toggleActive(offer)}
-                    className="text-muted-foreground hover:text-foreground transition-colors" title={offer.active ? "Désactiver" : "Activer"}>
-                    {offer.active ? <ToggleRight className="w-5 h-5 text-primary" /> : <ToggleLeft className="w-5 h-5" />}
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditOffer(offer)}>
+                        <Pencil className="w-4 h-4 mr-2" /> Modifier
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => toggleActive(offer)}>
+                        {offer.active ? <ToggleLeft className="w-4 h-4 mr-2" /> : <ToggleRight className="w-4 h-4 mr-2" />}
+                        {offer.active ? "Désactiver" : "Activer"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setDeleteOffer(offer)} className="text-destructive focus:text-destructive">
+                        <Trash2 className="w-4 h-4 mr-2" /> Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
                 <div className="mt-3 pt-3 border-t border-border/50">
                   <div className="flex items-center justify-between">
@@ -99,6 +138,24 @@ export default function Offers() {
       </motion.div>
 
       <OfferFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
+      <OfferFormDialog open={!!editOffer} onClose={() => setEditOffer(null)} onSubmit={handleEdit} loading={update.isPending} initial={editOffer} />
+
+      <AlertDialog open={!!deleteOffer} onOpenChange={(v) => !v && setDeleteOffer(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer l'offre</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer « {deleteOffer?.name} » ? Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
