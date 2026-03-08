@@ -23,10 +23,10 @@ export async function seedDemoData(orgId: string, userId: string) {
 
   // --- VEHICLES ---
   const vehiclesData = [
-    { brand: "Peugeot", model: "208", plate: "AB-123-CD", category: "auto_ecole", monthly_cost: 450, status: "actif" as const },
-    { brand: "Renault", model: "Clio V", plate: "EF-456-GH", category: "auto_ecole", monthly_cost: 420, status: "actif" as const },
-    { brand: "Toyota", model: "Yaris", plate: "IJ-789-KL", category: "auto_ecole", monthly_cost: 380, status: "actif" as const },
-    { brand: "Mercedes", model: "Classe A", plate: "MN-012-OP", category: "vtc", monthly_cost: 650, status: "actif" as const },
+    { brand: "Peugeot", model: "208", plate: "AB-123-CD", category: "auto_ecole", monthly_cost: 450, status: "actif" as const, next_maintenance_date: daysFromNow(15), insurance_expiry: daysFromNow(120), technical_control_date: daysFromNow(200) },
+    { brand: "Renault", model: "Clio V", plate: "EF-456-GH", category: "auto_ecole", monthly_cost: 420, status: "actif" as const, next_maintenance_date: daysFromNow(45), insurance_expiry: daysFromNow(60), technical_control_date: daysFromNow(300) },
+    { brand: "Toyota", model: "Yaris", plate: "IJ-789-KL", category: "auto_ecole", monthly_cost: 380, status: "actif" as const, next_maintenance_date: daysAgo(5), insurance_expiry: daysFromNow(180), technical_control_date: daysFromNow(150) },
+    { brand: "Mercedes", model: "Classe A", plate: "MN-012-OP", category: "vtc", monthly_cost: 650, status: "actif" as const, next_maintenance_date: daysFromNow(90), insurance_expiry: daysFromNow(25), technical_control_date: daysFromNow(350) },
   ];
 
   const { data: vehicles } = await supabase
