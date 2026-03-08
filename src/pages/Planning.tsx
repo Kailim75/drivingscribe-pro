@@ -60,42 +60,42 @@ export default function Planning() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
+    <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Planning</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-3xl font-bold text-foreground">Planning</h1>
+          <p className="text-muted-foreground text-xs mt-0.5 truncate">
             {sortedLessons.length} séance{sortedLessons.length > 1 ? "s" : ""}
-            {view === "jour" && ` — ${selectedDate.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}`}
+            {view === "jour" && ` — ${selectedDate.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <div className="flex items-center bg-secondary rounded-lg p-0.5">
-            <button onClick={() => setView("jour")} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", view === "jour" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
-              <CalendarDays className="w-3.5 h-3.5 inline mr-1" />Jour
+            <button onClick={() => setView("jour")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "jour" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
+              <CalendarDays className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Jour</span>
             </button>
-            <button onClick={() => setView("liste")} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", view === "liste" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
-              <List className="w-3.5 h-3.5 inline mr-1" />Liste
+            <button onClick={() => setView("liste")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "liste" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
+              <List className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Liste</span>
             </button>
           </div>
-          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-            <Plus className="w-4 h-4" /> Séance
+          <button onClick={() => setShowForm(true)} className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity active:scale-95">
+            <Plus className="w-4 h-4" /><span className="hidden sm:inline">Séance</span>
           </button>
         </div>
       </div>
 
       {/* Date navigator */}
       {view === "jour" && (
-        <div className="flex items-center justify-between glass-card rounded-xl px-4 py-2.5">
-          <button onClick={() => navigate(-1)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground transition-colors">
-            <ChevronLeft className="w-4 h-4" />
+        <div className="flex items-center justify-between glass-card rounded-xl px-3 py-2">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-md hover:bg-secondary text-muted-foreground transition-colors active:bg-secondary">
+            <ChevronLeft className="w-5 h-5" />
           </button>
-          <button onClick={() => setSelectedDate(new Date())} className="text-sm font-medium text-primary hover:underline">
+          <button onClick={() => setSelectedDate(new Date())} className="text-sm font-medium text-primary hover:underline px-4 py-1">
             Aujourd'hui
           </button>
-          <button onClick={() => navigate(1)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground transition-colors">
-            <ChevronRight className="w-4 h-4" />
+          <button onClick={() => navigate(1)} className="p-2 rounded-md hover:bg-secondary text-muted-foreground transition-colors active:bg-secondary">
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       )}
@@ -114,32 +114,33 @@ export default function Planning() {
           sortedLessons.map((lesson: any) => {
             const Icon = statusIcons[lesson.status] || Clock;
             return (
-              <div key={lesson.id} className="glass-card rounded-xl p-4 hover:border-primary/20 transition-colors">
-                <div className="flex items-start gap-4">
-                  {/* Time */}
-                  <div className="w-16 flex-shrink-0 text-center">
+              <div key={lesson.id} className="glass-card rounded-xl p-3 sm:p-4 hover:border-primary/20 transition-colors active:bg-card/90">
+                {/* Mobile: stacked layout / Desktop: inline */}
+                <div className="flex items-start gap-3">
+                  {/* Time block */}
+                  <div className="w-12 sm:w-16 flex-shrink-0 text-center">
                     <p className="text-sm font-bold text-foreground">{lesson.start_time?.slice(0, 5)}</p>
                     <p className="text-[10px] text-muted-foreground">{lesson.end_time?.slice(0, 5)}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{lesson.duration_hours}h</p>
                   </div>
-                  <div className="w-px h-12 bg-border self-center flex-shrink-0" />
+                  <div className="w-px h-10 bg-border self-center flex-shrink-0" />
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium text-foreground">
+                      <p className="font-medium text-foreground text-sm truncate">
                         {lesson.students?.first_name} {lesson.students?.last_name}
                       </p>
-                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1", lessonStatusColors[lesson.status])}>
+                      <span className={cn("text-[10px] font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 flex-shrink-0", lessonStatusColors[lesson.status])}>
                         <Icon className="w-3 h-3" />{lessonStatusLabels[lesson.status]}
                       </span>
                     </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-muted-foreground">
-                      <span>🚗 {lesson.vehicles?.brand} {lesson.vehicles?.model}</span>
-                      <span>👤 {lesson.instructors?.first_name} {lesson.instructors?.last_name}</span>
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-muted-foreground">
+                      <span className="truncate">🚗 {lesson.vehicles?.brand} {lesson.vehicles?.model}</span>
+                      <span className="truncate">👤 {lesson.instructors?.first_name}</span>
                     </div>
                     {lesson.note && (
-                      <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-                        <MessageSquare className="w-3 h-3" /> {lesson.note}
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 truncate">
+                        <MessageSquare className="w-3 h-3 flex-shrink-0" /> {lesson.note}
                       </p>
                     )}
                     {view === "liste" && (
@@ -147,24 +148,22 @@ export default function Planning() {
                         {new Date(lesson.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
                       </p>
                     )}
-                  </div>
-                  {/* Quick actions */}
-                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    {/* Quick actions — inline on mobile for easy thumb access */}
                     {lesson.status === "prevu" && (
-                      <>
+                      <div className="flex items-center gap-1.5 mt-2">
                         <button onClick={() => handleStatusChange(lesson.id, "effectue")}
-                          className="text-[10px] px-2 py-1 rounded bg-success/10 text-success hover:bg-success/20 transition-colors font-medium">
+                          className="text-[11px] px-3 py-1.5 rounded-lg bg-success/10 text-success hover:bg-success/20 active:bg-success/30 transition-colors font-medium">
                           ✓ Effectué
                         </button>
                         <button onClick={() => handleStatusChange(lesson.id, "annule")}
-                          className="text-[10px] px-2 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors font-medium">
+                          className="text-[11px] px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 active:bg-destructive/30 transition-colors font-medium">
                           ✗ Annulé
                         </button>
                         <button onClick={() => handleStatusChange(lesson.id, "absent")}
-                          className="text-[10px] px-2 py-1 rounded bg-warning/10 text-warning hover:bg-warning/20 transition-colors font-medium">
+                          className="text-[11px] px-3 py-1.5 rounded-lg bg-warning/10 text-warning hover:bg-warning/20 active:bg-warning/30 transition-colors font-medium">
                           ⚠ Absent
                         </button>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
