@@ -114,10 +114,22 @@ export default function Instructors() {
                         {instructorStatusLabels[inst.status]}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground transition-colors">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditInstructor(inst)}>
+                            <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleArchive(inst)}>
+                            <Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Archiver"}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
