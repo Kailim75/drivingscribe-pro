@@ -70,7 +70,7 @@ export function useInvoices() {
 
   const update = useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; status?: string; paid_amount?: number; remaining_amount?: number; notes?: string }) => {
-      const { error } = await supabase.from("invoices").update(updates).eq("id", id);
+      const { error } = await supabase.from("invoices").update(updates as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_, input) => {

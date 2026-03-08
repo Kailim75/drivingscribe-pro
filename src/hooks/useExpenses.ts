@@ -36,7 +36,7 @@ export function useExpenses() {
     }) => {
       const { data, error } = await supabase
         .from("expenses")
-        .insert({ ...input, organization_id: orgId! })
+        .insert({ ...input, organization_id: orgId! } as any)
         .select()
         .single();
       if (error) throw error;

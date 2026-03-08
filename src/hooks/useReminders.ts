@@ -35,7 +35,7 @@ export function useReminders() {
     }) => {
       const { data, error } = await supabase
         .from("reminders")
-        .insert({ ...input, organization_id: orgId! })
+        .insert({ ...input, organization_id: orgId! } as any)
         .select()
         .single();
       if (error) throw error;
