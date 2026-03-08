@@ -960,12 +960,16 @@ export type Database = {
           category: string
           created_at: string
           id: string
+          insurance_expiry: string | null
+          last_maintenance_date: string | null
           model: string
           monthly_cost: number
+          next_maintenance_date: string | null
           notes: string
           organization_id: string
           plate: string
           status: Database["public"]["Enums"]["vehicle_status"]
+          technical_control_date: string | null
           updated_at: string
         }
         Insert: {
@@ -973,12 +977,16 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          insurance_expiry?: string | null
+          last_maintenance_date?: string | null
           model?: string
           monthly_cost?: number
+          next_maintenance_date?: string | null
           notes?: string
           organization_id: string
           plate: string
           status?: Database["public"]["Enums"]["vehicle_status"]
+          technical_control_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -986,12 +994,16 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          insurance_expiry?: string | null
+          last_maintenance_date?: string | null
           model?: string
           monthly_cost?: number
+          next_maintenance_date?: string | null
           notes?: string
           organization_id?: string
           plate?: string
           status?: Database["public"]["Enums"]["vehicle_status"]
+          technical_control_date?: string | null
           updated_at?: string
         }
         Relationships: [
