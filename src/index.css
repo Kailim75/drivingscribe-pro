@@ -2,64 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @layer base {
   :root {
-    /* Forest green premium palette */
-    --background: 150 8% 97%;
-    --foreground: 150 20% 12%;
+    /* Premium forest palette — deeper, richer */
+    --background: 140 6% 96%;
+    --foreground: 160 25% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 150 20% 12%;
+    --card-foreground: 160 25% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 150 20% 12%;
+    --popover-foreground: 160 25% 10%;
 
-    --primary: 152 45% 28%;
+    --primary: 155 50% 22%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 150 8% 93%;
-    --secondary-foreground: 150 15% 25%;
+    --secondary: 150 6% 91%;
+    --secondary-foreground: 150 18% 22%;
 
-    --muted: 150 6% 93%;
-    --muted-foreground: 150 8% 46%;
+    --muted: 150 5% 91%;
+    --muted-foreground: 150 8% 42%;
 
-    --accent: 150 10% 90%;
-    --accent-foreground: 150 20% 12%;
+    --accent: 150 8% 88%;
+    --accent-foreground: 160 25% 10%;
 
-    --destructive: 0 65% 48%;
+    --destructive: 0 68% 46%;
     --destructive-foreground: 0 0% 98%;
 
-    --success: 152 55% 38%;
+    --success: 155 55% 32%;
     --success-foreground: 0 0% 98%;
 
-    --warning: 38 80% 50%;
+    --warning: 38 82% 48%;
     --warning-foreground: 38 90% 10%;
 
-    --info: 210 65% 48%;
+    --info: 210 65% 45%;
     --info-foreground: 0 0% 98%;
 
-    --border: 150 8% 88%;
-    --input: 150 8% 88%;
-    --ring: 152 45% 28%;
+    --border: 150 6% 85%;
+    --input: 150 6% 85%;
+    --ring: 155 50% 22%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 152 25% 16%;
+    --sidebar-background: 155 30% 13%;
     --sidebar-foreground: 150 10% 70%;
     --sidebar-primary: 150 40% 55%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 152 20% 22%;
+    --sidebar-accent: 155 22% 19%;
     --sidebar-accent-foreground: 150 10% 92%;
-    --sidebar-border: 152 20% 20%;
-    --sidebar-ring: 152 45% 28%;
+    --sidebar-border: 155 22% 18%;
+    --sidebar-ring: 155 50% 22%;
 
-    --chart-1: 152 45% 28%;
-    --chart-2: 152 55% 38%;
-    --chart-3: 210 65% 48%;
-    --chart-4: 0 65% 48%;
-    --chart-5: 38 80% 50%;
+    --chart-1: 155 50% 22%;
+    --chart-2: 155 55% 32%;
+    --chart-3: 210 65% 45%;
+    --chart-4: 0 68% 46%;
+    --chart-5: 38 82% 48%;
   }
 }
 
@@ -73,7 +73,6 @@
     font-feature-settings: "cv11", "ss01", "ss03";
   }
 
-  /* Scrollbar styling */
   ::-webkit-scrollbar {
     width: 5px;
     height: 5px;
@@ -95,12 +94,15 @@
     @apply bg-card border border-border shadow-sm;
   }
   .glow-primary {
-    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.15);
+    box-shadow: 0 0 28px -6px hsl(var(--primary) / 0.22), 0 4px 14px -4px hsl(var(--primary) / 0.12);
   }
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[hsl(152,45%,28%)] to-[hsl(152,55%,38%)];
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(155 50% 22%), hsl(155 55% 35%), hsl(150 40% 28%));
   }
-  /* Page header utility */
+  .section-dark {
+    background: linear-gradient(180deg, hsl(155 30% 13%) 0%, hsl(155 28% 10%) 100%);
+  }
   .page-header {
     @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-1;
   }
@@ -110,7 +112,6 @@
   .page-subtitle {
     @apply text-muted-foreground text-sm mt-0.5;
   }
-  /* Table improvements */
   .data-table thead tr {
     @apply bg-muted/50;
   }
@@ -123,11 +124,9 @@
   .data-table tbody tr {
     @apply border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors;
   }
-  /* Badge utility */
   .status-badge {
     @apply text-[11px] font-medium px-2 py-0.5 rounded-md;
   }
-  /* Primary CTA button */
   .btn-primary {
     @apply inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm;
   }
