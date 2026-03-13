@@ -60,6 +60,7 @@ function AppRoutes() {
       <Route path="/p/facture" element={<PublicInvoice />} />
       <Route path="/" element={<LandingPage />} />
       <Route path="/admin" element={<SuperAdminPage />} />
+      <Route path="/suspendu" element={<SuspendedPage />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/tableau-de-bord" element={<Dashboard />} />
         <Route path="/eleves" element={<Students />} />
