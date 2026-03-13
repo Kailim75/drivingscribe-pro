@@ -22,6 +22,7 @@ const navGroups: NavGroup[] = [
     { label: "Formateurs", path: "/formateurs", icon: UserCog, roles: ["owner", "admin"] },
     { label: "Véhicules", path: "/vehicules", icon: Car, roles: ["owner", "admin"] },
     { label: "Planning", path: "/planning", icon: CalendarDays },
+    { label: "Mon portail", path: "/portail-formateur", icon: GraduationCap, roles: ["instructor"] },
   ]},
   { title: "COMMERCIAL", items: [
     { label: "Offres", path: "/offres", icon: Package, roles: ["owner", "admin"] },
