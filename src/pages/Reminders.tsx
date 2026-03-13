@@ -82,7 +82,7 @@ export default function Reminders() {
       </div>
 
       <div className="glass-card rounded-xl p-4 border-dashed">
-        <p className="text-xs text-muted-foreground text-center">📧 Email disponible · 📱 SMS et WhatsApp prévus en v2</p>
+        <p className="text-xs text-muted-foreground text-center">📧 Email disponible · 📱 WhatsApp disponible (lien direct)</p>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
