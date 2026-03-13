@@ -546,7 +546,7 @@ function AudienceSection() {
   const profiles = [
     { icon: UserCheck, title: "Formateur indépendant", desc: "Organisez vos séances, facturez proprement, suivez vos revenus sans comptable.", tag: "Solo" },
     { icon: Users, title: "Auto-école / Petit centre", desc: "Gérez formateurs et véhicules, gardez la visibilité sur chaque indicateur clé.", tag: "Équipe" },
-    { icon: BarChart3, title: "Centre Taxi / VTC / VMDTR", desc: "Multi-activités, multi-sites : DriveFlow s'adapte à votre échelle.", tag: "Structure" },
+    { icon: BarChart3, title: "Centre Taxi / VTC / VMDTR", desc: "Multi-activités, multi-sites : Drivflow s'adapte à votre échelle.", tag: "Structure" },
   ];
   return (
     <section className="py-20 md:py-24 bg-muted/30">
