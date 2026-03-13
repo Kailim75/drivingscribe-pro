@@ -246,6 +246,61 @@ export default function Planning() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* AI Suggestion Dialog */}
+      <Dialog open={showAiSuggest} onOpenChange={setShowAiSuggest}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" /> Suggestion IA de créneaux
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              L'IA analyse les disponibilités des formateurs et véhicules pour le {selectedDate.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} et suggère les meilleurs créneaux.
+            </p>
+            <div>
+              <label className="text-sm font-medium text-foreground">Élève</label>
+              <select value={aiStudent} onChange={(e) => setAiStudent(e.target.value)} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                <option value="">Sélectionner un élève</option>
+                {students.filter(s => s.status === "actif").map(s => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground">Durée</label>
+              <select value={aiDuration} onChange={(e) => setAiDuration(e.target.value)} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                <option value="1">1 heure</option>
+                <option value="1.5">1h30</option>
+                <option value="2">2 heures</option>
+              </select>
+            </div>
+            <button onClick={handleAiSuggest} disabled={aiLoading || !aiStudent} className="w-full btn-primary justify-center">
+              {aiLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyse en cours...</> : <><Sparkles className="w-4 h-4" /> Trouver les meilleurs créneaux</>}
+            </button>
+
+            {aiSuggestions.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-foreground">Créneaux suggérés :</p>
+                {aiSuggestions.map((s: any, i: number) => (
+                  <div key={i} className="p-3 rounded-lg border border-border bg-muted/30 hover:border-primary/30 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{s.start_time} — {s.end_time}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">👤 {s.instructor_name}</p>
+                        <p className="text-xs text-muted-foreground">🚗 {s.vehicle_name}</p>
+                      </div>
+                      <button onClick={() => handleUseSuggestion(s)} className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium">
+                        Réserver
+                      </button>
+                    </div>
+                    {s.reason && <p className="text-[10px] text-muted-foreground mt-1.5 italic">💡 {s.reason}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
