@@ -83,6 +83,7 @@ serve(async (req) => {
 
     const instructorsStr = (instructors || []).map(i => `${i.id}: ${i.first_name} ${i.last_name}`).join("\n");
     const vehiclesStr = (vehicles || []).map(v => `${v.id}: ${v.brand} ${v.model} (${v.plate})`).join("\n");
+    const availStr = (availabilities || []).map(a => `Instructor ${a.instructor_id}: ${a.start_time}-${a.end_time}`).join("\n");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
