@@ -46,7 +46,7 @@ function Nav({ onCTA }: { onCTA: () => void }) {
           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20">
             <span className="text-sm font-extrabold text-primary-foreground tracking-tight">DF</span>
           </div>
-          <span className="font-bold text-foreground text-lg tracking-tight">DriveFlow</span>
+          <span className="font-bold text-foreground text-lg tracking-tight">Drivflow</span>
         </a>
         <div className="hidden md:flex items-center gap-7">
           {links.map((l) => (
@@ -257,7 +257,7 @@ function HeroProduct() {
             <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
           </div>
           <div className="flex-1 flex justify-center">
-            <div className="px-4 py-1 rounded-lg bg-background/80 border border-border/30 text-[11px] text-muted-foreground font-mono">app.driveflow.fr</div>
+            <div className="px-4 py-1 rounded-lg bg-background/80 border border-border/30 text-[11px] text-muted-foreground font-mono">app.drivflow.fr</div>
           </div>
         </div>
 
@@ -297,8 +297,8 @@ function Hero({ onCTA }: { onCTA: () => void }) {
           {/* Left — copy */}
           <div>
             <motion.div {...fade()} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/20 mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-semibold text-primary tracking-wide">Bêta fondatrice — Places limitées</span>
+              <Zap className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-semibold text-primary tracking-wide">Boosté par l'IA — Bêta fondatrice</span>
             </motion.div>
 
             <motion.h1 {...fade(0.05)} className="text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl font-extrabold tracking-tight leading-[1.1] text-foreground">
@@ -377,7 +377,7 @@ function BenefitsSection() {
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <motion.h2 {...fade()} className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
-            4 raisons de passer à DriveFlow
+            4 raisons de passer à Drivflow
           </motion.h2>
           <motion.p {...fade(0.05)} className="mt-3 text-muted-foreground">Des bénéfices concrets, mesurables dès le premier mois.</motion.p>
         </div>
@@ -523,7 +523,7 @@ function DifferentiationSection() {
           <motion.h2 {...fade(0.04)} className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
             Plus qu'un agenda : un vrai outil de pilotage
           </motion.h2>
-          <motion.p {...fade(0.08)} className="mt-3 text-muted-foreground">DriveFlow vous donne les indicateurs pour prendre les bonnes décisions business.</motion.p>
+          <motion.p {...fade(0.08)} className="mt-3 text-muted-foreground">Drivflow vous donne les indicateurs pour prendre les bonnes décisions business.</motion.p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-5xl mx-auto">
           {items.map((it, i) => (
@@ -546,7 +546,7 @@ function AudienceSection() {
   const profiles = [
     { icon: UserCheck, title: "Formateur indépendant", desc: "Organisez vos séances, facturez proprement, suivez vos revenus sans comptable.", tag: "Solo" },
     { icon: Users, title: "Auto-école / Petit centre", desc: "Gérez formateurs et véhicules, gardez la visibilité sur chaque indicateur clé.", tag: "Équipe" },
-    { icon: BarChart3, title: "Centre Taxi / VTC / VMDTR", desc: "Multi-activités, multi-sites : DriveFlow s'adapte à votre échelle.", tag: "Structure" },
+    { icon: BarChart3, title: "Centre Taxi / VTC / VMDTR", desc: "Multi-activités, multi-sites : Drivflow s'adapte à votre échelle.", tag: "Structure" },
   ];
   return (
     <section className="py-20 md:py-24 bg-muted/30">
@@ -555,7 +555,7 @@ function AudienceSection() {
           <motion.h2 {...fade()} className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
             Conçu pour les professionnels de la conduite
           </motion.h2>
-          <motion.p {...fade(0.05)} className="mt-3 text-muted-foreground">Quel que soit votre profil, DriveFlow s'adapte à vos besoins.</motion.p>
+          <motion.p {...fade(0.05)} className="mt-3 text-muted-foreground">Quel que soit votre profil, Drivflow s'adapte à vos besoins.</motion.p>
         </div>
         <div className="grid sm:grid-cols-3 gap-5 sm:gap-6 max-w-4xl mx-auto">
           {profiles.map((p, i) => (
@@ -683,10 +683,10 @@ function CredibilitySection() {
 function FAQSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const faqs = [
-    { q: "À qui s'adresse DriveFlow ?", a: "Aux formateurs indépendants, auto-écoles, centres Taxi, VTC et VMDTR, ainsi qu'aux structures mixtes multi-activités." },
-    { q: "L'application est-elle utilisable sur mobile ?", a: "Oui. DriveFlow est conçu mobile-first pour être utilisé rapidement entre deux séances, sur smartphone ou tablette." },
+    { q: "À qui s'adresse Drivflow ?", a: "Aux formateurs indépendants, auto-écoles, centres Taxi, VTC et VMDTR, ainsi qu'aux structures mixtes multi-activités." },
+    { q: "L'application est-elle utilisable sur mobile ?", a: "Oui. Drivflow est conçu mobile-first pour être utilisé rapidement entre deux séances, sur smartphone ou tablette." },
     { q: "Peut-on gérer plusieurs formateurs et véhicules ?", a: "Oui. Selon votre plan, vous gérez plusieurs formateurs, véhicules et activités. Le planning détecte automatiquement les conflits." },
-    { q: "Comment fonctionne le suivi des paiements ?", a: "DriveFlow suit les paiements facture par facture, détecte les impayés et les paiements partiels, et vous alerte en cas de retard." },
+    { q: "Comment fonctionne le suivi des paiements ?", a: "Drivflow suit les paiements facture par facture, détecte les impayés et les paiements partiels, et vous alerte en cas de retard." },
     { q: "Comment est calculée la rentabilité ?", a: "À partir du CA généré par élève, formateur ou véhicule, comparé aux coûts réels (heures, charges véhicule, etc.)." },
     { q: "Comment demander une démo ?", a: "Cliquez sur « Demander une démo » et remplissez le formulaire. Nous vous recontacterons sous 48 heures." },
   ];
@@ -729,7 +729,7 @@ function FinalCTA({ onCTA }: { onCTA: () => void }) {
           Prêt à piloter votre activité avec plus de clarté ?
         </motion.h2>
         <motion.p {...fade(0.06)} className="mt-5 text-primary-foreground/60 leading-relaxed max-w-xl mx-auto text-base sm:text-lg">
-          Demandez une démonstration personnalisée. Découvrez en 15 minutes comment DriveFlow simplifie votre quotidien.
+          Demandez une démonstration personnalisée. Découvrez en 15 minutes comment Drivflow simplifie votre quotidien.
         </motion.p>
         <motion.div {...fade(0.12)} className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button size="lg" onClick={onCTA} className="text-base px-10 h-13 font-semibold bg-primary-foreground text-primary hover:bg-primary-foreground/90 shadow-xl">
@@ -754,8 +754,8 @@ function Footer() {
             <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-sm">
               <span className="text-xs font-extrabold text-primary-foreground">DF</span>
             </div>
-            <span className="font-bold text-foreground">DriveFlow</span>
-            <span className="text-xs text-muted-foreground/50 ml-1 font-medium">Gestion & Rentabilité</span>
+            <span className="font-bold text-foreground">Drivflow</span>
+            <span className="text-xs text-muted-foreground/50 ml-1 font-medium">Gestion & Rentabilité · Boosté par l'IA</span>
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground font-medium">
             <a href="#fonctionnalites" className="hover:text-foreground transition-colors">Fonctionnalités</a>
@@ -765,7 +765,7 @@ function Footer() {
           </div>
         </div>
         <div className="mt-8 text-center text-xs text-muted-foreground/40 font-medium">
-          © {new Date().getFullYear()} DriveFlow. Tous droits réservés.
+          © {new Date().getFullYear()} Drivflow. Tous droits réservés.
         </div>
       </div>
     </footer>
@@ -842,7 +842,7 @@ function BetaFormDialog({ open, onClose }: { open: boolean; onClose: () => void 
       <motion.div initial={{ opacity: 0, scale: 0.96, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.2 }} className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-border/50 bg-card shadow-2xl">
         <div className="sticky top-0 bg-card/98 backdrop-blur-xl px-6 py-5 border-b border-border/30 flex items-center justify-between z-10">
           <div>
-            <h2 className="text-lg font-extrabold text-foreground">Rejoindre la bêta DriveFlow</h2>
+            <h2 className="text-lg font-extrabold text-foreground">Rejoindre la bêta Drivflow</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Nous vous recontacterons sous 48h.</p>
           </div>
           <button onClick={onClose} className="p-2.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors" aria-label="Fermer"><X className="w-4 h-4" /></button>

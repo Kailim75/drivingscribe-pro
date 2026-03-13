@@ -72,7 +72,7 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
           {!collapsed && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden">
               <span className="font-semibold text-sidebar-accent-foreground text-sm block truncate">
-                {organization?.name || "DriveFlow"}
+                {organization?.name || "Drivflow"}
               </span>
               <span className="text-[10px] text-sidebar-foreground/60 capitalize">{organization?.mode || ""}</span>
             </motion.div>
