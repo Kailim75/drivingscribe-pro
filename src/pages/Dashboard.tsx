@@ -12,6 +12,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { lessonStatusLabels, lessonStatusColors, formatEur } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import DashboardCharts from "@/components/dashboard/DashboardCharts";
 
 type Period = "today" | "week" | "month" | "quarter";
 
@@ -286,6 +287,14 @@ export default function Dashboard() {
           </motion.div>
         ))}
       </motion.div>
+
+      {/* Charts */}
+      <DashboardCharts
+        payments={periodPayments}
+        expenses={periodExpenses}
+        lessons={periodLessons}
+        period={period}
+      />
 
       <div className="grid md:grid-cols-2 gap-4">
         {/* Today's lessons */}
