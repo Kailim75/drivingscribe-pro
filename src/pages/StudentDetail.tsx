@@ -1,13 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Phone, Mail, MapPin, Edit2, Loader2, Clock, CalendarDays, MessageCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Edit2, Loader2, Clock, CalendarDays, MessageCircle, AlertTriangle, Star, Target } from "lucide-react";
 import { useState } from "react";
 import { useStudents } from "@/hooks/useStudents";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { useLessons } from "@/hooks/useLessons";
+import { useSkillCategories, useSkillEvaluations } from "@/hooks/useSkills";
 import { studentStatusLabels, studentStatusColors, activityTypeLabels, lessonStatusLabels, lessonStatusColors, offerTypeLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import StudentFormDialog from "@/components/students/StudentFormDialog";
+import SkillRadarChart from "@/components/students/SkillRadarChart";
+import SkillEvaluationDialog from "@/components/students/SkillEvaluationDialog";
 import { Button } from "@/components/ui/button";
 
 export default function StudentDetail() {
