@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Package, Loader2, ToggleLeft, ToggleRight, MoreVertical, Pencil, Archive } from "lucide-react";
+import { Plus, Package, Loader2, ToggleLeft, ToggleRight, MoreVertical, Pencil, Archive, Copy } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useOffers } from "@/hooks/useOffers";
@@ -50,6 +50,22 @@ export default function Offers() {
 
   const toggleActive = (offer: any) => {
     update.mutate({ id: offer.id, active: !offer.active });
+  };
+
+  const handleDuplicate = (offer: any) => {
+    create.mutate({
+      name: `${offer.name} (copie)`,
+      type: offer.type,
+      price: Number(offer.price),
+      hours: offer.hours,
+      tva_rate: Number(offer.tva_rate),
+      deposit_percent: Number(offer.deposit_percent),
+      cancellation_policy: offer.cancellation_policy,
+      activity_type: offer.activity_type,
+      active: true,
+    }, {
+      onSuccess: () => log({ action: "create", entity: "offer", details: `Duplication de ${offer.name}` }),
+    });
   };
 
   if (isLoading) {
@@ -104,6 +120,9 @@ export default function Offers() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => setEditOffer(offer)}>
                         <Pencil className="w-4 h-4 mr-2" /> Modifier
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDuplicate(offer)}>
+                        <Copy className="w-4 h-4 mr-2" /> Dupliquer
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => toggleActive(offer)}>
                         {offer.active ? <ToggleLeft className="w-4 h-4 mr-2" /> : <ToggleRight className="w-4 h-4 mr-2" />}
