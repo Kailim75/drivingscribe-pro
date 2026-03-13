@@ -23,6 +23,7 @@ export default function Students() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
+  const [showForm, setShowForm] = useState(false);
   const [activityFilter, setActivityFilter] = useState("tous");
   const [editStudent, setEditStudent] = useState<any>(null);
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
