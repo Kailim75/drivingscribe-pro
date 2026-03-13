@@ -35,7 +35,7 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
-  const { organization, loading: orgLoading } = useOrg();
+  const { organization, loading: orgLoading, userSuspended, orgSuspended } = useOrg();
 
   if (authLoading || orgLoading) {
     return (
@@ -47,6 +47,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) return <Navigate to="/connexion" replace />;
   if (!organization) return <Navigate to="/onboarding" replace />;
+  if (userSuspended || orgSuspended) return <Navigate to="/suspendu" replace />;
 
   return <>{children}</>;
 }
