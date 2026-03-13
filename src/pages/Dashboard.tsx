@@ -288,6 +288,14 @@ export default function Dashboard() {
         ))}
       </motion.div>
 
+      {/* Charts */}
+      <DashboardCharts
+        payments={periodPayments}
+        expenses={periodExpenses}
+        lessons={periodLessons}
+        period={period}
+      />
+
       <div className="grid md:grid-cols-2 gap-4">
         {/* Today's lessons */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-xl">
