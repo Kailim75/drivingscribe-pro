@@ -143,6 +143,9 @@ export default function Planning() {
               <List className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Liste</span>
             </button>
           </div>
+          <button onClick={() => { setAiSuggestions([]); setShowAiSuggest(true); }} className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/15 transition-colors font-medium">
+            <Sparkles className="w-3.5 h-3.5" /><span className="hidden sm:inline">IA</span>
+          </button>
           <button onClick={() => setShowForm(true)} className="btn-primary">
             <Plus className="w-4 h-4" /><span className="hidden sm:inline">Séance</span>
           </button>
