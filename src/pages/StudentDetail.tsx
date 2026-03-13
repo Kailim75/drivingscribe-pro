@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Phone, Mail, MapPin, Edit2, Loader2, Clock, CalendarDays, MessageCircle } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Edit2, Loader2, Clock, CalendarDays, MessageCircle, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { useStudents } from "@/hooks/useStudents";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
@@ -97,6 +97,14 @@ export default function StudentDetail() {
           </div>
         )}
       </motion.div>
+
+      {/* Alert low hours */}
+      {totalHoursBought > 0 && totalHoursRemaining <= 3 && (
+        <div className={cn("flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium", totalHoursRemaining <= 0 ? "bg-destructive/8 text-destructive border border-destructive/15" : "bg-warning/8 text-warning border border-warning/15")}>
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          {totalHoursRemaining <= 0 ? "Forfait épuisé — Proposez un renouvellement de formule" : `Plus que ${totalHoursRemaining}h restantes — Pensez à proposer un renouvellement`}
+        </div>
+      )}
 
       {/* Hours summary */}
       <div className="grid grid-cols-3 gap-3">
