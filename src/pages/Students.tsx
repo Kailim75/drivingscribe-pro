@@ -31,7 +31,7 @@ export default function Students() {
 
   const filtered = students.filter((s) => {
     const matchSearch = `${s.first_name} ${s.last_name} ${s.email}`.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "tous" || s.status === statusFilter;
+    const matchStatus = statusFilter === "tous" ? s.status !== "archive" : s.status === statusFilter;
     const matchActivity = activityFilter === "tous" || s.activity_type === activityFilter;
     return matchSearch && matchStatus && matchActivity;
   });

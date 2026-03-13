@@ -45,7 +45,7 @@ export default function Vehicles() {
 
   const filtered = vehicles.filter((v) => {
     const matchSearch = `${v.brand} ${v.model} ${v.plate}`.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "tous" || v.status === statusFilter;
+    const matchStatus = statusFilter === "tous" ? v.status !== "archive" : v.status === statusFilter;
     return matchSearch && matchStatus;
   });
 

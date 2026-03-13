@@ -17,13 +17,16 @@ export default function Instructors() {
   const { instructors, isLoading, create, update } = useInstructors();
   const { log } = useAuditLog();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("tous");
   const [showForm, setShowForm] = useState(false);
   const [editInstructor, setEditInstructor] = useState<any>(null);
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
 
-  const filtered = instructors.filter((i) =>
-    `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = instructors.filter((i) => {
+    const matchSearch = `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "tous" ? i.status !== "archive" : i.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
   const handleCreate = (data: any) => {
     create.mutate(data, { onSuccess: () => { setShowForm(false); log({ action: "create", entity: "instructor", details: `${data.first_name} ${data.last_name}` }); } });
@@ -59,10 +62,19 @@ export default function Instructors() {
         </button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un formateur..."
-          className="w-full bg-card text-foreground text-sm pl-9 pr-4 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground transition-colors" />
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un formateur..."
+            className="w-full bg-card text-foreground text-sm pl-9 pr-4 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground transition-colors" />
+        </div>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="tous">Tous les statuts</option>
+          <option value="actif">Actif</option>
+          <option value="inactif">Inactif</option>
+          <option value="archive">Archivé</option>
+        </select>
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
