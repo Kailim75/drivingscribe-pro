@@ -8,6 +8,10 @@ import { instructorStatusLabels, instructorStatusColors, activityTypeLabels, for
 import InstructorFormDialog from "@/components/instructors/InstructorFormDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Instructors() {
   const { instructors, isLoading, create, update } = useInstructors();
