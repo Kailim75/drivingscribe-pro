@@ -22,6 +22,7 @@ export default function Instructors() {
   const [showForm, setShowForm] = useState(false);
   const [editInstructor, setEditInstructor] = useState<any>(null);
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
+  const [availabilityInstructor, setAvailabilityInstructor] = useState<any>(null);
 
   const filtered = instructors.filter((i) => {
     const matchSearch = `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase());
