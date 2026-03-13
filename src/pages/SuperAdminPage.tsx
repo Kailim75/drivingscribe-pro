@@ -412,7 +412,7 @@ export default function SuperAdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {(stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).map((org) => (
+                {(stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).filter(o => !orgSearch || o.name.toLowerCase().includes(orgSearch.toLowerCase())).map((org) => (
                   <tr key={org.id} className={`border-b border-border/50 transition-colors ${org.suspended ? "bg-destructive/5" : "hover:bg-accent/30"}`}>
                     <td className="py-2.5 font-medium text-foreground">{org.name}</td>
                     <td className="py-2.5">
