@@ -224,6 +224,51 @@ export type Database = {
           },
         ]
       }
+      instructor_availabilities: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          instructor_id: string
+          organization_id: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          instructor_id: string
+          organization_id: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          instructor_id?: string
+          organization_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_availabilities_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instructor_availabilities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instructors: {
         Row: {
           created_at: string
@@ -492,6 +537,47 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_settings: {
+        Row: {
+          auto_reminder_enabled: boolean
+          created_at: string
+          id: string
+          notify_instructor_on_change: boolean
+          notify_student_on_change: boolean
+          organization_id: string
+          reminder_before_hours: number
+          updated_at: string
+        }
+        Insert: {
+          auto_reminder_enabled?: boolean
+          created_at?: string
+          id?: string
+          notify_instructor_on_change?: boolean
+          notify_student_on_change?: boolean
+          organization_id: string
+          reminder_before_hours?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_reminder_enabled?: boolean
+          created_at?: string
+          id?: string
+          notify_instructor_on_change?: boolean
+          notify_student_on_change?: boolean
+          organization_id?: string
+          reminder_before_hours?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -816,6 +902,113 @@ export type Database = {
           },
           {
             foreignKeyName: "reminders_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_categories_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_evaluations: {
+        Row: {
+          category_id: string
+          created_at: string
+          evaluated_at: string
+          id: string
+          instructor_id: string | null
+          lesson_id: string | null
+          note: string
+          organization_id: string
+          score: number
+          student_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          evaluated_at?: string
+          id?: string
+          instructor_id?: string | null
+          lesson_id?: string | null
+          note?: string
+          organization_id: string
+          score: number
+          student_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          evaluated_at?: string
+          id?: string
+          instructor_id?: string | null
+          lesson_id?: string | null
+          note?: string
+          organization_id?: string
+          score?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_evaluations_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "skill_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skill_evaluations_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "instructors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skill_evaluations_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skill_evaluations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skill_evaluations_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
