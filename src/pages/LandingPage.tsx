@@ -754,8 +754,8 @@ function Footer() {
             <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-sm">
               <span className="text-xs font-extrabold text-primary-foreground">DF</span>
             </div>
-            <span className="font-bold text-foreground">DriveFlow</span>
-            <span className="text-xs text-muted-foreground/50 ml-1 font-medium">Gestion & Rentabilité</span>
+            <span className="font-bold text-foreground">Drivflow</span>
+            <span className="text-xs text-muted-foreground/50 ml-1 font-medium">Gestion & Rentabilité · Boosté par l'IA</span>
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground font-medium">
             <a href="#fonctionnalites" className="hover:text-foreground transition-colors">Fonctionnalités</a>
