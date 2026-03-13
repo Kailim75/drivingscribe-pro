@@ -13,6 +13,8 @@ interface OrgContextType {
   hasRole: (role: AppRole) => boolean;
   hasAnyRole: (...roles: AppRole[]) => boolean;
   isOwnerOrAdmin: boolean;
+  userSuspended: boolean;
+  orgSuspended: boolean;
   refreshOrg: () => Promise<void>;
 }
 
@@ -22,12 +24,14 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userRoles, setUserRoles] = useState<AppRole[]>([]);
+  const [userSuspended, setUserSuspended] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchOrg = async () => {
     if (!user) {
       setOrganization(null);
       setUserRoles([]);
+      setUserSuspended(false);
       setLoading(false);
       return;
     }
@@ -44,16 +48,19 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         const orgId = members[0].organization_id;
 
         // Fetch org and roles in parallel
-        const [orgResult, rolesResult] = await Promise.all([
+        const [orgResult, rolesResult, profileResult] = await Promise.all([
           supabase.from("organizations").select("*").eq("id", orgId).single(),
           supabase.from("user_roles").select("role").eq("user_id", user.id).eq("organization_id", orgId),
+          supabase.from("profiles").select("suspended").eq("user_id", user.id).single(),
         ]);
 
         setOrganization(orgResult.data);
         setUserRoles((rolesResult.data || []).map((r) => r.role));
+        setUserSuspended(!!(profileResult.data as any)?.suspended);
       } else {
         setOrganization(null);
         setUserRoles([]);
+        setUserSuspended(false);
       }
     } catch (err) {
       console.error("Error fetching organization:", err);
@@ -69,9 +76,10 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const hasRole = (role: AppRole) => userRoles.includes(role);
   const hasAnyRole = (...roles: AppRole[]) => roles.some((r) => userRoles.includes(r));
   const isOwnerOrAdmin = hasAnyRole("owner", "admin");
+  const orgSuspended = !!(organization as any)?.suspended;
 
   return (
-    <OrgContext.Provider value={{ organization, userRoles, loading, hasRole, hasAnyRole, isOwnerOrAdmin, refreshOrg: fetchOrg }}>
+    <OrgContext.Provider value={{ organization, userRoles, loading, hasRole, hasAnyRole, isOwnerOrAdmin, userSuspended, orgSuspended, refreshOrg: fetchOrg }}>
       {children}
     </OrgContext.Provider>
   );

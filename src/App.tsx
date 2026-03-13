@@ -27,6 +27,7 @@ import OnboardingPage from "@/pages/OnboardingPage";
 import PublicInvoice from "@/pages/PublicInvoice";
 import LandingPage from "@/pages/LandingPage";
 import SuperAdminPage from "@/pages/SuperAdminPage";
+import SuspendedPage from "@/pages/SuspendedPage";
 import NotFound from "@/pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -34,7 +35,7 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
-  const { organization, loading: orgLoading } = useOrg();
+  const { organization, loading: orgLoading, userSuspended, orgSuspended } = useOrg();
 
   if (authLoading || orgLoading) {
     return (
@@ -46,6 +47,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) return <Navigate to="/connexion" replace />;
   if (!organization) return <Navigate to="/onboarding" replace />;
+  if (userSuspended || orgSuspended) return <Navigate to="/suspendu" replace />;
 
   return <>{children}</>;
 }
@@ -58,6 +60,7 @@ function AppRoutes() {
       <Route path="/p/facture" element={<PublicInvoice />} />
       <Route path="/" element={<LandingPage />} />
       <Route path="/admin" element={<SuperAdminPage />} />
+      <Route path="/suspendu" element={<SuspendedPage />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/tableau-de-bord" element={<Dashboard />} />
         <Route path="/eleves" element={<Students />} />
