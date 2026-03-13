@@ -103,7 +103,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-export default function DashboardCharts({ payments, expenses, lessons, period }: DashboardChartsProps) {
+export default function DashboardCharts({ payments, expenses, lessons, students, period }: DashboardChartsProps) {
   const bucketKeys = useMemo(() => getBucketKeys(period), [period]);
 
   const revenueData = useMemo(() => {
@@ -127,59 +127,158 @@ export default function DashboardCharts({ payments, expenses, lessons, period }:
     }));
   }, [lessons, period, bucketKeys]);
 
-  return (
-    <div className="grid md:grid-cols-2 gap-4">
-      {/* Revenue Chart */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-xl">
-        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-muted-foreground" />
-          <h2 className="font-semibold text-foreground text-sm">CA vs Dépenses</h2>
-        </div>
-        <div className="p-4">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={revenueData} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}€`} width={50} />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-              <Bar dataKey="CA" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={32} />
-              <Bar dataKey="Dépenses" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} maxBarSize={32} opacity={0.7} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </motion.div>
+  // Pie chart: CA by activity type
+  const activityLabels: Record<string, string> = {
+    auto_ecole: "Auto-école",
+    vtc: "VTC",
+    taxi: "Taxi",
+    moto: "Moto",
+  };
+  const ACTIVITY_COLORS = [
+    "hsl(var(--primary))",
+    "hsl(var(--success))",
+    "hsl(var(--warning))",
+    "hsl(var(--destructive))",
+    "hsl(var(--accent-foreground))",
+  ];
 
-      {/* Sessions Chart */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-xl">
-        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-muted-foreground" />
-          <h2 className="font-semibold text-foreground text-sm">Séances par statut</h2>
+  const studentActivityMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    students.forEach((s) => { map[s.id] = s.activity_type; });
+    return map;
+  }, [students]);
+
+  const pieData = useMemo(() => {
+    const byActivity: Record<string, number> = {};
+    payments.forEach((p) => {
+      const activity = studentActivityMap[(p as any).student_id] || "autre";
+      byActivity[activity] = (byActivity[activity] || 0) + p.amount;
+    });
+    return Object.entries(byActivity)
+      .map(([key, value]) => ({
+        name: activityLabels[key] || key,
+        value: Math.round(value * 100) / 100,
+      }))
+      .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value);
+  }, [payments, studentActivityMap]);
+
+  const PieTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.[0]) return null;
+    const d = payload[0];
+    return (
+      <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-lg">
+        <div className="flex items-center gap-2 text-xs">
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.payload.fill }} />
+          <span className="text-muted-foreground">{d.name}:</span>
+          <span className="font-medium text-foreground">{formatEur(d.value)}</span>
         </div>
-        <div className="p-4">
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={sessionsData}>
-              <defs>
-                <linearGradient id="gradEffectuees" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="gradPrevues" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-              <Area type="monotone" dataKey="Effectuées" stroke="hsl(var(--success))" fill="url(#gradEffectuees)" strokeWidth={2} />
-              <Area type="monotone" dataKey="Prévues" stroke="hsl(var(--primary))" fill="url(#gradPrevues)" strokeWidth={2} />
-              <Area type="monotone" dataKey="Annulées" stroke="hsl(var(--destructive))" fill="hsl(var(--destructive))" fillOpacity={0.1} strokeWidth={1.5} />
-              <Area type="monotone" dataKey="Absents" stroke="hsl(var(--warning))" fill="hsl(var(--warning))" fillOpacity={0.1} strokeWidth={1.5} />
-            </AreaChart>
-          </ResponsiveContainer>
+      </div>
+    );
+  };
+
+  const renderPieLabel = ({ name, percent, x, y, midAngle }: any) => {
+    if (percent < 0.05) return null;
+    return (
+      <text x={x} y={y} textAnchor={midAngle > 180 ? "end" : "start"} dominantBaseline="central" className="text-[10px] fill-foreground font-medium">
+        {name} ({(percent * 100).toFixed(0)}%)
+      </text>
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Revenue Chart */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="glass-card rounded-xl">
+          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-muted-foreground" />
+            <h2 className="font-semibold text-foreground text-sm">CA vs Dépenses</h2>
+          </div>
+          <div className="p-4">
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={revenueData} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}€`} width={50} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                <Bar dataKey="CA" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                <Bar dataKey="Dépenses" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} maxBarSize={32} opacity={0.7} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+
+        {/* Sessions Chart */}
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-xl">
+          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+            <h2 className="font-semibold text-foreground text-sm">Séances par statut</h2>
+          </div>
+          <div className="p-4">
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={sessionsData}>
+                <defs>
+                  <linearGradient id="gradEffectuees" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gradPrevues" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                <Area type="monotone" dataKey="Effectuées" stroke="hsl(var(--success))" fill="url(#gradEffectuees)" strokeWidth={2} />
+                <Area type="monotone" dataKey="Prévues" stroke="hsl(var(--primary))" fill="url(#gradPrevues)" strokeWidth={2} />
+                <Area type="monotone" dataKey="Annulées" stroke="hsl(var(--destructive))" fill="hsl(var(--destructive))" fillOpacity={0.1} strokeWidth={1.5} />
+                <Area type="monotone" dataKey="Absents" stroke="hsl(var(--warning))" fill="hsl(var(--warning))" fillOpacity={0.1} strokeWidth={1.5} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Pie Chart: CA by Activity Type */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-xl">
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+          <PieChartIcon className="w-4 h-4 text-muted-foreground" />
+          <h2 className="font-semibold text-foreground text-sm">Répartition CA par activité</h2>
+        </div>
+        <div className="p-4 flex items-center justify-center">
+          {pieData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+              <PieChartIcon className="w-8 h-8 opacity-30 mb-2" />
+              <p className="text-sm">Aucun paiement sur cette période</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={90}
+                  paddingAngle={3}
+                  dataKey="value"
+                  label={renderPieLabel}
+                  labelLine={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1 }}
+                >
+                  {pieData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={ACTIVITY_COLORS[index % ACTIVITY_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<PieTooltip />} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </motion.div>
     </div>
