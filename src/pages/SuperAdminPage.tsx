@@ -81,6 +81,9 @@ export default function SuperAdminPage() {
   const [userFilter, setUserFilter] = useState<"all" | "active" | "suspended">("all");
   const [orgSearch, setOrgSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
+  const [orgPage, setOrgPage] = useState(1);
+  const [userPage, setUserPage] = useState(1);
+  const PAGE_SIZE = 15;
   const initialLoadDone = useRef(false);
 
   const loadStats = async () => {
