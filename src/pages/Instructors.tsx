@@ -8,6 +8,10 @@ import { instructorStatusLabels, instructorStatusColors, activityTypeLabels, for
 import InstructorFormDialog from "@/components/instructors/InstructorFormDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Instructors() {
   const { instructors, isLoading, create, update } = useInstructors();
@@ -15,6 +19,7 @@ export default function Instructors() {
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editInstructor, setEditInstructor] = useState<any>(null);
+  const [archiveTarget, setArchiveTarget] = useState<any>(null);
 
   const filtered = instructors.filter((i) =>
     `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase())
@@ -29,9 +34,15 @@ export default function Instructors() {
     update.mutate({ id: editInstructor.id, ...data }, { onSuccess: () => { setEditInstructor(null); log({ action: "update", entity: "instructor", entity_id: editInstructor.id, details: `${data.first_name} ${data.last_name}` }); } });
   };
 
-  const handleArchive = (inst: any) => {
-    const newStatus = inst.status === "archive" ? "actif" : "archive";
-    update.mutate({ id: inst.id, status: newStatus }, { onSuccess: () => log({ action: "update_status", entity: "instructor", entity_id: inst.id, details: `Statut → ${instructorStatusLabels[newStatus]}` }) });
+  const handleArchive = () => {
+    if (!archiveTarget) return;
+    const newStatus = archiveTarget.status === "archive" ? "actif" : "archive";
+    update.mutate({ id: archiveTarget.id, status: newStatus }, {
+      onSuccess: () => {
+        setArchiveTarget(null);
+        log({ action: "update_status", entity: "instructor", entity_id: archiveTarget.id, details: `Statut → ${instructorStatusLabels[newStatus]}` });
+      },
+    });
   };
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -103,7 +114,9 @@ export default function Instructors() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setEditInstructor(inst)}><Pencil className="w-3.5 h-3.5 mr-2" /> Modifier</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleArchive(inst)}><Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Archiver"}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setArchiveTarget(inst)} className={inst.status === "archive" ? "text-success" : "text-destructive"}>
+                            <Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Supprimer"}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -117,6 +130,28 @@ export default function Instructors() {
 
       <InstructorFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
       <InstructorFormDialog open={!!editInstructor} onClose={() => setEditInstructor(null)} onSubmit={handleEdit} loading={update.isPending} initial={editInstructor} />
+
+      <AlertDialog open={!!archiveTarget} onOpenChange={(v) => !v && setArchiveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {archiveTarget?.status === "archive" ? "Réactiver ce formateur ?" : "Supprimer ce formateur ?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveTarget?.status === "archive"
+                ? `${archiveTarget?.first_name} ${archiveTarget?.last_name} sera de nouveau actif.`
+                : `${archiveTarget?.first_name} ${archiveTarget?.last_name} sera archivé et n'apparaîtra plus dans les listes actives. Vous pourrez le réactiver à tout moment.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive}>
+              {archiveTarget?.status === "archive" ? "Réactiver" : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

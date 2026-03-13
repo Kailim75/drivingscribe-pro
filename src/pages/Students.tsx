@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle } from "lucide-react";
+import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle, Pencil, Archive } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -9,14 +9,23 @@ import { studentStatusLabels, studentStatusColors, activityTypeLabels, activityT
 import StudentFormDialog from "@/components/students/StudentFormDialog";
 import { PaginationControls, usePagination } from "@/components/PaginationControls";
 import type { StudentFormData } from "@/lib/validations";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Students() {
-  const { students, isLoading, create } = useStudents();
+  const { students, isLoading, create, update, archive } = useStudents();
   const { log } = useAuditLog();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
   const [showForm, setShowForm] = useState(false);
+  const [editStudent, setEditStudent] = useState<any>(null);
+  const [archiveTarget, setArchiveTarget] = useState<any>(null);
   const [page, setPage] = useState(1);
 
   const filtered = students.filter((s) => {
@@ -36,6 +45,27 @@ export default function Students() {
       onSuccess: () => {
         setShowForm(false);
         log({ action: "create", entity: "student", details: `${data.first_name} ${data.last_name}` });
+      },
+    });
+  };
+
+  const handleEdit = (data: StudentFormData) => {
+    if (!editStudent) return;
+    update.mutate({ id: editStudent.id, ...data }, {
+      onSuccess: () => {
+        setEditStudent(null);
+        log({ action: "update", entity: "student", entity_id: editStudent.id, details: `${data.first_name} ${data.last_name}` });
+      },
+    });
+  };
+
+  const handleArchive = () => {
+    if (!archiveTarget) return;
+    const newStatus = archiveTarget.status === "archive" ? "actif" : "archive";
+    update.mutate({ id: archiveTarget.id, status: newStatus }, {
+      onSuccess: () => {
+        setArchiveTarget(null);
+        log({ action: "archive", entity: "student", entity_id: archiveTarget.id, details: `${archiveTarget.first_name} ${archiveTarget.last_name} → ${newStatus}` });
       },
     });
   };
@@ -130,9 +160,21 @@ export default function Students() {
                               <MessageCircle className="w-4 h-4" />
                             </button>
                           )}
-                          <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditStudent(student); }}>
+                                <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setArchiveTarget(student); }} className={student.status === "archive" ? "text-success" : "text-warning"}>
+                                <Archive className="w-3.5 h-3.5 mr-2" /> {student.status === "archive" ? "Réactiver" : "Supprimer"}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
@@ -146,6 +188,29 @@ export default function Students() {
       </motion.div>
 
       <StudentFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
+      <StudentFormDialog open={!!editStudent} onClose={() => setEditStudent(null)} onSubmit={handleEdit} loading={update.isPending} initial={editStudent} />
+
+      <AlertDialog open={!!archiveTarget} onOpenChange={(v) => !v && setArchiveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {archiveTarget?.status === "archive" ? "Réactiver cet élève ?" : "Supprimer cet élève ?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveTarget?.status === "archive"
+                ? `${archiveTarget?.first_name} ${archiveTarget?.last_name} sera de nouveau actif.`
+                : `${archiveTarget?.first_name} ${archiveTarget?.last_name} sera archivé et n'apparaîtra plus dans les listes actives. Vous pourrez le réactiver à tout moment.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive}>
+              {archiveTarget?.status === "archive" ? "Réactiver" : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

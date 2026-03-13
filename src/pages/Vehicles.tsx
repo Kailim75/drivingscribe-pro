@@ -157,9 +157,9 @@ export default function Vehicles() {
                           <DropdownMenuItem onClick={() => setEditVehicle(v)}>
                             <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setArchiveTarget(v)} className={v.status === "archive" ? "text-success" : "text-warning"}>
+                          <DropdownMenuItem onClick={() => setArchiveTarget(v)} className={v.status === "archive" ? "text-success" : "text-destructive"}>
                             <Archive className="w-3.5 h-3.5 mr-2" />
-                            {v.status === "archive" ? "Réactiver" : "Archiver"}
+                            {v.status === "archive" ? "Réactiver" : "Supprimer"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -226,19 +226,19 @@ export default function Vehicles() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {archiveTarget?.status === "archive" ? "Réactiver ce véhicule ?" : "Archiver ce véhicule ?"}
+              {archiveTarget?.status === "archive" ? "Réactiver ce véhicule ?" : "Supprimer ce véhicule ?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {archiveTarget?.status === "archive"
                 ? `${archiveTarget?.brand} ${archiveTarget?.model} (${archiveTarget?.plate}) sera de nouveau disponible.`
-                : `${archiveTarget?.brand} ${archiveTarget?.model} (${archiveTarget?.plate}) ne sera plus proposé pour les séances. Vous pourrez le réactiver à tout moment.`
+                : `${archiveTarget?.brand} ${archiveTarget?.model} (${archiveTarget?.plate}) sera archivé et n'apparaîtra plus dans les listes actives. Vous pourrez le réactiver à tout moment.`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleArchive}>
-              {archiveTarget?.status === "archive" ? "Réactiver" : "Archiver"}
+              {archiveTarget?.status === "archive" ? "Réactiver" : "Supprimer"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
