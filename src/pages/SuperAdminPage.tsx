@@ -533,6 +533,9 @@ export default function SuperAdminPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <h2 className="font-semibold text-foreground text-sm">Tous les utilisateurs</h2>
             <div className="flex items-center gap-2">
+              <button onClick={exportUsers} className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium rounded-md border border-border hover:bg-accent transition-colors text-muted-foreground">
+                <Download className="w-3.5 h-3.5" /> CSV
+              </button>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <input
