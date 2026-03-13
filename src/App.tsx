@@ -27,6 +27,7 @@ import OnboardingPage from "@/pages/OnboardingPage";
 import PublicInvoice from "@/pages/PublicInvoice";
 import LandingPage from "@/pages/LandingPage";
 import SuperAdminPage from "@/pages/SuperAdminPage";
+import SuspendedPage from "@/pages/SuspendedPage";
 import NotFound from "@/pages/NotFound";
 import { Loader2 } from "lucide-react";
 
