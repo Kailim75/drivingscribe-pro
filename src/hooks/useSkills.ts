@@ -62,7 +62,18 @@ export function useSkillCategories() {
     onError: () => toast.error("Erreur"),
   });
 
-  return { ...query, categories: query.data ?? [], create, remove };
+  const reorder = useMutation({
+    mutationFn: async (ordered: { id: string; sort_order: number }[]) => {
+      const updates = ordered.map((item) =>
+        supabase.from("skill_categories").update({ sort_order: item.sort_order }).eq("id", item.id)
+      );
+      await Promise.all(updates);
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["skill_categories"] }); },
+    onError: () => toast.error("Erreur de réordonnancement"),
+  });
+
+  return { ...query, categories: query.data ?? [], create, remove, reorder };
 }
 
 export function useSkillEvaluations(studentId?: string) {

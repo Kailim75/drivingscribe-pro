@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Building2, Receipt, Users, Shield, Save, Loader2, Bell, Target, Plus, Trash2 } from "lucide-react";
+import { Building2, Receipt, Users, Shield, Save, Loader2, Bell, Target, Plus, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
@@ -11,6 +11,9 @@ import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 import { useSkillCategories } from "@/hooks/useSkills";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type Tab = "organisation" | "facturation" | "utilisateurs" | "roles" | "notifications" | "competences";
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
@@ -25,7 +28,22 @@ export default function SettingsPage() {
   const [activityTypes, setActivityTypes] = useState<any[]>([]);
   const [newSkillName, setNewSkillName] = useState("");
   const { settings: notifSettings, upsert: upsertNotif } = useNotificationSettings();
-  const { categories: skillCategories, create: createSkill, remove: removeSkill } = useSkillCategories();
+  const { categories: skillCategories, create: createSkill, remove: removeSkill, reorder: reorderSkills } = useSkillCategories();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = skillCategories.findIndex((c) => c.id === active.id);
+    const newIndex = skillCategories.findIndex((c) => c.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(skillCategories, oldIndex, newIndex);
+    reorderSkills.mutate(reordered.map((c, i) => ({ id: c.id, sort_order: i + 1 })));
+  };
 
   useEffect(() => {
     if (organization) {
@@ -392,20 +410,19 @@ Body: {
             </button>
           </div>
 
-          <div className="space-y-2">
-            {skillCategories.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Aucune compétence configurée</p>
-            ) : (
-              skillCategories.map((cat) => (
-                <div key={cat.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
-                  <span className="text-sm font-medium text-foreground">{cat.name}</span>
-                  <button onClick={() => removeSkill.mutate(cat.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={skillCategories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {skillCategories.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Aucune compétence configurée</p>
+                ) : (
+                  skillCategories.map((cat) => (
+                    <SortableSkillItem key={cat.id} id={cat.id} name={cat.name} onRemove={() => removeSkill.mutate(cat.id)} />
+                  ))
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
 
           {skillCategories.length === 0 && (
             <div className="p-3 rounded-lg bg-accent/50 border border-border/60">
@@ -434,6 +451,25 @@ function Field({ label, value, onChange, className, disabled }: {
       <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{label}</label>
       <input type="text" value={value} onChange={(e) => onChange?.(e.target.value)} disabled={disabled}
         className="w-full bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50 transition-shadow" />
+    </div>
+  );
+}
+
+function SortableSkillItem({ id, name, onRemove }: { id: string; name: string; onRemove: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn("flex items-center justify-between p-3 rounded-lg border border-border bg-card", isDragging && "opacity-50 shadow-lg")}>
+      <div className="flex items-center gap-2">
+        <button type="button" {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground hover:text-foreground touch-none">
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <span className="text-sm font-medium text-foreground">{name}</span>
+      </div>
+      <button onClick={onRemove} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors">
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 }
