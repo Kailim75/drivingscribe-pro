@@ -34,9 +34,15 @@ export default function Instructors() {
     update.mutate({ id: editInstructor.id, ...data }, { onSuccess: () => { setEditInstructor(null); log({ action: "update", entity: "instructor", entity_id: editInstructor.id, details: `${data.first_name} ${data.last_name}` }); } });
   };
 
-  const handleArchive = (inst: any) => {
-    const newStatus = inst.status === "archive" ? "actif" : "archive";
-    update.mutate({ id: inst.id, status: newStatus }, { onSuccess: () => log({ action: "update_status", entity: "instructor", entity_id: inst.id, details: `Statut → ${instructorStatusLabels[newStatus]}` }) });
+  const handleArchive = () => {
+    if (!archiveTarget) return;
+    const newStatus = archiveTarget.status === "archive" ? "actif" : "archive";
+    update.mutate({ id: archiveTarget.id, status: newStatus }, {
+      onSuccess: () => {
+        setArchiveTarget(null);
+        log({ action: "update_status", entity: "instructor", entity_id: archiveTarget.id, details: `Statut → ${instructorStatusLabels[newStatus]}` });
+      },
+    });
   };
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
