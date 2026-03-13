@@ -599,6 +599,7 @@ export type Database = {
           quote_next_number: number
           quote_prefix: string
           siret: string | null
+          suspended: boolean
           timezone: string
           tva_number: string | null
           tva_rate: number
@@ -622,6 +623,7 @@ export type Database = {
           quote_next_number?: number
           quote_prefix?: string
           siret?: string | null
+          suspended?: boolean
           timezone?: string
           tva_number?: string | null
           tva_rate?: number
@@ -645,6 +647,7 @@ export type Database = {
           quote_next_number?: number
           quote_prefix?: string
           siret?: string | null
+          suspended?: boolean
           timezone?: string
           tva_number?: string | null
           tva_rate?: number
@@ -722,6 +725,7 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          suspended: boolean
           updated_at: string
           user_id: string
         }
@@ -732,6 +736,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          suspended?: boolean
           updated_at?: string
           user_id: string
         }
@@ -742,6 +747,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          suspended?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -1024,7 +1030,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_organization: {
+        Args: { _org_id: string }
+        Returns: undefined
+      }
+      admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_get_global_stats: { Args: never; Returns: Json }
+      admin_suspend_organization: {
+        Args: { _org_id: string; _suspended: boolean }
+        Returns: undefined
+      }
+      admin_suspend_user: {
+        Args: { _suspended: boolean; _user_id: string }
+        Returns: undefined
+      }
       check_lesson_conflicts: {
         Args: {
           _date: string
