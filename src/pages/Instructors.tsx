@@ -114,7 +114,9 @@ export default function Instructors() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setEditInstructor(inst)}><Pencil className="w-3.5 h-3.5 mr-2" /> Modifier</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleArchive(inst)}><Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Archiver"}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setArchiveTarget(inst)} className={inst.status === "archive" ? "text-success" : "text-destructive"}>
+                            <Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Supprimer"}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
