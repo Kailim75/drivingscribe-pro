@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface GlobalStats {
   total_organizations: number;
@@ -34,6 +35,13 @@ interface GlobalStats {
   }> | null;
 }
 
+interface RecentSignup {
+  user_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  created_at: string;
+}
+
 export default function SuperAdminPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -41,20 +49,62 @@ export default function SuperAdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"overview" | "orgs" | "users">("overview");
+  const [recentSignups, setRecentSignups] = useState<RecentSignup[]>([]);
+  const [newSignupCount, setNewSignupCount] = useState(0);
+  const initialLoadDone = useRef(false);
+
+  const loadStats = async () => {
+    const { data, error } = await supabase.rpc("admin_get_global_stats");
+    if (error) {
+      setError("Accès refusé ou erreur de chargement.");
+      console.error(error);
+    } else {
+      setStats(data as unknown as GlobalStats);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const { data, error } = await supabase.rpc("admin_get_global_stats");
-      if (error) {
-        setError("Accès refusé ou erreur de chargement.");
-        console.error(error);
-      } else {
-        setStats(data as unknown as GlobalStats);
-      }
-      setLoading(false);
-    })();
+    loadStats();
   }, [user]);
+
+  // Realtime subscription for new signups
+  useEffect(() => {
+    if (!user || error) return;
+
+    const channel = supabase
+      .channel("admin-new-signups")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "profiles" },
+        (payload) => {
+          const newProfile = payload.new as RecentSignup;
+          const name = [newProfile.first_name, newProfile.last_name].filter(Boolean).join(" ") || "Nouvel utilisateur";
+
+          // Show toast notification
+          toast.success(`Nouvelle inscription !`, {
+            description: `${name} vient de créer un compte`,
+            icon: <UserPlus className="w-4 h-4" />,
+            duration: 8000,
+          });
+
+          // Add to recent signups
+          setRecentSignups((prev) => [newProfile, ...prev].slice(0, 20));
+          setNewSignupCount((c) => c + 1);
+
+          // Refresh stats
+          loadStats();
+        }
+      )
+      .subscribe();
+
+    initialLoadDone.current = true;
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, error]);
 
   if (loading) {
     return (
@@ -107,6 +157,18 @@ export default function SuperAdminPage() {
             <p className="page-subtitle">Vue globale de toutes les organisations</p>
           </div>
         </div>
+        {newSignupCount > 0 && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20"
+          >
+            <Bell className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+            <span className="text-xs font-semibold text-emerald-600">
+              {newSignupCount} nouvelle{newSignupCount > 1 ? "s" : ""} inscription{newSignupCount > 1 ? "s" : ""}
+            </span>
+          </motion.div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -133,6 +195,43 @@ export default function SuperAdminPage() {
               </div>
             ))}
           </div>
+
+          {/* Realtime recent signups */}
+          {recentSignups.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-5 space-y-3 border-emerald-500/20 border">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-emerald-500" />
+                <h2 className="font-semibold text-foreground text-sm">Inscriptions en direct</h2>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <AnimatePresence>
+                  {recentSignups.map((signup) => (
+                    <motion.div
+                      key={signup.user_id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-xs font-bold text-emerald-600">
+                        {(signup.first_name?.[0] || "?")}{(signup.last_name?.[0] || "")}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {[signup.first_name, signup.last_name].filter(Boolean).join(" ") || "Sans nom"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {format(new Date(signup.created_at), "d MMM yyyy à HH:mm", { locale: fr })}
+                        </p>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-medium">Nouveau</span>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
 
           {/* Recent orgs */}
           <div className="glass-card rounded-xl p-5 space-y-3">
