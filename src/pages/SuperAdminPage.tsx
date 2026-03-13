@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play } from "lucide-react";
+import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -79,6 +79,8 @@ export default function SuperAdminPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [orgFilter, setOrgFilter] = useState<"all" | "active" | "suspended">("all");
   const [userFilter, setUserFilter] = useState<"all" | "active" | "suspended">("all");
+  const [orgSearch, setOrgSearch] = useState("");
+  const [userSearch, setUserSearch] = useState("");
   const initialLoadDone = useRef(false);
 
   const loadStats = async () => {
@@ -372,15 +374,27 @@ export default function SuperAdminPage() {
       {/* Organizations tab */}
       {tab === "orgs" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-5 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <h2 className="font-semibold text-foreground text-sm">Toutes les organisations</h2>
-            <div className="flex gap-1 bg-accent/50 rounded-lg p-0.5">
-              {([["all", "Tous"], ["active", "Actives"], ["suspended", "Suspendues"]] as const).map(([key, label]) => (
-                <button key={key} onClick={() => setOrgFilter(key)}
-                  className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${orgFilter === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                  {label}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Rechercher…"
+                  value={orgSearch}
+                  onChange={(e) => setOrgSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 text-xs rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-44"
+                />
+              </div>
+              <div className="flex gap-1 bg-accent/50 rounded-lg p-0.5">
+                {([["all", "Tous"], ["active", "Actives"], ["suspended", "Suspendues"]] as const).map(([key, label]) => (
+                  <button key={key} onClick={() => setOrgFilter(key)}
+                    className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${orgFilter === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <div className="overflow-x-auto">
@@ -398,7 +412,7 @@ export default function SuperAdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {(stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).map((org) => (
+                {(stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).filter(o => !orgSearch || o.name.toLowerCase().includes(orgSearch.toLowerCase())).map((org) => (
                   <tr key={org.id} className={`border-b border-border/50 transition-colors ${org.suspended ? "bg-destructive/5" : "hover:bg-accent/30"}`}>
                     <td className="py-2.5 font-medium text-foreground">{org.name}</td>
                     <td className="py-2.5">
@@ -455,19 +469,31 @@ export default function SuperAdminPage() {
       {/* Users tab */}
       {tab === "users" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-5 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <h2 className="font-semibold text-foreground text-sm">Tous les utilisateurs</h2>
-            <div className="flex gap-1 bg-accent/50 rounded-lg p-0.5">
-              {([["all", "Tous"], ["active", "Actifs"], ["suspended", "Suspendus"]] as const).map(([key, label]) => (
-                <button key={key} onClick={() => setUserFilter(key)}
-                  className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${userFilter === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                  {label}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Rechercher…"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 text-xs rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring w-44"
+                />
+              </div>
+              <div className="flex gap-1 bg-accent/50 rounded-lg p-0.5">
+                {([["all", "Tous"], ["active", "Actifs"], ["suspended", "Suspendus"]] as const).map(([key, label]) => (
+                  <button key={key} onClick={() => setUserFilter(key)}
+                    className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${userFilter === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <div className="space-y-2">
-            {(stats.users || []).filter(u => userFilter === "all" ? true : userFilter === "suspended" ? u.suspended : !u.suspended).map((u) => {
+            {(stats.users || []).filter(u => userFilter === "all" ? true : userFilter === "suspended" ? u.suspended : !u.suspended).filter(u => { const name = [u.first_name, u.last_name].filter(Boolean).join(" ").toLowerCase(); return !userSearch || name.includes(userSearch.toLowerCase()); }).map((u) => {
               const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Sans nom";
               const isSelf = u.user_id === user?.id;
               return (
