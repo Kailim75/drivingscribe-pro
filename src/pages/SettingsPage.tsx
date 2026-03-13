@@ -7,8 +7,12 @@ import { useOrg } from "@/contexts/OrgContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { useNotificationSettings } from "@/hooks/useNotificationSettings";
+import { useSkillCategories } from "@/hooks/useSkills";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 
-type Tab = "organisation" | "facturation" | "utilisateurs" | "roles";
+type Tab = "organisation" | "facturation" | "utilisateurs" | "roles" | "notifications" | "competences";
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
 export default function SettingsPage() {
