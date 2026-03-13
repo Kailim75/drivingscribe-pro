@@ -547,7 +547,7 @@ export default function SuperAdminPage() {
                               <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
                                 <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                               <DropdownMenuContent align="end">
                                 {org.suspended ? (
                                   <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_org", id: org.id, label: org.name })}>
                                     <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
@@ -559,6 +559,32 @@ export default function SuperAdminPage() {
                                     Suspendre
                                   </DropdownMenuItem>
                                 )}
+                                <DropdownMenuItem onClick={async () => {
+                                  try {
+                                    const { data: key, error: err } = await supabase.rpc("admin_generate_api_key", { _org_id: org.id });
+                                    if (err) throw err;
+                                    await navigator.clipboard.writeText(key as string);
+                                    toast.success("Clé API générée et copiée !");
+                                    await loadStats();
+                                  } catch (err: any) {
+                                    toast.error("Erreur : " + (err.message || "Échec"));
+                                  }
+                                }}>
+                                  {org.webhook_api_key ? (
+                                    <><RefreshCw className="w-3.5 h-3.5 mr-2 text-primary" /> Régénérer clé API</>
+                                  ) : (
+                                    <><Key className="w-3.5 h-3.5 mr-2 text-primary" /> Générer clé API</>
+                                  )}
+                                </DropdownMenuItem>
+                                {org.webhook_api_key && (
+                                  <DropdownMenuItem onClick={() => {
+                                    navigator.clipboard.writeText(org.webhook_api_key!);
+                                    toast.success("Clé API copiée");
+                                  }}>
+                                    <Copy className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                                    Copier clé API
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                   onClick={() => setConfirmAction({ type: "delete_org", id: org.id, label: org.name })}
                                   className="text-destructive focus:text-destructive"
@@ -566,7 +592,7 @@ export default function SuperAdminPage() {
                                   <Trash2 className="w-3.5 h-3.5 mr-2" />
                                   Supprimer
                                 </DropdownMenuItem>
-                              </DropdownMenuContent>
+                               </DropdownMenuContent>
                             </DropdownMenu>
                           </td>
                         </tr>
