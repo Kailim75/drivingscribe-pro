@@ -729,7 +729,7 @@ function FinalCTA({ onCTA }: { onCTA: () => void }) {
           Prêt à piloter votre activité avec plus de clarté ?
         </motion.h2>
         <motion.p {...fade(0.06)} className="mt-5 text-primary-foreground/60 leading-relaxed max-w-xl mx-auto text-base sm:text-lg">
-          Demandez une démonstration personnalisée. Découvrez en 15 minutes comment DriveFlow simplifie votre quotidien.
+          Demandez une démonstration personnalisée. Découvrez en 15 minutes comment Drivflow simplifie votre quotidien.
         </motion.p>
         <motion.div {...fade(0.12)} className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button size="lg" onClick={onCTA} className="text-base px-10 h-13 font-semibold bg-primary-foreground text-primary hover:bg-primary-foreground/90 shadow-xl">
