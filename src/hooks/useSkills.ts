@@ -73,7 +73,7 @@ export function useSkillCategories() {
     onError: () => toast.error("Erreur de réordonnancement"),
   });
 
-  return { ...query, categories: query.data ?? [], create, remove };
+  return { ...query, categories: query.data ?? [], create, remove, reorder };
 }
 
 export function useSkillEvaluations(studentId?: string) {
