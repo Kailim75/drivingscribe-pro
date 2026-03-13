@@ -121,6 +121,9 @@ export default function Offers() {
                       <DropdownMenuItem onClick={() => setEditOffer(offer)}>
                         <Pencil className="w-4 h-4 mr-2" /> Modifier
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDuplicate(offer)}>
+                        <Copy className="w-4 h-4 mr-2" /> Dupliquer
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => toggleActive(offer)}>
                         {offer.active ? <ToggleLeft className="w-4 h-4 mr-2" /> : <ToggleRight className="w-4 h-4 mr-2" />}
                         {offer.active ? "Désactiver" : "Activer"}
