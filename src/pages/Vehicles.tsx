@@ -238,7 +238,7 @@ export default function Vehicles() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleArchive}>
-              {archiveTarget?.status === "archive" ? "Réactiver" : "Archiver"}
+              {archiveTarget?.status === "archive" ? "Réactiver" : "Supprimer"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
