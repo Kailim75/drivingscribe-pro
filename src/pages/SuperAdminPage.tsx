@@ -527,6 +527,15 @@ export default function SuperAdminPage() {
                               <span className="status-badge rounded-md bg-emerald-500/10 text-emerald-600 text-[10px]">Active</span>
                             )}
                           </td>
+                          <td className="py-2.5 text-center">
+                            {org.webhook_api_key ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-medium">
+                                <Key className="w-3 h-3" /> Active
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">—</span>
+                            )}
+                          </td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.member_count}</td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.student_count}</td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.lesson_count}</td>
