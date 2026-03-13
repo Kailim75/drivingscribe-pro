@@ -11,6 +11,7 @@ import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 import { useSkillCategories } from "@/hooks/useSkills";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -401,13 +402,13 @@ Body: {
                 }
               }}
             />
-            <button
+            <Button
               onClick={() => { if (newSkillName.trim()) createSkill.mutate(newSkillName.trim(), { onSuccess: () => setNewSkillName("") }); }}
               disabled={!newSkillName.trim() || createSkill.isPending}
-              className="btn-primary"
+              size="sm"
             >
-              <Plus className="w-4 h-4" /> Ajouter
-            </button>
+              <Plus className="w-4 h-4 mr-1" /> Ajouter
+            </Button>
           </div>
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
