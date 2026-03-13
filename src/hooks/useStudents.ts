@@ -33,8 +33,8 @@ export function useStudents() {
       qc.invalidateQueries({ queryKey: ["students"] });
       toast.success("Élève créé");
 
-      // Fire webhook if configured
-      if ((organization as any)?.webhook_url) {
+      // Fire webhook only for driving students
+      if ((organization as any)?.webhook_url && student.activity_type === "auto_ecole") {
         try {
           await fetch((organization as any).webhook_url, {
             method: "POST",
