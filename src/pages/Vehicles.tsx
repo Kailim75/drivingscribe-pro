@@ -226,12 +226,12 @@ export default function Vehicles() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {archiveTarget?.status === "archive" ? "Réactiver ce véhicule ?" : "Archiver ce véhicule ?"}
+              {archiveTarget?.status === "archive" ? "Réactiver ce véhicule ?" : "Supprimer ce véhicule ?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {archiveTarget?.status === "archive"
                 ? `${archiveTarget?.brand} ${archiveTarget?.model} (${archiveTarget?.plate}) sera de nouveau disponible.`
-                : `${archiveTarget?.brand} ${archiveTarget?.model} (${archiveTarget?.plate}) ne sera plus proposé pour les séances. Vous pourrez le réactiver à tout moment.`
+                : `${archiveTarget?.brand} ${archiveTarget?.model} (${archiveTarget?.plate}) sera archivé et n'apparaîtra plus dans les listes actives. Vous pourrez le réactiver à tout moment.`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
