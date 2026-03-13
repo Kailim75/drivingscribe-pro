@@ -765,7 +765,7 @@ function Footer() {
           </div>
         </div>
         <div className="mt-8 text-center text-xs text-muted-foreground/40 font-medium">
-          © {new Date().getFullYear()} DriveFlow. Tous droits réservés.
+          © {new Date().getFullYear()} Drivflow. Tous droits réservés.
         </div>
       </div>
     </footer>
