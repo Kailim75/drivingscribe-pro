@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play, Search, Download } from "lucide-react";
+import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play, Search, Download, Key, Copy, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaginationControls } from "@/components/PaginationControls";
@@ -40,6 +40,7 @@ interface GlobalStats {
     mode: string;
     created_at: string;
     suspended: boolean;
+    webhook_api_key: string | null;
     student_count: number;
     instructor_count: number;
     lesson_count: number;
@@ -497,6 +498,7 @@ export default function SuperAdminPage() {
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Nom</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Mode</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Statut</th>
+                  <th className="pb-2 text-xs font-medium text-muted-foreground text-center">API</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Membres</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Élèves</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Séances</th>
@@ -525,6 +527,15 @@ export default function SuperAdminPage() {
                               <span className="status-badge rounded-md bg-emerald-500/10 text-emerald-600 text-[10px]">Active</span>
                             )}
                           </td>
+                          <td className="py-2.5 text-center">
+                            {org.webhook_api_key ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 font-medium">
+                                <Key className="w-3 h-3" /> Active
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">—</span>
+                            )}
+                          </td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.member_count}</td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.student_count}</td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.lesson_count}</td>
@@ -536,7 +547,7 @@ export default function SuperAdminPage() {
                               <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
                                 <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                               <DropdownMenuContent align="end">
                                 {org.suspended ? (
                                   <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_org", id: org.id, label: org.name })}>
                                     <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
@@ -548,6 +559,32 @@ export default function SuperAdminPage() {
                                     Suspendre
                                   </DropdownMenuItem>
                                 )}
+                                <DropdownMenuItem onClick={async () => {
+                                  try {
+                                    const { data: key, error: err } = await supabase.rpc("admin_generate_api_key", { _org_id: org.id });
+                                    if (err) throw err;
+                                    await navigator.clipboard.writeText(key as string);
+                                    toast.success("Clé API générée et copiée !");
+                                    await loadStats();
+                                  } catch (err: any) {
+                                    toast.error("Erreur : " + (err.message || "Échec"));
+                                  }
+                                }}>
+                                  {org.webhook_api_key ? (
+                                    <><RefreshCw className="w-3.5 h-3.5 mr-2 text-primary" /> Régénérer clé API</>
+                                  ) : (
+                                    <><Key className="w-3.5 h-3.5 mr-2 text-primary" /> Générer clé API</>
+                                  )}
+                                </DropdownMenuItem>
+                                {org.webhook_api_key && (
+                                  <DropdownMenuItem onClick={() => {
+                                    navigator.clipboard.writeText(org.webhook_api_key!);
+                                    toast.success("Clé API copiée");
+                                  }}>
+                                    <Copy className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                                    Copier clé API
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                   onClick={() => setConfirmAction({ type: "delete_org", id: org.id, label: org.name })}
                                   className="text-destructive focus:text-destructive"
@@ -555,7 +592,7 @@ export default function SuperAdminPage() {
                                   <Trash2 className="w-3.5 h-3.5 mr-2" />
                                   Supprimer
                                 </DropdownMenuItem>
-                              </DropdownMenuContent>
+                               </DropdownMenuContent>
                             </DropdownMenu>
                           </td>
                         </tr>

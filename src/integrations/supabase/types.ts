@@ -1038,6 +1038,7 @@ export type Database = {
         Returns: undefined
       }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_generate_api_key: { Args: { _org_id: string }; Returns: string }
       admin_get_global_stats: { Args: never; Returns: Json }
       admin_suspend_organization: {
         Args: { _org_id: string; _suspended: boolean }
