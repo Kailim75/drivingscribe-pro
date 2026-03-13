@@ -44,8 +44,8 @@ export function useInstructors() {
 
   const archive = useMutation({
     mutationFn: async (id: string) => {
-      const update: TablesUpdate<"instructors"> = { status: "archive" };
-      const { error } = await supabase.from("instructors").update(update).eq("id", id);
+      const upd: TablesUpdate<"instructors"> = { status: "archive" };
+      const { error } = await supabase.from("instructors").update(upd).eq("id", id).eq("organization_id", orgId!).select().single();
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["instructors"] }); toast.success("Formateur archivé"); },

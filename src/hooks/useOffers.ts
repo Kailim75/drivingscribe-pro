@@ -67,7 +67,7 @@ export function useOffers() {
 
   const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("offers").update({ active: false }).eq("id", id);
+      const { error } = await supabase.from("offers").update({ active: false }).eq("id", id).eq("organization_id", orgId!).select().single();
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["offers"] }); toast.success("Offre désactivée"); },

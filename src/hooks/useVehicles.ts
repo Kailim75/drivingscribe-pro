@@ -44,8 +44,8 @@ export function useVehicles() {
 
   const archive = useMutation({
     mutationFn: async (id: string) => {
-      const update: TablesUpdate<"vehicles"> = { status: "archive" };
-      const { error } = await supabase.from("vehicles").update(update).eq("id", id);
+      const upd: TablesUpdate<"vehicles"> = { status: "archive" };
+      const { error } = await supabase.from("vehicles").update(upd).eq("id", id).eq("organization_id", orgId!).select().single();
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["vehicles"] }); toast.success("Véhicule archivé"); },

@@ -74,8 +74,8 @@ export function useStudents() {
 
   const archive = useMutation({
     mutationFn: async (id: string) => {
-      const update: TablesUpdate<"students"> = { status: "archive" };
-      const { error } = await supabase.from("students").update(update).eq("id", id);
+      const upd: TablesUpdate<"students"> = { status: "archive" };
+      const { error } = await supabase.from("students").update(upd).eq("id", id).eq("organization_id", orgId!).select().single();
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["students"] }); toast.success("Élève archivé"); },
