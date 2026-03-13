@@ -49,6 +49,27 @@ export default function Students() {
     });
   };
 
+  const handleEdit = (data: StudentFormData) => {
+    if (!editStudent) return;
+    update.mutate({ id: editStudent.id, ...data }, {
+      onSuccess: () => {
+        setEditStudent(null);
+        log({ action: "update", entity: "student", entity_id: editStudent.id, details: `${data.first_name} ${data.last_name}` });
+      },
+    });
+  };
+
+  const handleArchive = () => {
+    if (!archiveTarget) return;
+    const newStatus = archiveTarget.status === "archive" ? "actif" : "archive";
+    update.mutate({ id: archiveTarget.id, status: newStatus }, {
+      onSuccess: () => {
+        setArchiveTarget(null);
+        log({ action: "archive", entity: "student", entity_id: archiveTarget.id, details: `${archiveTarget.first_name} ${archiveTarget.last_name} → ${newStatus}` });
+      },
+    });
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
   }
