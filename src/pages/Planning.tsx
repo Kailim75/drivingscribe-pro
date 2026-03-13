@@ -27,13 +27,72 @@ export default function Planning() {
   const [showForm, setShowForm] = useState(false);
   const [editLesson, setEditLesson] = useState<any>(null);
   const [statusConfirm, setStatusConfirm] = useState<{ lessonId: string; status: string; label: string } | null>(null);
+  const [showAiSuggest, setShowAiSuggest] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
+  const [aiStudent, setAiStudent] = useState("");
+  const [aiDuration, setAiDuration] = useState("1");
 
+  const { organization } = useOrg();
   const dateStr = selectedDate.toISOString().split("T")[0];
   const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(view === "jour" ? { date: dateStr } : undefined);
   const { students } = useStudents();
   const { instructors } = useInstructors();
   const { vehicles } = useVehicles();
   const { log } = useAuditLog();
+
+  const handleAiSuggest = async () => {
+    if (!aiStudent || !organization?.id) return;
+    setAiLoading(true);
+    setAiSuggestions([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("suggest-slots", {
+        body: {
+          student_id: aiStudent,
+          organization_id: organization.id,
+          date: dateStr,
+          preferred_duration: Number(aiDuration),
+        },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+      } else {
+        setAiSuggestions(data?.suggestions || []);
+        if ((data?.suggestions || []).length === 0) toast.info("Aucun créneau trouvé");
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Erreur lors de la suggestion IA");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleUseSuggestion = (suggestion: any) => {
+    const student = students.find(s => s.id === aiStudent);
+    if (!student) return;
+    const endTimeParts = suggestion.end_time.split(":");
+    const startTimeParts = suggestion.start_time.split(":");
+    const durationH = (parseInt(endTimeParts[0]) * 60 + parseInt(endTimeParts[1]) - parseInt(startTimeParts[0]) * 60 - parseInt(startTimeParts[1])) / 60;
+    
+    create.mutate({
+      student_id: aiStudent,
+      instructor_id: suggestion.instructor_id,
+      vehicle_id: suggestion.vehicle_id,
+      date: dateStr,
+      start_time: suggestion.start_time,
+      end_time: suggestion.end_time,
+      duration_hours: durationH,
+    }, {
+      onSuccess: () => {
+        setShowAiSuggest(false);
+        setAiSuggestions([]);
+        log({ action: "create", entity: "lesson", details: `Séance IA le ${dateStr} ${suggestion.start_time}-${suggestion.end_time}` });
+        toast.success("Séance créée depuis la suggestion IA");
+      },
+    });
+  };
 
   const navigate = (dir: number) => {
     const d = new Date(selectedDate);
