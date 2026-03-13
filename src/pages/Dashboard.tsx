@@ -12,6 +12,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { lessonStatusLabels, lessonStatusColors, formatEur } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import DashboardCharts from "@/components/dashboard/DashboardCharts";
 
 type Period = "today" | "week" | "month" | "quarter";
 
