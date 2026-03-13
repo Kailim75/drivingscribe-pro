@@ -160,9 +160,21 @@ export default function Students() {
                               <MessageCircle className="w-4 h-4" />
                             </button>
                           )}
-                          <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditStudent(student); }}>
+                                <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setArchiveTarget(student); }} className={student.status === "archive" ? "text-success" : "text-warning"}>
+                                <Archive className="w-3.5 h-3.5 mr-2" /> {student.status === "archive" ? "Réactiver" : "Supprimer"}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </td>
                     </tr>
