@@ -80,7 +80,8 @@ export default function SettingsPage() {
         quote_prefix: form.quote_prefix,
         mode: form.mode,
         cancellation_policy: form.cancellation_policy,
-      })
+        webhook_url: form.webhook_url || null,
+      } as any)
       .eq("id", organization.id);
 
     if (error) {
