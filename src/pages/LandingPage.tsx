@@ -377,7 +377,7 @@ function BenefitsSection() {
       <div className="max-w-7xl mx-auto px-5 sm:px-8">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <motion.h2 {...fade()} className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
-            4 raisons de passer à DriveFlow
+            4 raisons de passer à Drivflow
           </motion.h2>
           <motion.p {...fade(0.05)} className="mt-3 text-muted-foreground">Des bénéfices concrets, mesurables dès le premier mois.</motion.p>
         </div>
