@@ -24,6 +24,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [userRoles, setUserRoles] = useState<AppRole[]>([]);
+  const [userSuspended, setUserSuspended] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchOrg = async () => {
