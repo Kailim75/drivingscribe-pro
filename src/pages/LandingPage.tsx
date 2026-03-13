@@ -842,7 +842,7 @@ function BetaFormDialog({ open, onClose }: { open: boolean; onClose: () => void 
       <motion.div initial={{ opacity: 0, scale: 0.96, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.2 }} className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-border/50 bg-card shadow-2xl">
         <div className="sticky top-0 bg-card/98 backdrop-blur-xl px-6 py-5 border-b border-border/30 flex items-center justify-between z-10">
           <div>
-            <h2 className="text-lg font-extrabold text-foreground">Rejoindre la bêta DriveFlow</h2>
+            <h2 className="text-lg font-extrabold text-foreground">Rejoindre la bêta Drivflow</h2>
             <p className="text-xs text-muted-foreground mt-0.5">Nous vous recontacterons sous 48h.</p>
           </div>
           <button onClick={onClose} className="p-2.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors" aria-label="Fermer"><X className="w-4 h-4" /></button>
