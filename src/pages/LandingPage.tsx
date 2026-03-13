@@ -523,7 +523,7 @@ function DifferentiationSection() {
           <motion.h2 {...fade(0.04)} className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
             Plus qu'un agenda : un vrai outil de pilotage
           </motion.h2>
-          <motion.p {...fade(0.08)} className="mt-3 text-muted-foreground">DriveFlow vous donne les indicateurs pour prendre les bonnes décisions business.</motion.p>
+          <motion.p {...fade(0.08)} className="mt-3 text-muted-foreground">Drivflow vous donne les indicateurs pour prendre les bonnes décisions business.</motion.p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-5xl mx-auto">
           {items.map((it, i) => (
