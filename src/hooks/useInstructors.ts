@@ -34,8 +34,9 @@ export function useInstructors() {
 
   const update = useMutation({
     mutationFn: async ({ id, ...input }: { id: string } & TablesUpdate<"instructors">) => {
-      const { error } = await supabase.from("instructors").update(input).eq("id", id);
+      const { data, error } = await supabase.from("instructors").update(input).eq("id", id).eq("organization_id", orgId!).select().single();
       if (error) throw error;
+      return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["instructors"] }); toast.success("Formateur mis à jour"); },
     onError: () => toast.error("Erreur lors de la mise à jour"),
