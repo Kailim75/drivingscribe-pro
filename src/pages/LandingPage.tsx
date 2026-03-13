@@ -46,7 +46,7 @@ function Nav({ onCTA }: { onCTA: () => void }) {
           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20">
             <span className="text-sm font-extrabold text-primary-foreground tracking-tight">DF</span>
           </div>
-          <span className="font-bold text-foreground text-lg tracking-tight">DriveFlow</span>
+          <span className="font-bold text-foreground text-lg tracking-tight">Drivflow</span>
         </a>
         <div className="hidden md:flex items-center gap-7">
           {links.map((l) => (
