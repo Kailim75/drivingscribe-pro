@@ -18,12 +18,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function Students() {
-  const { students, isLoading, create } = useStudents();
+  const { students, isLoading, create, update, archive } = useStudents();
   const { log } = useAuditLog();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
   const [showForm, setShowForm] = useState(false);
+  const [editStudent, setEditStudent] = useState<any>(null);
+  const [archiveTarget, setArchiveTarget] = useState<any>(null);
   const [page, setPage] = useState(1);
 
   const filtered = students.filter((s) => {
