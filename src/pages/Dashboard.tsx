@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CalendarDays, CheckCircle2, Clock, Users, Loader2, ArrowRight, Euro, AlertTriangle, TrendingUp, XCircle, UserX, FileText } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Users, Loader2, ArrowRight, Euro, AlertTriangle, TrendingUp, XCircle, UserX, FileText, TrendingDown, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useMemo } from "react";
 import { useLessons } from "@/hooks/useLessons";
@@ -9,6 +9,7 @@ import { useVehicles } from "@/hooks/useVehicles";
 import { useInvoices } from "@/hooks/useInvoices";
 import { usePayments } from "@/hooks/usePayments";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { lessonStatusLabels, lessonStatusColors, formatEur } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,16 @@ export default function Dashboard() {
   const { invoices } = useInvoices();
   const { payments } = usePayments();
   const { expenses } = useExpenses();
+  const { formulas } = useStudentFormulas();
+
+  // Fetch next 30 days lessons for forecast
+  const next30 = useMemo(() => {
+    const now = new Date();
+    const future = new Date(now);
+    future.setDate(future.getDate() + 30);
+    return { start: now.toISOString().split("T")[0], end: future.toISOString().split("T")[0] };
+  }, []);
+  const { lessons: futureLessons } = useLessons({ dateFrom: next30.start, dateTo: next30.end });
 
   const isLoading = loadingLessons || loadingStudents || loadingPeriod;
 
@@ -68,9 +79,61 @@ export default function Dashboard() {
   const totalUnpaid = unpaidInvoices.reduce((s, i) => s + i.remaining_amount, 0);
   const overdueCount = invoices.filter((i) => i.status === "en_retard").length;
 
+  // === FEATURE 1: Alertes heures restantes ===
+  const allLessons = periodLessonsRaw; // Use all lessons for hour calculations
+  const studentsLowHours = useMemo(() => {
+    const activeStudentsList = students.filter(s => s.status === "actif");
+    return activeStudentsList.map(student => {
+      const studentFormulas = formulas.filter(f => f.student_id === student.id);
+      const totalBought = studentFormulas.reduce((s, f) => s + Number(f.hours_bought), 0);
+      // We need all completed lessons for this student - use a broader approach
+      // Since we might not have all lessons, we approximate with what we have
+      const completedHours = allLessons
+        .filter((l: any) => l.student_id === student.id && l.status === "effectue")
+        .reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
+      const remaining = totalBought - completedHours;
+      return { ...student, totalBought, completedHours, remaining };
+    }).filter(s => s.totalBought > 0 && s.remaining <= 3);
+  }, [students, formulas, allLessons]);
+
+  // === FEATURE 2: Tableau de bord prédictif ===
+  const forecast = useMemo(() => {
+    // CA prévisionnel = séances planifiées × montant facturable moyen
+    const plannedFuture = futureLessons.filter((l: any) => l.status === "prevu");
+    const avgBillable = periodLessons.length > 0
+      ? periodLessons.reduce((s: number, l: any) => s + Number(l.billable_amount || 0), 0) / periodLessons.length
+      : 0;
+    const forecastRevenue = plannedFuture.length * (avgBillable || 45); // fallback 45€/h
+
+    // Tendance: comparer la période actuelle avec la période précédente
+    const periodDays = period === "today" ? 1 : period === "week" ? 7 : period === "month" ? 30 : 90;
+    const prevStart = new Date();
+    prevStart.setDate(prevStart.getDate() - periodDays * 2);
+    const prevEnd = new Date();
+    prevEnd.setDate(prevEnd.getDate() - periodDays);
+    const prevPayments = payments.filter(p => p.date >= prevStart.toISOString().split("T")[0] && p.date <= prevEnd.toISOString().split("T")[0]);
+    const prevRevenue = prevPayments.reduce((s, p) => s + p.amount, 0);
+    const trend = prevRevenue > 0 ? ((periodRevenue - prevRevenue) / prevRevenue) * 100 : 0;
+
+    // Taux d'occupation formateurs
+    const maxHoursPerDay = 8;
+    const workingDays = period === "today" ? 1 : period === "week" ? 5 : period === "month" ? 22 : 66;
+    const maxCapacity = activeInstructors * maxHoursPerDay * workingDays;
+    const occupancyRate = maxCapacity > 0 ? (totalHoursDone / maxCapacity) * 100 : 0;
+
+    return {
+      forecastRevenue,
+      plannedSessions: plannedFuture.length,
+      trend: Math.round(trend),
+      occupancyRate: Math.round(occupancyRate),
+    };
+  }, [futureLessons, periodLessons, payments, periodRevenue, period, activeInstructors, totalHoursDone]);
+
   const alerts: { message: string; type: "warning" | "error" }[] = [];
   if (overdueCount > 0) alerts.push({ message: `${overdueCount} facture${overdueCount > 1 ? "s" : ""} en retard`, type: "error" });
   if (totalUnpaid > 500) alerts.push({ message: `${formatEur(totalUnpaid)} d'impayés en cours`, type: "warning" });
+  if (studentsLowHours.length > 0) alerts.push({ message: `${studentsLowHours.length} élève${studentsLowHours.length > 1 ? "s" : ""} avec ≤ 3h restantes`, type: "warning" });
+  if (forecast.occupancyRate < 30 && period !== "today") alerts.push({ message: `Taux d'occupation bas : ${forecast.occupancyRate}%`, type: "warning" });
 
   const sorted = [...todayLessons].sort((a: any, b: any) => (a.start_time || "").localeCompare(b.start_time || ""));
 
@@ -141,6 +204,70 @@ export default function Dashboard() {
           </motion.div>
         ))}
       </motion.div>
+
+      {/* FEATURE 2: Prédictif */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Zap className="w-4 h-4 text-primary" />
+          <h2 className="font-semibold text-foreground text-sm">Prévisions à 30 jours</h2>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="p-3 rounded-lg bg-muted/50">
+            <p className="text-xs text-muted-foreground mb-1">CA prévisionnel</p>
+            <p className="text-lg font-bold text-primary tabular-nums">{formatEur(forecast.forecastRevenue)}</p>
+            <p className="text-[10px] text-muted-foreground">{forecast.plannedSessions} séances planifiées</p>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/50">
+            <p className="text-xs text-muted-foreground mb-1">Tendance CA</p>
+            <div className="flex items-center gap-1.5">
+              {forecast.trend >= 0 ? <TrendingUp className="w-4 h-4 text-success" /> : <TrendingDown className="w-4 h-4 text-destructive" />}
+              <p className={cn("text-lg font-bold tabular-nums", forecast.trend >= 0 ? "text-success" : "text-destructive")}>
+                {forecast.trend > 0 ? "+" : ""}{forecast.trend}%
+              </p>
+            </div>
+            <p className="text-[10px] text-muted-foreground">vs période précédente</p>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/50">
+            <p className="text-xs text-muted-foreground mb-1">Taux d'occupation</p>
+            <p className={cn("text-lg font-bold tabular-nums", forecast.occupancyRate >= 60 ? "text-success" : forecast.occupancyRate >= 30 ? "text-warning" : "text-destructive")}>
+              {forecast.occupancyRate}%
+            </p>
+            <p className="text-[10px] text-muted-foreground">{activeInstructors} formateur{activeInstructors > 1 ? "s" : ""} actif{activeInstructors > 1 ? "s" : ""}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/50">
+            <p className="text-xs text-muted-foreground mb-1">Élèves à renouveler</p>
+            <p className={cn("text-lg font-bold tabular-nums", studentsLowHours.length > 0 ? "text-warning" : "text-foreground")}>
+              {studentsLowHours.length}
+            </p>
+            <p className="text-[10px] text-muted-foreground">≤ 3h restantes</p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* FEATURE 1: Élèves en fin de forfait */}
+      {studentsLowHours.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <h2 className="font-semibold text-foreground text-sm flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-warning" /> Élèves en fin de forfait
+            </h2>
+            <Link to="/eleves" className="text-xs text-primary hover:underline font-medium">Voir tous</Link>
+          </div>
+          <div className="p-4 space-y-1">
+            {studentsLowHours.slice(0, 5).map((s) => (
+              <Link key={s.id} to={`/eleves/${s.id}`} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{s.first_name} {s.last_name}</p>
+                  <p className="text-xs text-muted-foreground">{s.completedHours}h / {s.totalBought}h utilisées</p>
+                </div>
+                <span className={cn("text-sm font-bold tabular-nums", s.remaining <= 0 ? "text-destructive" : "text-warning")}>
+                  {s.remaining}h restantes
+                </span>
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Operational KPIs */}
       <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-3 lg:grid-cols-6 gap-3">
