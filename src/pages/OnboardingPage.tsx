@@ -70,6 +70,22 @@ export default function OnboardingPage() {
         defaultTypes.map((t) => ({ ...t, organization_id: orgId }))
       );
 
+      // 3b. Create default skill categories
+      const defaultSkills = [
+        { name: "Maîtrise du volant", sort_order: 1 },
+        { name: "Rétroviseurs / Angles morts", sort_order: 2 },
+        { name: "Signalisation", sort_order: 3 },
+        { name: "Priorités / Intersections", sort_order: 4 },
+        { name: "Stationnement", sort_order: 5 },
+        { name: "Trajectoire / Placement", sort_order: 6 },
+        { name: "Vitesse / Adaptation", sort_order: 7 },
+        { name: "Autonomie", sort_order: 8 },
+      ];
+
+      await supabase.from("skill_categories").insert(
+        defaultSkills.map((s) => ({ ...s, organization_id: orgId }))
+      );
+
       // 4. Audit log
       const profile = await supabase.from("profiles").select("first_name, last_name").eq("user_id", user.id).single();
       const userName = profile.data ? `${profile.data.first_name} ${profile.data.last_name}`.trim() : user.email || "";
