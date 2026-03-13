@@ -77,6 +77,8 @@ export default function SuperAdminPage() {
   const [newSignupCount, setNewSignupCount] = useState(0);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [orgFilter, setOrgFilter] = useState<"all" | "active" | "suspended">("all");
+  const [userFilter, setUserFilter] = useState<"all" | "active" | "suspended">("all");
   const initialLoadDone = useRef(false);
 
   const loadStats = async () => {
