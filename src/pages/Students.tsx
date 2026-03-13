@@ -40,6 +40,7 @@ export default function Students() {
   // Reset page when filters change
   const handleSearch = (v: string) => { setSearch(v); setPage(1); };
   const handleStatusFilter = (v: string) => { setStatusFilter(v); setPage(1); };
+  const handleActivityFilter = (v: string) => { setActivityFilter(v); setPage(1); };
 
   const handleCreate = (data: StudentFormData) => {
     create.mutate(data as { first_name: string; last_name: string; phone?: string; email?: string; address?: string; activity_type?: string; notes?: string }, {
