@@ -555,7 +555,7 @@ function AudienceSection() {
           <motion.h2 {...fade()} className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-foreground tracking-tight">
             Conçu pour les professionnels de la conduite
           </motion.h2>
-          <motion.p {...fade(0.05)} className="mt-3 text-muted-foreground">Quel que soit votre profil, DriveFlow s'adapte à vos besoins.</motion.p>
+          <motion.p {...fade(0.05)} className="mt-3 text-muted-foreground">Quel que soit votre profil, Drivflow s'adapte à vos besoins.</motion.p>
         </div>
         <div className="grid sm:grid-cols-3 gap-5 sm:gap-6 max-w-4xl mx-auto">
           {profiles.map((p, i) => (
