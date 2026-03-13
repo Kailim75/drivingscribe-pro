@@ -79,6 +79,7 @@ function AppRoutes() {
         <Route path="/import" element={<Import />} />
         <Route path="/journal" element={<ActivityLog />} />
         <Route path="/parametres" element={<SettingsPage />} />
+        <Route path="/portail-formateur" element={<InstructorPortal />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
