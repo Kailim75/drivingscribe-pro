@@ -20,6 +20,9 @@ export default function StudentDetail() {
   const { formulas } = useStudentFormulas(id);
   const { lessons } = useLessons({ studentId: id });
   const [showEdit, setShowEdit] = useState(false);
+  const [showEval, setShowEval] = useState(false);
+  const { categories } = useSkillCategories();
+  const { evaluations, evaluate } = useSkillEvaluations(id);
 
   const student = students.find((s) => s.id === id);
 
