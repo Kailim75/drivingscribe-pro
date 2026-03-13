@@ -297,8 +297,8 @@ function Hero({ onCTA }: { onCTA: () => void }) {
           {/* Left — copy */}
           <div>
             <motion.div {...fade()} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/20 mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-semibold text-primary tracking-wide">Bêta fondatrice — Places limitées</span>
+              <Zap className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-semibold text-primary tracking-wide">Boosté par l'IA — Bêta fondatrice</span>
             </motion.div>
 
             <motion.h1 {...fade(0.05)} className="text-3xl sm:text-4xl md:text-[2.75rem] lg:text-5xl font-extrabold tracking-tight leading-[1.1] text-foreground">
