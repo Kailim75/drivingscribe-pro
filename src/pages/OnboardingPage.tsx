@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Loader2, Sparkles } from "lucide-react";
@@ -12,12 +12,26 @@ type OrgMode = Database["public"]["Enums"]["org_mode"];
 
 export default function OnboardingPage() {
   const { user } = useAuth();
-  const { refreshOrg } = useOrg();
+  const { organization, refreshOrg } = useOrg();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [mode, setMode] = useState<OrgMode>("independant");
   const [withDemo, setWithDemo] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  // If user already has an org, redirect to dashboard
+  useEffect(() => {
+    if (organization) {
+      navigate("/tableau-de-bord", { replace: true });
+    }
+  }, [organization, navigate]);
+
+  // Try to refresh org on mount in case it wasn't loaded yet
+  useEffect(() => {
+    if (user && !organization) {
+      refreshOrg();
+    }
+  }, [user]);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
