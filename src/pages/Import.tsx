@@ -93,7 +93,7 @@ export default function Import() {
           phone: row.phone,
           email: row.email,
           activity_type: row.activity_type,
-        } as any)
+        })
         .select()
         .single();
 
@@ -108,7 +108,7 @@ export default function Import() {
           offer_type: "pack",
           hours_bought: row.hours_bought,
           total_price: 0,
-        } as any);
+        });
       }
     }
 

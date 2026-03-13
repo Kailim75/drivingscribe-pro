@@ -7,6 +7,8 @@ import { useStudents } from "@/hooks/useStudents";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { studentStatusLabels, studentStatusColors, activityTypeLabels, activityTypeColors } from "@/lib/labels";
 import StudentFormDialog from "@/components/students/StudentFormDialog";
+import { PaginationControls, usePagination } from "@/components/PaginationControls";
+import type { StudentFormData } from "@/lib/validations";
 
 export default function Students() {
   const { students, isLoading, create } = useStudents();
@@ -15,6 +17,7 @@ export default function Students() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
   const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
 
   const filtered = students.filter((s) => {
     const matchSearch = `${s.first_name} ${s.last_name} ${s.email}`.toLowerCase().includes(search.toLowerCase());
@@ -22,8 +25,14 @@ export default function Students() {
     return matchSearch && matchStatus;
   });
 
-  const handleCreate = (data: any) => {
-    create.mutate(data, {
+  const { paginated, total } = usePagination(filtered, page);
+
+  // Reset page when filters change
+  const handleSearch = (v: string) => { setSearch(v); setPage(1); };
+  const handleStatusFilter = (v: string) => { setStatusFilter(v); setPage(1); };
+
+  const handleCreate = (data: StudentFormData) => {
+    create.mutate(data as { first_name: string; last_name: string; phone?: string; email?: string; address?: string; activity_type?: string; notes?: string }, {
       onSuccess: () => {
         setShowForm(false);
         log({ action: "create", entity: "student", details: `${data.first_name} ${data.last_name}` });
@@ -50,10 +59,10 @@ export default function Students() {
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher un élève..."
+          <input type="text" value={search} onChange={(e) => handleSearch(e.target.value)} placeholder="Rechercher un élève..."
             className="w-full bg-card text-foreground text-sm pl-9 pr-4 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground transition-colors" />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+        <select value={statusFilter} onChange={(e) => handleStatusFilter(e.target.value)}
           className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="tous">Tous les statuts</option>
           <option value="actif">Actif</option>
@@ -73,47 +82,50 @@ export default function Students() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm data-table">
-              <thead>
-                <tr className="border-b border-border text-left">
-                  <th>Élève</th>
-                  <th className="hidden md:table-cell">Activité</th>
-                  <th className="hidden sm:table-cell">Statut</th>
-                  <th className="w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((student) => (
-                  <tr key={student.id} onClick={() => navigate(`/eleves/${student.id}`)}
-                    className="cursor-pointer">
-                    <td>
-                      <p className="font-medium text-foreground">{student.first_name} {student.last_name}</p>
-                      <div className="flex items-center gap-3 mt-0.5">
-                        {student.phone && <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>}
-                        {student.email && <span className="text-xs text-muted-foreground items-center gap-1 hidden sm:flex"><Mail className="w-3 h-3" /> {student.email}</span>}
-                      </div>
-                    </td>
-                    <td className="hidden md:table-cell">
-                      <span className={cn("status-badge", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
-                        {activityTypeLabels[student.activity_type] || student.activity_type}
-                      </span>
-                    </td>
-                    <td className="hidden sm:table-cell">
-                      <span className={cn("status-badge", studentStatusColors[student.status])}>
-                        {studentStatusLabels[student.status]}
-                      </span>
-                    </td>
-                    <td>
-                      <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm data-table">
+                <thead>
+                  <tr className="border-b border-border text-left">
+                    <th>Élève</th>
+                    <th className="hidden md:table-cell">Activité</th>
+                    <th className="hidden sm:table-cell">Statut</th>
+                    <th className="w-10"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paginated.map((student) => (
+                    <tr key={student.id} onClick={() => navigate(`/eleves/${student.id}`)}
+                      className="cursor-pointer">
+                      <td>
+                        <p className="font-medium text-foreground">{student.first_name} {student.last_name}</p>
+                        <div className="flex items-center gap-3 mt-0.5">
+                          {student.phone && <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>}
+                          {student.email && <span className="text-xs text-muted-foreground items-center gap-1 hidden sm:flex"><Mail className="w-3 h-3" /> {student.email}</span>}
+                        </div>
+                      </td>
+                      <td className="hidden md:table-cell">
+                        <span className={cn("status-badge", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
+                          {activityTypeLabels[student.activity_type] || student.activity_type}
+                        </span>
+                      </td>
+                      <td className="hidden sm:table-cell">
+                        <span className={cn("status-badge", studentStatusColors[student.status])}>
+                          {studentStatusLabels[student.status]}
+                        </span>
+                      </td>
+                      <td>
+                        <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <PaginationControls page={page} total={total} onChange={setPage} />
+          </>
         )}
       </motion.div>
 

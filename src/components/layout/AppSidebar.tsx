@@ -55,7 +55,7 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
 
   const canSee = (item: NavItem) => {
     if (!item.roles) return true;
-    return item.roles.some((r) => userRoles.includes(r as any));
+    return item.roles.some((r) => (userRoles as string[]).includes(r));
   };
 
   const sidebarContent = (

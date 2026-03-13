@@ -154,7 +154,7 @@ export default function Dashboard() {
         ].map((kpi) => (
           <motion.div key={kpi.label} variants={item} className="glass-card rounded-xl p-3 flex flex-col gap-1.5">
             <kpi.icon className="w-4 h-4 text-muted-foreground" />
-            <p className={cn("text-lg md:text-xl font-bold tabular-nums", (kpi as any).color || "text-foreground")}>{kpi.value}</p>
+            <p className={cn("text-lg md:text-xl font-bold tabular-nums", ("color" in kpi && typeof kpi.color === "string" ? kpi.color : "") || "text-foreground")}>{kpi.value}</p>
             <p className="text-[11px] text-muted-foreground font-medium">{kpi.label}</p>
           </motion.div>
         ))}

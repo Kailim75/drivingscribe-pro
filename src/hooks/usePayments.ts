@@ -3,6 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuditLog } from "./useAuditLog";
 import { toast } from "@/hooks/use-toast";
+import type { Database, TablesUpdate } from "@/integrations/supabase/types";
+
+type PaymentMethod = Database["public"]["Enums"]["payment_method"];
+type InvoiceStatus = Database["public"]["Enums"]["invoice_status"];
 
 export function usePayments() {
   const { organization } = useOrg();
@@ -29,14 +33,23 @@ export function usePayments() {
       invoice_id?: string;
       student_id: string;
       amount: number;
-      method: string;
+      method: PaymentMethod;
       date: string;
       reference?: string;
       notes?: string;
     }) => {
       const { data, error } = await supabase
         .from("payments")
-        .insert({ ...input, organization_id: orgId! } as any)
+        .insert({
+          student_id: input.student_id,
+          amount: input.amount,
+          method: input.method,
+          date: input.date,
+          reference: input.reference ?? "",
+          notes: input.notes ?? "",
+          invoice_id: input.invoice_id,
+          organization_id: orgId!,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -47,12 +60,13 @@ export function usePayments() {
         if (inv) {
           const newPaid = (inv.paid_amount || 0) + input.amount;
           const newRemaining = inv.total_ttc - newPaid;
-          const newStatus = newRemaining <= 0 ? "payé" : newPaid > 0 ? "partiellement_payé" : undefined;
-          await supabase.from("invoices").update({
+          const newStatus: InvoiceStatus | undefined = newRemaining <= 0 ? "payé" : newPaid > 0 ? "partiellement_payé" : undefined;
+          const updateData: TablesUpdate<"invoices"> = {
             paid_amount: newPaid,
             remaining_amount: Math.max(0, newRemaining),
-            ...(newStatus ? { status: newStatus as any } : {}),
-          }).eq("id", input.invoice_id);
+            ...(newStatus ? { status: newStatus } : {}),
+          };
+          await supabase.from("invoices").update(updateData).eq("id", input.invoice_id);
         }
       }
       return data;

@@ -37,7 +37,7 @@ export default function Reminders() {
   const handleSubmit = () => {
     if (!form.message) return;
     create.mutate({
-      type: form.type,
+      type: form.type as "séance" | "impayé" | "document" | "autre",
       student_id: form.student_id || undefined,
       invoice_id: form.invoice_id || undefined,
       message: form.message,

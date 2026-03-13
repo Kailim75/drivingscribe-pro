@@ -3,6 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuditLog } from "./useAuditLog";
 import { toast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type ReminderType = Database["public"]["Enums"]["reminder_type"];
+type ReminderChannel = Database["public"]["Enums"]["reminder_channel"];
+type ReminderStatus = Database["public"]["Enums"]["reminder_status"];
 
 export function useReminders() {
   const { organization } = useOrg();
@@ -26,8 +31,8 @@ export function useReminders() {
 
   const create = useMutation({
     mutationFn: async (input: {
-      type: string;
-      channel?: string;
+      type: ReminderType;
+      channel?: ReminderChannel;
       student_id?: string;
       invoice_id?: string;
       message: string;
@@ -35,7 +40,15 @@ export function useReminders() {
     }) => {
       const { data, error } = await supabase
         .from("reminders")
-        .insert({ ...input, organization_id: orgId! } as any)
+        .insert({
+          type: input.type,
+          channel: input.channel ?? "email",
+          student_id: input.student_id,
+          invoice_id: input.invoice_id,
+          message: input.message,
+          scheduled_at: input.scheduled_at,
+          organization_id: orgId!,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -51,7 +64,8 @@ export function useReminders() {
 
   const markSent = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("reminders").update({ status: "envoyé" as const, sent_at: new Date().toISOString() }).eq("id", id);
+      const status: ReminderStatus = "envoyé";
+      const { error } = await supabase.from("reminders").update({ status, sent_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_, id) => {

@@ -3,6 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuditLog } from "./useAuditLog";
 import { toast } from "@/hooks/use-toast";
+import type { Database, TablesUpdate } from "@/integrations/supabase/types";
+
+type InvoiceStatus = Database["public"]["Enums"]["invoice_status"];
+type InvoiceType = Database["public"]["Enums"]["invoice_type"];
 
 export function useInvoices() {
   const { organization } = useOrg();
@@ -27,9 +31,9 @@ export function useInvoices() {
   const create = useMutation({
     mutationFn: async (input: {
       number: string;
-      type: "devis" | "facture";
+      type: InvoiceType;
       student_id: string;
-      status?: string;
+      status?: InvoiceStatus;
       total_ht: number;
       tva_amount: number;
       total_ttc: number;
@@ -40,14 +44,13 @@ export function useInvoices() {
       lines: { description: string; quantity: number; unit_price: number; total_ht: number }[];
     }) => {
       const { lines, ...invoiceData } = input;
-      const insertData = {
-        ...invoiceData,
-        organization_id: orgId!,
-        remaining_amount: input.total_ttc,
-      } as any;
       const { data, error } = await supabase
         .from("invoices")
-        .insert(insertData)
+        .insert({
+          ...invoiceData,
+          organization_id: orgId!,
+          remaining_amount: input.total_ttc,
+        })
         .select()
         .single();
       if (error) throw error;
@@ -69,8 +72,8 @@ export function useInvoices() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; status?: string; paid_amount?: number; remaining_amount?: number; notes?: string }) => {
-      const { error } = await supabase.from("invoices").update(updates as any).eq("id", id);
+    mutationFn: async ({ id, ...updates }: { id: string } & TablesUpdate<"invoices">) => {
+      const { error } = await supabase.from("invoices").update(updates).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_, input) => {
@@ -86,21 +89,24 @@ export function useInvoices() {
       const devis = invoicesQuery.data?.find((i) => i.id === devisId);
       if (!devis) throw new Error("Devis introuvable");
 
-      // Atomic counter
       const { data: number, error: numErr } = await supabase.rpc("next_document_number", {
         _org_id: orgId!,
         _type: "facture",
       });
       if (numErr || !number) throw new Error("Impossible de générer le numéro de facture");
 
+      const invoiceType: InvoiceType = "facture";
+      const invoiceStatus: InvoiceStatus = "brouillon";
+      const archiveStatus: InvoiceStatus = "archivé";
+
       const { data, error } = await supabase
         .from("invoices")
         .insert({
           organization_id: orgId!,
           number,
-          type: "facture" as const,
+          type: invoiceType,
           student_id: devis.student_id,
-          status: "brouillon" as const,
+          status: invoiceStatus,
           total_ht: devis.total_ht,
           tva_amount: devis.tva_amount,
           total_ttc: devis.total_ttc,
@@ -114,16 +120,14 @@ export function useInvoices() {
         .single();
       if (error) throw error;
 
-      // Copy lines
       const lines = devis.invoice_lines || [];
       if (lines.length > 0) {
         await supabase.from("invoice_lines").insert(
-          lines.map((l: any) => ({ invoice_id: data.id, description: l.description, quantity: l.quantity, unit_price: l.unit_price, total_ht: l.total_ht }))
+          lines.map((l) => ({ invoice_id: data.id, description: l.description, quantity: l.quantity, unit_price: l.unit_price, total_ht: l.total_ht }))
         );
       }
 
-      // Update devis status
-      await supabase.from("invoices").update({ status: "archivé" as const }).eq("id", devisId);
+      await supabase.from("invoices").update({ status: archiveStatus }).eq("id", devisId);
 
       return data;
     },
@@ -136,7 +140,8 @@ export function useInvoices() {
 
   const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("invoices").update({ status: "archivé" as any }).eq("id", id);
+      const status: InvoiceStatus = "archivé";
+      const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
