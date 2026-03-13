@@ -17,6 +17,7 @@ export default function Instructors() {
   const { instructors, isLoading, create, update } = useInstructors();
   const { log } = useAuditLog();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("tous");
   const [showForm, setShowForm] = useState(false);
   const [editInstructor, setEditInstructor] = useState<any>(null);
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
