@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     // Look up the organization by its webhook_api_key
     const { data: org, error: orgError } = await supabase
       .from("organizations")
-      .select("id")
+      .select("id, webhook_calls_count")
       .eq("webhook_api_key", apiKey)
       .single();
 
@@ -45,6 +45,12 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Increment webhook calls counter
+    await supabase
+      .from("organizations")
+      .update({ webhook_calls_count: (org.webhook_calls_count || 0) + 1 })
+      .eq("id", org.id);
 
     const body = await req.json();
 

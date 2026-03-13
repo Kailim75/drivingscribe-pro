@@ -538,6 +538,13 @@ export default function SuperAdminPage() {
                               <span className="text-[10px] text-muted-foreground">—</span>
                             )}
                           </td>
+                          <td className="py-2.5 text-center">
+                            {org.webhook_calls_count > 0 ? (
+                              <span className="text-xs font-medium text-foreground">{org.webhook_calls_count}</span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">0</span>
+                            )}
+                          </td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.member_count}</td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.student_count}</td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.lesson_count}</td>
