@@ -589,7 +589,6 @@ export default function SuperAdminPage() {
             const safePage = Math.min(userPage, totalPages);
             return <PaginationControls page={safePage} total={filtered.length} pageSize={PAGE_SIZE} onChange={(p) => setUserPage(p)} />;
           })()}
-          </div>
         </motion.div>
       )}
     </div>
