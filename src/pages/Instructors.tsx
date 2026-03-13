@@ -6,8 +6,9 @@ import { useInstructors } from "@/hooks/useInstructors";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { instructorStatusLabels, instructorStatusColors, activityTypeLabels, formatEur } from "@/lib/labels";
 import InstructorFormDialog from "@/components/instructors/InstructorFormDialog";
+import InstructorAvailabilityDialog from "@/components/instructors/InstructorAvailabilityDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, CalendarClock } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
