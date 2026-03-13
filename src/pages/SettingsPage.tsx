@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Building2, Receipt, Users, Shield, Save, Loader2, Bell, Target, Plus, Trash2 } from "lucide-react";
+import { Building2, Receipt, Users, Shield, Save, Loader2, Bell, Target, Plus, Trash2, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
@@ -11,6 +11,9 @@ import { useNotificationSettings } from "@/hooks/useNotificationSettings";
 import { useSkillCategories } from "@/hooks/useSkills";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type Tab = "organisation" | "facturation" | "utilisateurs" | "roles" | "notifications" | "competences";
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
