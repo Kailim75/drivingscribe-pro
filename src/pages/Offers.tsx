@@ -52,6 +52,22 @@ export default function Offers() {
     update.mutate({ id: offer.id, active: !offer.active });
   };
 
+  const handleDuplicate = (offer: any) => {
+    create.mutate({
+      name: `${offer.name} (copie)`,
+      type: offer.type,
+      price: Number(offer.price),
+      hours: offer.hours,
+      tva_rate: Number(offer.tva_rate),
+      deposit_percent: Number(offer.deposit_percent),
+      cancellation_policy: offer.cancellation_policy,
+      activity_type: offer.activity_type,
+      active: true,
+    }, {
+      onSuccess: () => log({ action: "create", entity: "offer", details: `Duplication de ${offer.name}` }),
+    });
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
   }
