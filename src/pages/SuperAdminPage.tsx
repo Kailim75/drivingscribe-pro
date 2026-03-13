@@ -455,9 +455,19 @@ export default function SuperAdminPage() {
       {/* Users tab */}
       {tab === "users" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-5 space-y-3">
-          <h2 className="font-semibold text-foreground text-sm">Tous les utilisateurs</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-foreground text-sm">Tous les utilisateurs</h2>
+            <div className="flex gap-1 bg-accent/50 rounded-lg p-0.5">
+              {([["all", "Tous"], ["active", "Actifs"], ["suspended", "Suspendus"]] as const).map(([key, label]) => (
+                <button key={key} onClick={() => setUserFilter(key)}
+                  className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${userFilter === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="space-y-2">
-            {(stats.users || []).map((u) => {
+            {(stats.users || []).filter(u => userFilter === "all" ? true : userFilter === "suspended" ? u.suspended : !u.suspended).map((u) => {
               const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Sans nom";
               const isSelf = u.user_id === user?.id;
               return (
