@@ -188,6 +188,29 @@ export default function Students() {
       </motion.div>
 
       <StudentFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
+      <StudentFormDialog open={!!editStudent} onClose={() => setEditStudent(null)} onSubmit={handleEdit} loading={update.isPending} initial={editStudent} />
+
+      <AlertDialog open={!!archiveTarget} onOpenChange={(v) => !v && setArchiveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {archiveTarget?.status === "archive" ? "Réactiver cet élève ?" : "Supprimer cet élève ?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveTarget?.status === "archive"
+                ? `${archiveTarget?.first_name} ${archiveTarget?.last_name} sera de nouveau actif.`
+                : `${archiveTarget?.first_name} ${archiveTarget?.last_name} sera archivé et n'apparaîtra plus dans les listes actives. Vous pourrez le réactiver à tout moment.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive}>
+              {archiveTarget?.status === "archive" ? "Réactiver" : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
