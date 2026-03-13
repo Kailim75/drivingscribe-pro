@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserCog, Car, CalendarDays, Package,
   FileText, CreditCard, Receipt, TrendingUp, FolderOpen, Bell,
-  Settings, Upload, ClipboardList, ChevronLeft, Menu, LogOut,
+  Settings, Upload, ClipboardList, ChevronLeft, Menu, LogOut, ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
