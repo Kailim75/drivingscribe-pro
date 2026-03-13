@@ -345,6 +345,54 @@ export default function SuperAdminPage() {
             ))}
           </div>
 
+          {/* Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="glass-card rounded-xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-primary" />
+                <h2 className="font-semibold text-foreground text-sm">Inscriptions par mois</h2>
+              </div>
+              {(stats.signups_per_month && stats.signups_per_month.length > 0) ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={stats.signups_per_month.map(d => ({ ...d, label: format(new Date(d.month + '-01'), 'MMM yy', { locale: fr }) }))}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} width={30} />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} labelStyle={{ color: 'hsl(var(--foreground))' }} />
+                    <Bar dataKey="count" name="Inscriptions" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-xs text-muted-foreground py-8 text-center">Aucune donnée disponible</p>
+              )}
+            </div>
+            <div className="glass-card rounded-xl p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-4 h-4 text-primary" />
+                <h2 className="font-semibold text-foreground text-sm">Séances par semaine</h2>
+              </div>
+              {(stats.lessons_per_week && stats.lessons_per_week.length > 0) ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={stats.lessons_per_week.map(d => ({ ...d, label: format(new Date(d.week), 'd MMM', { locale: fr }) }))}>
+                    <defs>
+                      <linearGradient id="lessonsGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} width={30} />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} labelStyle={{ color: 'hsl(var(--foreground))' }} />
+                    <Area type="monotone" dataKey="count" name="Séances" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#lessonsGrad)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-xs text-muted-foreground py-8 text-center">Aucune donnée disponible</p>
+              )}
+            </div>
+          </div>
+
           {/* Realtime recent signups */}
           {recentSignups.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-5 space-y-3 border-emerald-500/20 border">
