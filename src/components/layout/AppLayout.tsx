@@ -25,7 +25,7 @@ export default function AppLayout() {
               <span className="text-primary font-bold text-[10px]">DF</span>
             </div>
             <span className="font-semibold text-foreground text-sm truncate">
-              {organization?.name || "DriveFlow"}
+              {organization?.name || "Drivflow"}
             </span>
           </div>
         </header>
