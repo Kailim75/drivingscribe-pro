@@ -41,6 +41,7 @@ interface GlobalStats {
     created_at: string;
     suspended: boolean;
     webhook_api_key: string | null;
+    webhook_calls_count: number;
     student_count: number;
     instructor_count: number;
     lesson_count: number;
