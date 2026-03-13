@@ -59,6 +59,18 @@ export default function StudentDetail() {
             <span className="text-sm text-muted-foreground">{activityTypeLabels[student.activity_type]}</span>
           </div>
         </div>
+        {student.phone && (
+          <button
+            onClick={() => {
+              const cleaned = student.phone.replace(/[\s\-().]/g, "");
+              const phone = cleaned.startsWith("+") ? cleaned : cleaned.startsWith("0") && cleaned.length === 10 ? "+33" + cleaned.slice(1) : cleaned;
+              window.open(`https://wa.me/${phone.replace("+", "")}`, "_blank");
+            }}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors font-medium"
+          >
+            <MessageCircle className="w-4 h-4" /> WhatsApp
+          </button>
+        )}
         <Button variant="outline" size="sm" onClick={() => setShowEdit(true)}>
           <Edit2 className="w-4 h-4 mr-1" /> Modifier
         </Button>
