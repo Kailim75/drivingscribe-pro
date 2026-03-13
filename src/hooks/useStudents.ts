@@ -64,8 +64,9 @@ export function useStudents() {
 
   const update = useMutation({
     mutationFn: async ({ id, ...input }: { id: string } & TablesUpdate<"students">) => {
-      const { error } = await supabase.from("students").update(input).eq("id", id);
+      const { data, error } = await supabase.from("students").update(input).eq("id", id).eq("organization_id", orgId!).select().single();
       if (error) throw error;
+      return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["students"] }); toast.success("Élève mis à jour"); },
     onError: () => toast.error("Erreur lors de la mise à jour"),
