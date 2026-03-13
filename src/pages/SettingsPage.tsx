@@ -306,9 +306,123 @@ Body: {
           </div>
         </motion.div>
       )}
+
+      {tab === "notifications" && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-6 space-y-5">
+          <h2 className="font-semibold text-foreground">Notifications & Rappels</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+              <div>
+                <p className="text-sm font-medium text-foreground">Rappels automatiques avant séance</p>
+                <p className="text-xs text-muted-foreground">Envoyer un rappel aux élèves avant leur séance</p>
+              </div>
+              <Switch
+                checked={notifSettings?.auto_reminder_enabled ?? true}
+                onCheckedChange={(v) => upsertNotif.mutate({ auto_reminder_enabled: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+              <div>
+                <p className="text-sm font-medium text-foreground">Délai de rappel (heures)</p>
+                <p className="text-xs text-muted-foreground">Nombre d'heures avant la séance</p>
+              </div>
+              <select
+                value={notifSettings?.reminder_before_hours ?? 24}
+                onChange={(e) => upsertNotif.mutate({ reminder_before_hours: Number(e.target.value) })}
+                className="bg-card text-sm px-3 py-2 rounded-lg border border-border"
+              >
+                <option value={6}>6h</option>
+                <option value={12}>12h</option>
+                <option value={24}>24h</option>
+                <option value={48}>48h</option>
+              </select>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+              <div>
+                <p className="text-sm font-medium text-foreground">Notifier le formateur</p>
+                <p className="text-xs text-muted-foreground">En cas de modification ou annulation de séance</p>
+              </div>
+              <Switch
+                checked={notifSettings?.notify_instructor_on_change ?? true}
+                onCheckedChange={(v) => upsertNotif.mutate({ notify_instructor_on_change: v })}
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg border border-border">
+              <div>
+                <p className="text-sm font-medium text-foreground">Notifier l'élève</p>
+                <p className="text-xs text-muted-foreground">En cas de modification ou annulation de séance</p>
+              </div>
+              <Switch
+                checked={notifSettings?.notify_student_on_change ?? true}
+                onCheckedChange={(v) => upsertNotif.mutate({ notify_student_on_change: v })}
+              />
+            </div>
+          </div>
+          <div className="border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">
+              💡 Les notifications sont envoyées via le système de rappels intégré. Configurez les canaux (email, SMS, WhatsApp) dans la section Rappels.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {tab === "competences" && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-6 space-y-5">
+          <h2 className="font-semibold text-foreground">Grille de compétences</h2>
+          <p className="text-xs text-muted-foreground">Définissez les compétences à évaluer pour chaque élève (note de 1 à 5). Visible sur la fiche élève sous forme de radar.</p>
+
+          <div className="flex gap-2">
+            <Input
+              value={newSkillName}
+              onChange={(e) => setNewSkillName(e.target.value)}
+              placeholder="Nom de la compétence (ex: Manœuvres)"
+              className="flex-1"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newSkillName.trim()) {
+                  createSkill.mutate(newSkillName.trim(), { onSuccess: () => setNewSkillName("") });
+                }
+              }}
+            />
+            <button
+              onClick={() => { if (newSkillName.trim()) createSkill.mutate(newSkillName.trim(), { onSuccess: () => setNewSkillName("") }); }}
+              disabled={!newSkillName.trim() || createSkill.isPending}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4" /> Ajouter
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {skillCategories.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Aucune compétence configurée</p>
+            ) : (
+              skillCategories.map((cat) => (
+                <div key={cat.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
+                  <span className="text-sm font-medium text-foreground">{cat.name}</span>
+                  <button onClick={() => removeSkill.mutate(cat.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          {skillCategories.length === 0 && (
+            <div className="p-3 rounded-lg bg-accent/50 border border-border/60">
+              <p className="text-xs font-medium text-foreground mb-1">Suggestions :</p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {["Code de la route", "Manœuvres", "Conduite en ville", "Conduite sur route", "Autoroute", "Stationnement", "Éco-conduite", "Gestion du stress"].map((s) => (
+                  <button key={s} onClick={() => createSkill.mutate(s)}
+                    className="text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
+                    + {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
     </div>
-  );
-}
 
 function Field({ label, value, onChange, className, disabled }: {
   label: string; value: string; onChange?: (v: string) => void; className?: string; disabled?: boolean;
