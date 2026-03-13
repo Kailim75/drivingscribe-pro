@@ -38,7 +38,7 @@ const navGroups: NavGroup[] = [
     { label: "Journal", path: "/journal", icon: ClipboardList, roles: ["owner", "admin"] },
   ]},
   { title: "ADMINISTRATION", items: [
-    { label: "Super Admin", path: "/admin", icon: Settings, roles: ["owner"] },
+    { label: "Super Admin", path: "/admin", icon: ShieldCheck, roles: ["owner"] },
   ]},
 ];
 
