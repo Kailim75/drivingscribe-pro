@@ -22,7 +22,7 @@ export default function Instructors() {
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
 
   const filtered = instructors.filter((i) =>
-    `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase())
+    `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase()) && i.status !== "archive"
   );
 
   const handleCreate = (data: any) => {
