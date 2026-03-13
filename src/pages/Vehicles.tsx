@@ -157,9 +157,9 @@ export default function Vehicles() {
                           <DropdownMenuItem onClick={() => setEditVehicle(v)}>
                             <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setArchiveTarget(v)} className={v.status === "archive" ? "text-success" : "text-warning"}>
+                          <DropdownMenuItem onClick={() => setArchiveTarget(v)} className={v.status === "archive" ? "text-success" : "text-destructive"}>
                             <Archive className="w-3.5 h-3.5 mr-2" />
-                            {v.status === "archive" ? "Réactiver" : "Archiver"}
+                            {v.status === "archive" ? "Réactiver" : "Supprimer"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
