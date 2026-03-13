@@ -103,9 +103,10 @@ serve(async (req) => {
 
 Critères d'optimisation:
 1. Pas de conflit avec les séances existantes (même formateur ou même véhicule)
-2. Privilégier les créneaux qui comblent les trous dans le planning
-3. Privilégier les heures de début classiques (9h, 10h, 14h, 15h)
-4. Varier les formateurs si possible
+2. RESPECTER les disponibilités des formateurs (ne proposer que les créneaux dans leurs plages horaires)
+3. Privilégier les créneaux qui comblent les trous dans le planning
+4. Privilégier les heures de début classiques (9h, 10h, 14h, 15h)
+5. Varier les formateurs si possible
 
 Réponds UNIQUEMENT avec un JSON valide au format:
 [{"start_time":"HH:MM","end_time":"HH:MM","instructor_id":"uuid","vehicle_id":"uuid","reason":"explication courte"}]`
