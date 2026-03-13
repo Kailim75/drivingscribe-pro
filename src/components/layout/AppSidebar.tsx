@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserCog, Car, CalendarDays, Package,
   FileText, CreditCard, Receipt, TrendingUp, FolderOpen, Bell,
-  Settings, Upload, ClipboardList, ChevronLeft, Menu, LogOut,
+  Settings, Upload, ClipboardList, ChevronLeft, Menu, LogOut, ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -36,6 +36,9 @@ const navGroups: NavGroup[] = [
     { label: "Rappels", path: "/rappels", icon: Bell, roles: ["owner", "admin"] },
     { label: "Import", path: "/import", icon: Upload, roles: ["owner", "admin"] },
     { label: "Journal", path: "/journal", icon: ClipboardList, roles: ["owner", "admin"] },
+  ]},
+  { title: "ADMINISTRATION", items: [
+    { label: "Super Admin", path: "/admin", icon: ShieldCheck, roles: ["owner"] },
   ]},
 ];
 
