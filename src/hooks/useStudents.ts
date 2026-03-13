@@ -36,7 +36,7 @@ export function useStudents() {
       // Fire webhook if configured
       if ((organization as any)?.webhook_url) {
         try {
-          await fetch(organization.webhook_url, {
+          await fetch((organization as any).webhook_url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             mode: "no-cors",
