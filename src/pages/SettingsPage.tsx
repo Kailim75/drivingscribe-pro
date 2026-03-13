@@ -454,3 +454,22 @@ function Field({ label, value, onChange, className, disabled }: {
     </div>
   );
 }
+
+function SortableSkillItem({ id, name, onRemove }: { id: string; name: string; onRemove: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn("flex items-center justify-between p-3 rounded-lg border border-border bg-card", isDragging && "opacity-50 shadow-lg")}>
+      <div className="flex items-center gap-2">
+        <button type="button" {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground hover:text-foreground touch-none">
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <span className="text-sm font-medium text-foreground">{name}</span>
+      </div>
+      <button onClick={onRemove} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors">
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
