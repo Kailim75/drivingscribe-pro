@@ -113,7 +113,7 @@ Réponds UNIQUEMENT avec un JSON valide au format:
           },
           {
             role: "user",
-            content: `Séances existantes le ${date}:\n${lessonsStr || "Aucune"}\n\nFormateurs disponibles:\n${instructorsStr || "Aucun"}\n\nVéhicules disponibles:\n${vehiclesStr || "Aucun"}\n\nCréneaux possibles: ${timeSlots.join(", ")}`
+            content: `Séances existantes le ${date}:\n${lessonsStr || "Aucune"}\n\nDisponibilités formateurs le ${DAYS[dayOfWeek] || date}:\n${availStr || "Non configurées (considérer 8h-19h)"}\n\nFormateurs disponibles:\n${instructorsStr || "Aucun"}\n\nVéhicules disponibles:\n${vehiclesStr || "Aucun"}\n\nCréneaux possibles: ${timeSlots.join(", ")}`
           }
         ],
       }),
