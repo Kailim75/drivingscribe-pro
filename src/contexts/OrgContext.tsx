@@ -31,6 +31,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     if (!user) {
       setOrganization(null);
       setUserRoles([]);
+      setUserSuspended(false);
       setLoading(false);
       return;
     }
