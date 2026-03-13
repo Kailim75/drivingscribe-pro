@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users } from "lucide-react";
+import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -115,9 +115,25 @@ export default function Students() {
                         </span>
                       </td>
                       <td>
-                        <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {student.phone && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const cleaned = student.phone.replace(/[\s\-().]/g, "");
+                                const phone = cleaned.startsWith("+") ? cleaned : cleaned.startsWith("0") && cleaned.length === 10 ? "+33" + cleaned.slice(1) : cleaned;
+                                window.open(`https://wa.me/${phone.replace("+", "")}`, "_blank");
+                              }}
+                              title="WhatsApp"
+                              className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#25D366]/10 text-[#25D366] transition-colors"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
