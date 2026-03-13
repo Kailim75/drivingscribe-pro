@@ -48,13 +48,15 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         const orgId = members[0].organization_id;
 
         // Fetch org and roles in parallel
-        const [orgResult, rolesResult] = await Promise.all([
+        const [orgResult, rolesResult, profileResult] = await Promise.all([
           supabase.from("organizations").select("*").eq("id", orgId).single(),
           supabase.from("user_roles").select("role").eq("user_id", user.id).eq("organization_id", orgId),
+          supabase.from("profiles").select("suspended").eq("user_id", user.id).single(),
         ]);
 
         setOrganization(orgResult.data);
         setUserRoles((rolesResult.data || []).map((r) => r.role));
+        setUserSuspended(!!(profileResult.data as any)?.suspended);
       } else {
         setOrganization(null);
         setUserRoles([]);
