@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Users, UserCog, Car, CalendarDays, Package,
   FileText, CreditCard, Receipt, TrendingUp, FolderOpen, Bell,
   Settings, Upload, ClipboardList, ChevronLeft, Menu, LogOut, ShieldCheck,
+  GraduationCap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ const navGroups: NavGroup[] = [
     { label: "Formateurs", path: "/formateurs", icon: UserCog, roles: ["owner", "admin"] },
     { label: "Véhicules", path: "/vehicules", icon: Car, roles: ["owner", "admin"] },
     { label: "Planning", path: "/planning", icon: CalendarDays },
+    { label: "Mon portail", path: "/portail-formateur", icon: GraduationCap, roles: ["instructor"] },
   ]},
   { title: "COMMERCIAL", items: [
     { label: "Offres", path: "/offres", icon: Package, roles: ["owner", "admin"] },

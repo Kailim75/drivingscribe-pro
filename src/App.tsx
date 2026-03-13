@@ -22,6 +22,7 @@ import Reminders from "@/pages/Reminders";
 import Import from "@/pages/Import";
 import ActivityLog from "@/pages/ActivityLog";
 import SettingsPage from "@/pages/SettingsPage";
+import InstructorPortal from "@/pages/InstructorPortal";
 import AuthPage from "@/pages/AuthPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import PublicInvoice from "@/pages/PublicInvoice";
@@ -78,6 +79,7 @@ function AppRoutes() {
         <Route path="/import" element={<Import />} />
         <Route path="/journal" element={<ActivityLog />} />
         <Route path="/parametres" element={<SettingsPage />} />
+        <Route path="/portail-formateur" element={<InstructorPortal />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

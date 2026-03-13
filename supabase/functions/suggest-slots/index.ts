@@ -54,7 +54,16 @@ serve(async (req) => {
       .eq("organization_id", organization_id)
       .eq("status", "actif");
 
+    // Fetch instructor availabilities for the day of week
+    const dayOfWeek = (new Date(date).getDay() + 6) % 7; // Convert JS Sunday=0 to Monday=0
+    const { data: availabilities } = await supabase
+      .from("instructor_availabilities")
+      .select("instructor_id, start_time, end_time")
+      .eq("organization_id", organization_id)
+      .eq("day_of_week", dayOfWeek);
+
     const duration = preferred_duration || 1;
+    const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
     const workStart = 8; // 8:00
     const workEnd = 19; // 19:00
     const slotDuration = duration; // in hours
@@ -75,6 +84,7 @@ serve(async (req) => {
 
     const instructorsStr = (instructors || []).map(i => `${i.id}: ${i.first_name} ${i.last_name}`).join("\n");
     const vehiclesStr = (vehicles || []).map(v => `${v.id}: ${v.brand} ${v.model} (${v.plate})`).join("\n");
+    const availStr = (availabilities || []).map(a => `Instructor ${a.instructor_id}: ${a.start_time}-${a.end_time}`).join("\n");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -94,16 +104,17 @@ serve(async (req) => {
 
 Critères d'optimisation:
 1. Pas de conflit avec les séances existantes (même formateur ou même véhicule)
-2. Privilégier les créneaux qui comblent les trous dans le planning
-3. Privilégier les heures de début classiques (9h, 10h, 14h, 15h)
-4. Varier les formateurs si possible
+2. RESPECTER les disponibilités des formateurs (ne proposer que les créneaux dans leurs plages horaires)
+3. Privilégier les créneaux qui comblent les trous dans le planning
+4. Privilégier les heures de début classiques (9h, 10h, 14h, 15h)
+5. Varier les formateurs si possible
 
 Réponds UNIQUEMENT avec un JSON valide au format:
 [{"start_time":"HH:MM","end_time":"HH:MM","instructor_id":"uuid","vehicle_id":"uuid","reason":"explication courte"}]`
           },
           {
             role: "user",
-            content: `Séances existantes le ${date}:\n${lessonsStr || "Aucune"}\n\nFormateurs disponibles:\n${instructorsStr || "Aucun"}\n\nVéhicules disponibles:\n${vehiclesStr || "Aucun"}\n\nCréneaux possibles: ${timeSlots.join(", ")}`
+            content: `Séances existantes le ${date}:\n${lessonsStr || "Aucune"}\n\nDisponibilités formateurs le ${DAYS[dayOfWeek] || date}:\n${availStr || "Non configurées (considérer 8h-19h)"}\n\nFormateurs disponibles:\n${instructorsStr || "Aucun"}\n\nVéhicules disponibles:\n${vehiclesStr || "Aucun"}\n\nCréneaux possibles: ${timeSlots.join(", ")}`
           }
         ],
       }),

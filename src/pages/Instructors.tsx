@@ -6,8 +6,9 @@ import { useInstructors } from "@/hooks/useInstructors";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { instructorStatusLabels, instructorStatusColors, activityTypeLabels, formatEur } from "@/lib/labels";
 import InstructorFormDialog from "@/components/instructors/InstructorFormDialog";
+import InstructorAvailabilityDialog from "@/components/instructors/InstructorAvailabilityDialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, CalendarClock } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -21,6 +22,7 @@ export default function Instructors() {
   const [showForm, setShowForm] = useState(false);
   const [editInstructor, setEditInstructor] = useState<any>(null);
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
+  const [availabilityInstructor, setAvailabilityInstructor] = useState<any>(null);
 
   const filtered = instructors.filter((i) => {
     const matchSearch = `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase());
@@ -126,6 +128,7 @@ export default function Instructors() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setEditInstructor(inst)}><Pencil className="w-3.5 h-3.5 mr-2" /> Modifier</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setAvailabilityInstructor(inst)}><CalendarClock className="w-3.5 h-3.5 mr-2" /> Disponibilités</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setArchiveTarget(inst)} className={inst.status === "archive" ? "text-success" : "text-destructive"}>
                             <Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Supprimer"}
                           </DropdownMenuItem>
@@ -142,6 +145,14 @@ export default function Instructors() {
 
       <InstructorFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
       <InstructorFormDialog open={!!editInstructor} onClose={() => setEditInstructor(null)} onSubmit={handleEdit} loading={update.isPending} initial={editInstructor} />
+      {availabilityInstructor && (
+        <InstructorAvailabilityDialog
+          open={!!availabilityInstructor}
+          onClose={() => setAvailabilityInstructor(null)}
+          instructorId={availabilityInstructor.id}
+          instructorName={`${availabilityInstructor.first_name} ${availabilityInstructor.last_name}`}
+        />
+      )}
 
       <AlertDialog open={!!archiveTarget} onOpenChange={(v) => !v && setArchiveTarget(null)}>
         <AlertDialogContent>

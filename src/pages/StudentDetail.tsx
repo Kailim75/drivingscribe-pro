@@ -1,13 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Phone, Mail, MapPin, Edit2, Loader2, Clock, CalendarDays, MessageCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Edit2, Loader2, Clock, CalendarDays, MessageCircle, AlertTriangle, Star, Target } from "lucide-react";
 import { useState } from "react";
 import { useStudents } from "@/hooks/useStudents";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { useLessons } from "@/hooks/useLessons";
+import { useSkillCategories, useSkillEvaluations } from "@/hooks/useSkills";
 import { studentStatusLabels, studentStatusColors, activityTypeLabels, lessonStatusLabels, lessonStatusColors, offerTypeLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import StudentFormDialog from "@/components/students/StudentFormDialog";
+import SkillRadarChart from "@/components/students/SkillRadarChart";
+import SkillEvaluationDialog from "@/components/students/SkillEvaluationDialog";
 import { Button } from "@/components/ui/button";
 
 export default function StudentDetail() {
@@ -17,6 +20,9 @@ export default function StudentDetail() {
   const { formulas } = useStudentFormulas(id);
   const { lessons } = useLessons({ studentId: id });
   const [showEdit, setShowEdit] = useState(false);
+  const [showEval, setShowEval] = useState(false);
+  const { categories } = useSkillCategories();
+  const { evaluations, evaluate } = useSkillEvaluations(id);
 
   const student = students.find((s) => s.id === id);
 
@@ -200,6 +206,19 @@ export default function StudentDetail() {
         </div>
       </div>
 
+      {/* Skill Progression Radar */}
+      <div className="glass-card rounded-xl">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <h2 className="font-semibold text-foreground flex items-center gap-2 text-sm"><Target className="w-4 h-4" /> Progression des compétences</h2>
+          <Button variant="outline" size="sm" onClick={() => setShowEval(true)} disabled={categories.length === 0}>
+            <Star className="w-3.5 h-3.5 mr-1" /> Évaluer
+          </Button>
+        </div>
+        <div className="p-4">
+          <SkillRadarChart categories={categories} evaluations={evaluations} />
+        </div>
+      </div>
+
       {/* Notes */}
       {student.notes && (
         <div className="glass-card rounded-xl p-4">
@@ -209,6 +228,15 @@ export default function StudentDetail() {
       )}
 
       <StudentFormDialog open={showEdit} onClose={() => setShowEdit(false)} onSubmit={handleUpdate} loading={update.isPending} initial={student} />
+      <SkillEvaluationDialog
+        open={showEval}
+        onClose={() => setShowEval(false)}
+        categories={categories}
+        onSubmit={(evals) => {
+          evaluate.mutate({ student_id: student.id, evaluations: evals }, { onSuccess: () => setShowEval(false) });
+        }}
+        loading={evaluate.isPending}
+      />
     </div>
   );
 }
