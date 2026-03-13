@@ -46,6 +46,16 @@ export default function SettingsPage() {
     reorderSkills.mutate(reordered.map((c, i) => ({ id: c.id, sort_order: i + 1 })));
   };
 
+  const handleAddSkill = () => {
+    const name = newSkillName.trim();
+    if (!name) {
+      toast.error("Saisissez un nom de compétence");
+      return;
+    }
+
+    createSkill.mutate(name, { onSuccess: () => setNewSkillName("") });
+  };
+
   useEffect(() => {
     if (organization) {
       setForm(organization);
