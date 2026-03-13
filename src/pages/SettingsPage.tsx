@@ -80,7 +80,8 @@ export default function SettingsPage() {
         quote_prefix: form.quote_prefix,
         mode: form.mode,
         cancellation_policy: form.cancellation_policy,
-      })
+        webhook_url: form.webhook_url || null,
+      } as any)
       .eq("id", organization.id);
 
     if (error) {
@@ -177,6 +178,11 @@ export default function SettingsPage() {
             <Field label="Préfixe devis" value={form.quote_prefix || "D"} onChange={(v) => update("quote_prefix", v)} disabled={!isOwnerOrAdmin} />
             <Field label="Devise" value="EUR (€)" disabled />
             <Field label="Fuseau horaire" value="Europe/Paris" disabled />
+          </div>
+          <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-medium text-foreground mb-2">Webhook sortant (CRM / Zapier)</h3>
+            <p className="text-xs text-muted-foreground mb-3">URL notifiée automatiquement à chaque création d'élève (POST JSON)</p>
+            <Field label="URL du webhook" value={(form as any).webhook_url || ""} onChange={(v) => update("webhook_url" as any, v)} disabled={!isOwnerOrAdmin} />
           </div>
           <div className="border-t border-border pt-4">
             <h3 className="text-sm font-medium text-foreground mb-2">Politique d'annulation par défaut</h3>

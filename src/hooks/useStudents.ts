@@ -25,10 +25,40 @@ export function useStudents() {
 
   const create = useMutation({
     mutationFn: async (input: Omit<TablesInsert<"students">, "organization_id">) => {
-      const { error } = await supabase.from("students").insert({ ...input, organization_id: orgId! });
+      const { data, error } = await supabase.from("students").insert({ ...input, organization_id: orgId! }).select().single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["students"] }); toast.success("Élève créé"); },
+    onSuccess: async (student) => {
+      qc.invalidateQueries({ queryKey: ["students"] });
+      toast.success("Élève créé");
+
+      // Fire webhook if configured
+      if ((organization as any)?.webhook_url) {
+        try {
+          await fetch((organization as any).webhook_url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            mode: "no-cors",
+            body: JSON.stringify({
+              event: "student.created",
+              timestamp: new Date().toISOString(),
+              data: {
+                id: student.id,
+                first_name: student.first_name,
+                last_name: student.last_name,
+                email: student.email,
+                phone: student.phone,
+                activity_type: student.activity_type,
+              },
+            }),
+          });
+          console.log("Webhook sent to", (organization as any).webhook_url);
+        } catch (err) {
+          console.warn("Webhook failed:", err);
+        }
+      }
+    },
     onError: () => toast.error("Erreur lors de la création"),
   });
 

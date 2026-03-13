@@ -1,0 +1,1 @@
+ALTER TABLE public.organizations ADD COLUMN webhook_url text DEFAULT NULL;
