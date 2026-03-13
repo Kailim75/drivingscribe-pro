@@ -52,6 +52,8 @@ interface GlobalStats {
     suspended: boolean;
     org_roles: Array<{ org_name: string; role: string }> | null;
   }> | null;
+  signups_per_month: Array<{ month: string; count: number }> | null;
+  lessons_per_week: Array<{ week: string; count: number }> | null;
 }
 
 interface RecentSignup {
