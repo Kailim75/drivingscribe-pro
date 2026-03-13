@@ -132,10 +132,26 @@ export default function Reminders() {
   );
 }
 
+function formatPhone(phone: string): string {
+  const cleaned = phone.replace(/[\s\-().]/g, "");
+  if (cleaned.startsWith("+")) return cleaned;
+  if (cleaned.startsWith("0") && cleaned.length === 10) return "+33" + cleaned.slice(1);
+  return cleaned;
+}
+
 function ReminderCard({ reminder, onSend }: { reminder: any; onSend?: () => void }) {
   const cfg = statusConfig[reminder.status] || statusConfig.planifié;
   const Icon = cfg.icon;
   const studentName = reminder.students ? `${reminder.students.first_name} ${reminder.students.last_name}` : null;
+  const studentPhone = reminder.students?.phone;
+
+  const handleWhatsApp = () => {
+    if (!studentPhone) return;
+    const phone = formatPhone(studentPhone);
+    const text = encodeURIComponent(reminder.message || "");
+    window.open(`https://wa.me/${phone.replace("+", "")}?text=${text}`, "_blank");
+  };
+
   return (
     <div className="glass-card rounded-xl p-4 flex items-start gap-4 hover:border-primary/20 hover:shadow-sm transition-all duration-200">
       <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0", cfg.color)}>
@@ -155,11 +171,18 @@ function ReminderCard({ reminder, onSend }: { reminder: any; onSend?: () => void
           <span>{reminder.sent_at ? `Envoyé le ${formatDate(reminder.sent_at)}` : `Prévu le ${formatDate(reminder.scheduled_at)}`}</span>
         </div>
       </div>
-      {reminder.status === "planifié" && onSend && (
-        <button onClick={onSend} className="flex-shrink-0 btn-primary text-xs !px-3 !py-1.5">
-          <Send className="w-3 h-3" /> Envoyer
-        </button>
-      )}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {studentPhone && (
+          <button onClick={handleWhatsApp} title="Envoyer par WhatsApp" className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors font-medium">
+            <MessageCircle className="w-3 h-3" /> WhatsApp
+          </button>
+        )}
+        {reminder.status === "planifié" && onSend && (
+          <button onClick={onSend} className="flex-shrink-0 btn-primary text-xs !px-3 !py-1.5">
+            <Send className="w-3 h-3" /> Envoyer
+          </button>
+        )}
+      </div>
     </div>
   );
 }

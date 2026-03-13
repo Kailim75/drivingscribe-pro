@@ -21,7 +21,7 @@ export function useReminders() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("reminders")
-        .select("*, students(first_name, last_name), invoices(number)")
+        .select("*, students(first_name, last_name, phone), invoices(number)")
         .eq("organization_id", orgId!)
         .order("scheduled_at", { ascending: false });
       if (error) throw error;
