@@ -683,10 +683,10 @@ function CredibilitySection() {
 function FAQSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(null);
   const faqs = [
-    { q: "À qui s'adresse DriveFlow ?", a: "Aux formateurs indépendants, auto-écoles, centres Taxi, VTC et VMDTR, ainsi qu'aux structures mixtes multi-activités." },
-    { q: "L'application est-elle utilisable sur mobile ?", a: "Oui. DriveFlow est conçu mobile-first pour être utilisé rapidement entre deux séances, sur smartphone ou tablette." },
+    { q: "À qui s'adresse Drivflow ?", a: "Aux formateurs indépendants, auto-écoles, centres Taxi, VTC et VMDTR, ainsi qu'aux structures mixtes multi-activités." },
+    { q: "L'application est-elle utilisable sur mobile ?", a: "Oui. Drivflow est conçu mobile-first pour être utilisé rapidement entre deux séances, sur smartphone ou tablette." },
     { q: "Peut-on gérer plusieurs formateurs et véhicules ?", a: "Oui. Selon votre plan, vous gérez plusieurs formateurs, véhicules et activités. Le planning détecte automatiquement les conflits." },
-    { q: "Comment fonctionne le suivi des paiements ?", a: "DriveFlow suit les paiements facture par facture, détecte les impayés et les paiements partiels, et vous alerte en cas de retard." },
+    { q: "Comment fonctionne le suivi des paiements ?", a: "Drivflow suit les paiements facture par facture, détecte les impayés et les paiements partiels, et vous alerte en cas de retard." },
     { q: "Comment est calculée la rentabilité ?", a: "À partir du CA généré par élève, formateur ou véhicule, comparé aux coûts réels (heures, charges véhicule, etc.)." },
     { q: "Comment demander une démo ?", a: "Cliquez sur « Demander une démo » et remplissez le formulaire. Nous vous recontacterons sous 48 heures." },
   ];
