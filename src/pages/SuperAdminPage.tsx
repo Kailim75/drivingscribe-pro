@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play, Search } from "lucide-react";
+import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play, Search, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PaginationControls } from "@/components/PaginationControls";
@@ -189,6 +189,41 @@ export default function SuperAdminPage() {
     suspend_user: { title: "Suspendre l'utilisateur", desc: "L'utilisateur ne pourra plus se connecter. Cette action est réversible." },
     unsuspend_user: { title: "Réactiver l'utilisateur", desc: "L'utilisateur pourra à nouveau se connecter." },
     delete_user: { title: "Supprimer l'utilisateur", desc: "⚠️ L'utilisateur sera retiré de toutes les organisations et ses données de profil seront supprimées. Cette action est IRRÉVERSIBLE.", destructive: true },
+  };
+
+  const downloadCsv = (filename: string, headers: string[], rows: string[][]) => {
+    const bom = "\uFEFF";
+    const csv = bom + [headers.join(";"), ...rows.map(r => r.map(c => `"${(c ?? "").replace(/"/g, '""')}"`).join(";"))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filename} téléchargé`);
+  };
+
+  const exportOrganizations = () => {
+    if (!stats?.organizations) return;
+    const headers = ["Nom", "Mode", "Statut", "Membres", "Élèves", "Formateurs", "Séances", "Créée le"];
+    const rows = stats.organizations.map(o => [
+      o.name, o.mode, o.suspended ? "Suspendue" : "Active",
+      String(o.member_count), String(o.student_count), String(o.instructor_count),
+      String(o.lesson_count), format(new Date(o.created_at), "dd/MM/yyyy", { locale: fr }),
+    ]);
+    downloadCsv("organisations.csv", headers, rows);
+  };
+
+  const exportUsers = () => {
+    if (!stats?.users) return;
+    const headers = ["Prénom", "Nom", "Statut", "Organisations & Rôles", "Inscrit le"];
+    const rows = stats.users.map(u => [
+      u.first_name || "", u.last_name || "", u.suspended ? "Suspendu" : "Actif",
+      (u.org_roles || []).map(r => `${r.org_name} (${r.role})`).join(", "),
+      format(new Date(u.created_at), "dd/MM/yyyy", { locale: fr }),
+    ]);
+    downloadCsv("utilisateurs.csv", headers, rows);
   };
 
   if (loading) {
@@ -381,6 +416,9 @@ export default function SuperAdminPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <h2 className="font-semibold text-foreground text-sm">Toutes les organisations</h2>
             <div className="flex items-center gap-2">
+              <button onClick={exportOrganizations} className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium rounded-md border border-border hover:bg-accent transition-colors text-muted-foreground">
+                <Download className="w-3.5 h-3.5" /> CSV
+              </button>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <input
@@ -495,6 +533,9 @@ export default function SuperAdminPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <h2 className="font-semibold text-foreground text-sm">Tous les utilisateurs</h2>
             <div className="flex items-center gap-2">
+              <button onClick={exportUsers} className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium rounded-md border border-border hover:bg-accent transition-colors text-muted-foreground">
+                <Download className="w-3.5 h-3.5" /> CSV
+              </button>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <input
