@@ -257,7 +257,7 @@ function HeroProduct() {
             <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
           </div>
           <div className="flex-1 flex justify-center">
-            <div className="px-4 py-1 rounded-lg bg-background/80 border border-border/30 text-[11px] text-muted-foreground font-mono">app.driveflow.fr</div>
+            <div className="px-4 py-1 rounded-lg bg-background/80 border border-border/30 text-[11px] text-muted-foreground font-mono">app.drivflow.fr</div>
           </div>
         </div>
 
