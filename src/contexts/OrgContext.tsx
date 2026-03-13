@@ -76,9 +76,10 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const hasRole = (role: AppRole) => userRoles.includes(role);
   const hasAnyRole = (...roles: AppRole[]) => roles.some((r) => userRoles.includes(r));
   const isOwnerOrAdmin = hasAnyRole("owner", "admin");
+  const orgSuspended = !!(organization as any)?.suspended;
 
   return (
-    <OrgContext.Provider value={{ organization, userRoles, loading, hasRole, hasAnyRole, isOwnerOrAdmin, refreshOrg: fetchOrg }}>
+    <OrgContext.Provider value={{ organization, userRoles, loading, hasRole, hasAnyRole, isOwnerOrAdmin, userSuspended, orgSuspended, refreshOrg: fetchOrg }}>
       {children}
     </OrgContext.Provider>
   );
