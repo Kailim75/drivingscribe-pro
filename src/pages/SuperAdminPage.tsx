@@ -191,6 +191,41 @@ export default function SuperAdminPage() {
     delete_user: { title: "Supprimer l'utilisateur", desc: "⚠️ L'utilisateur sera retiré de toutes les organisations et ses données de profil seront supprimées. Cette action est IRRÉVERSIBLE.", destructive: true },
   };
 
+  const downloadCsv = (filename: string, headers: string[], rows: string[][]) => {
+    const bom = "\uFEFF";
+    const csv = bom + [headers.join(";"), ...rows.map(r => r.map(c => `"${(c ?? "").replace(/"/g, '""')}"`).join(";"))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filename} téléchargé`);
+  };
+
+  const exportOrganizations = () => {
+    if (!stats?.organizations) return;
+    const headers = ["Nom", "Mode", "Statut", "Membres", "Élèves", "Formateurs", "Séances", "Créée le"];
+    const rows = stats.organizations.map(o => [
+      o.name, o.mode, o.suspended ? "Suspendue" : "Active",
+      String(o.member_count), String(o.student_count), String(o.instructor_count),
+      String(o.lesson_count), format(new Date(o.created_at), "dd/MM/yyyy", { locale: fr }),
+    ]);
+    downloadCsv("organisations.csv", headers, rows);
+  };
+
+  const exportUsers = () => {
+    if (!stats?.users) return;
+    const headers = ["Prénom", "Nom", "Statut", "Organisations & Rôles", "Inscrit le"];
+    const rows = stats.users.map(u => [
+      u.first_name || "", u.last_name || "", u.suspended ? "Suspendu" : "Actif",
+      (u.org_roles || []).map(r => `${r.org_name} (${r.role})`).join(", "),
+      format(new Date(u.created_at), "dd/MM/yyyy", { locale: fr }),
+    ]);
+    downloadCsv("utilisateurs.csv", headers, rows);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
