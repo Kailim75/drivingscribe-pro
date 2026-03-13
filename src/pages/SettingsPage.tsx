@@ -423,6 +423,8 @@ Body: {
         </motion.div>
       )}
     </div>
+  );
+}
 
 function Field({ label, value, onChange, className, disabled }: {
   label: string; value: string; onChange?: (v: string) => void; className?: string; disabled?: boolean;
