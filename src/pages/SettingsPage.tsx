@@ -438,19 +438,25 @@ Body: {
             </SortableContext>
           </DndContext>
 
-          {skillCategories.length === 0 && (
-            <div className="p-3 rounded-lg bg-accent/50 border border-border/60">
-              <p className="text-xs font-medium text-foreground mb-1">Suggestions :</p>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {["Code de la route", "Manœuvres", "Conduite en ville", "Conduite sur route", "Autoroute", "Stationnement", "Éco-conduite", "Gestion du stress"].map((s) => (
-                  <button key={s} onClick={() => createSkill.mutate(s)}
-                    className="text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
-                    + {s}
-                  </button>
-                ))}
+          {(() => {
+            const allSuggestions = ["Code de la route", "Manœuvres", "Conduite en ville", "Conduite sur route", "Autoroute", "Stationnement", "Éco-conduite", "Gestion du stress"];
+            const existing = skillCategories.map((c) => c.name.toLowerCase());
+            const remaining = allSuggestions.filter((s) => !existing.includes(s.toLowerCase()));
+            if (remaining.length === 0) return null;
+            return (
+              <div className="p-3 rounded-lg bg-accent/50 border border-border/60">
+                <p className="text-xs font-medium text-foreground mb-1">Suggestions :</p>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {remaining.map((s) => (
+                    <button key={s} onClick={() => createSkill.mutate(s)}
+                      className="text-xs px-2.5 py-1 rounded-md border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
+                      + {s}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </motion.div>
       )}
     </div>
