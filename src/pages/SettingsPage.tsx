@@ -46,6 +46,16 @@ export default function SettingsPage() {
     reorderSkills.mutate(reordered.map((c, i) => ({ id: c.id, sort_order: i + 1 })));
   };
 
+  const handleAddSkill = () => {
+    const name = newSkillName.trim();
+    if (!name) {
+      toast.error("Saisissez un nom de compétence");
+      return;
+    }
+
+    createSkill.mutate(name, { onSuccess: () => setNewSkillName("") });
+  };
+
   useEffect(() => {
     if (organization) {
       setForm(organization);
@@ -397,14 +407,17 @@ Body: {
               placeholder="Nom de la compétence (ex: Manœuvres)"
               className="flex-1"
               onKeyDown={(e) => {
-                if (e.key === "Enter" && newSkillName.trim()) {
-                  createSkill.mutate(newSkillName.trim(), { onSuccess: () => setNewSkillName("") });
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddSkill();
                 }
               }}
             />
             <Button
-              onClick={() => { if (newSkillName.trim()) createSkill.mutate(newSkillName.trim(), { onSuccess: () => setNewSkillName("") }); }}
-              disabled={!newSkillName.trim() || createSkill.isPending}
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={handleAddSkill}
+              disabled={createSkill.isPending}
               size="sm"
             >
               <Plus className="w-4 h-4 mr-1" /> Ajouter
