@@ -23,6 +23,9 @@ export default function SettingsPage() {
   const [form, setForm] = useState<Partial<Organization>>({});
   const [members, setMembers] = useState<any[]>([]);
   const [activityTypes, setActivityTypes] = useState<any[]>([]);
+  const [newSkillName, setNewSkillName] = useState("");
+  const { settings: notifSettings, upsert: upsertNotif } = useNotificationSettings();
+  const { categories: skillCategories, create: createSkill, remove: removeSkill } = useSkillCategories();
 
   useEffect(() => {
     if (organization) {
