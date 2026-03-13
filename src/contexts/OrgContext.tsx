@@ -60,6 +60,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       } else {
         setOrganization(null);
         setUserRoles([]);
+        setUserSuspended(false);
       }
     } catch (err) {
       console.error("Error fetching organization:", err);
