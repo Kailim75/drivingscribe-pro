@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Bell, Plus, Send, Clock, CheckCircle2, XCircle, Mail, Loader2 } from "lucide-react";
+import { Bell, Plus, Send, Clock, CheckCircle2, XCircle, Mail, Loader2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { useReminders } from "@/hooks/useReminders";
 import { useStudents } from "@/hooks/useStudents";
