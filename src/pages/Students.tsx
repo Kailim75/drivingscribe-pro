@@ -32,7 +32,7 @@ export default function Students() {
   const handleStatusFilter = (v: string) => { setStatusFilter(v); setPage(1); };
 
   const handleCreate = (data: StudentFormData) => {
-    create.mutate(data, {
+    create.mutate(data as { first_name: string; last_name: string; phone?: string; email?: string; address?: string; activity_type?: string; notes?: string }, {
       onSuccess: () => {
         setShowForm(false);
         log({ action: "create", entity: "student", details: `${data.first_name} ${data.last_name}` });
