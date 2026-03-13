@@ -1,15 +1,16 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, TrendingUp } from "lucide-react";
+import { BarChart3, TrendingUp, PieChartIcon } from "lucide-react";
 import {
-  BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import { formatEur } from "@/lib/labels";
 
 interface DashboardChartsProps {
-  payments: { date: string; amount: number }[];
+  payments: { date: string; amount: number; student_id: string }[];
   expenses: { date: string; amount: number }[];
   lessons: { date: string; status: string; duration_hours: number }[];
+  students: { id: string; activity_type: string }[];
   period: "today" | "week" | "month" | "quarter";
 }
 

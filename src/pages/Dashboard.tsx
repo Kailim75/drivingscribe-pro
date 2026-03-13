@@ -293,6 +293,7 @@ export default function Dashboard() {
         payments={periodPayments}
         expenses={periodExpenses}
         lessons={periodLessons}
+        students={students}
         period={period}
       />
 
