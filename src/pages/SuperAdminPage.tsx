@@ -415,56 +415,75 @@ export default function SuperAdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {(stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).filter(o => !orgSearch || o.name.toLowerCase().includes(orgSearch.toLowerCase())).map((org) => (
-                  <tr key={org.id} className={`border-b border-border/50 transition-colors ${org.suspended ? "bg-destructive/5" : "hover:bg-accent/30"}`}>
-                    <td className="py-2.5 font-medium text-foreground">{org.name}</td>
-                    <td className="py-2.5">
-                      <span className="status-badge rounded-md bg-primary/10 text-primary capitalize">{org.mode}</span>
-                    </td>
-                    <td className="py-2.5">
-                      {org.suspended ? (
-                        <span className="status-badge rounded-md bg-destructive/10 text-destructive text-[10px]">Suspendue</span>
-                      ) : (
-                        <span className="status-badge rounded-md bg-emerald-500/10 text-emerald-600 text-[10px]">Active</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 text-center text-muted-foreground">{org.member_count}</td>
-                    <td className="py-2.5 text-center text-muted-foreground">{org.student_count}</td>
-                    <td className="py-2.5 text-center text-muted-foreground">{org.lesson_count}</td>
-                    <td className="py-2.5 text-muted-foreground text-xs">
-                      {format(new Date(org.created_at), "d MMM yyyy", { locale: fr })}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
-                          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {org.suspended ? (
-                            <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_org", id: org.id, label: org.name })}>
-                              <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
-                              Réactiver
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onClick={() => setConfirmAction({ type: "suspend_org", id: org.id, label: org.name })}>
-                              <Ban className="w-3.5 h-3.5 mr-2 text-amber-500" />
-                              Suspendre
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() => setConfirmAction({ type: "delete_org", id: org.id, label: org.name })}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 mr-2" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
+                {(() => {
+                  const filtered = (stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).filter(o => !orgSearch || o.name.toLowerCase().includes(orgSearch.toLowerCase()));
+                  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+                  const safePage = Math.min(orgPage, totalPages || 1);
+                  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+                  return (
+                    <>
+                      {paged.map((org) => (
+                        <tr key={org.id} className={`border-b border-border/50 transition-colors ${org.suspended ? "bg-destructive/5" : "hover:bg-accent/30"}`}>
+                          <td className="py-2.5 font-medium text-foreground">{org.name}</td>
+                          <td className="py-2.5">
+                            <span className="status-badge rounded-md bg-primary/10 text-primary capitalize">{org.mode}</span>
+                          </td>
+                          <td className="py-2.5">
+                            {org.suspended ? (
+                              <span className="status-badge rounded-md bg-destructive/10 text-destructive text-[10px]">Suspendue</span>
+                            ) : (
+                              <span className="status-badge rounded-md bg-emerald-500/10 text-emerald-600 text-[10px]">Active</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 text-center text-muted-foreground">{org.member_count}</td>
+                          <td className="py-2.5 text-center text-muted-foreground">{org.student_count}</td>
+                          <td className="py-2.5 text-center text-muted-foreground">{org.lesson_count}</td>
+                          <td className="py-2.5 text-muted-foreground text-xs">
+                            {format(new Date(org.created_at), "d MMM yyyy", { locale: fr })}
+                          </td>
+                          <td className="py-2.5 text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
+                                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {org.suspended ? (
+                                  <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_org", id: org.id, label: org.name })}>
+                                    <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
+                                    Réactiver
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem onClick={() => setConfirmAction({ type: "suspend_org", id: org.id, label: org.name })}>
+                                    <Ban className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                                    Suspendre
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                  onClick={() => setConfirmAction({ type: "delete_org", id: org.id, label: org.name })}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                  Supprimer
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      ))}
+                    </>
+                  );
+                })()}
               </tbody>
             </table>
+            {(() => {
+              const filtered = (stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).filter(o => !orgSearch || o.name.toLowerCase().includes(orgSearch.toLowerCase()));
+              const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+              if (totalPages <= 1) return null;
+              const safePage = Math.min(orgPage, totalPages);
+              return (
+                <PaginationControls page={safePage} total={filtered.length} pageSize={PAGE_SIZE} onChange={(p) => setOrgPage(p)} />
+              );
+            })()}
           </div>
         </motion.div>
       )}
