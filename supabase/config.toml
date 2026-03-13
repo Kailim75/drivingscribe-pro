@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.receive-student-webhook]
 verify_jwt = false
+
+[functions.suggest-slots]
+verify_jwt = false
