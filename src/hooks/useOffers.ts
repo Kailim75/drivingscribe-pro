@@ -57,8 +57,9 @@ export function useOffers() {
 
   const update = useMutation({
     mutationFn: async ({ id, ...input }: { id: string } & TablesUpdate<"offers">) => {
-      const { error } = await supabase.from("offers").update(input).eq("id", id);
+      const { data, error } = await supabase.from("offers").update(input).eq("id", id).eq("organization_id", orgId!).select().single();
       if (error) throw error;
+      return data;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["offers"] }); toast.success("Offre mise à jour"); },
     onError: () => toast.error("Erreur lors de la mise à jour"),
@@ -66,7 +67,7 @@ export function useOffers() {
 
   const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("offers").update({ active: false }).eq("id", id);
+      const { error } = await supabase.from("offers").update({ active: false }).eq("id", id).eq("organization_id", orgId!).select().single();
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["offers"] }); toast.success("Offre désactivée"); },
