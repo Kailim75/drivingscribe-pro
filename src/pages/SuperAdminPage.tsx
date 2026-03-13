@@ -1,12 +1,28 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus } from "lucide-react";
+import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface GlobalStats {
   total_organizations: number;
@@ -21,6 +37,7 @@ interface GlobalStats {
     email: string | null;
     mode: string;
     created_at: string;
+    suspended: boolean;
     student_count: number;
     instructor_count: number;
     lesson_count: number;
@@ -31,6 +48,7 @@ interface GlobalStats {
     first_name: string | null;
     last_name: string | null;
     created_at: string;
+    suspended: boolean;
     org_roles: Array<{ org_name: string; role: string }> | null;
   }> | null;
 }
@@ -42,6 +60,12 @@ interface RecentSignup {
   created_at: string;
 }
 
+type ConfirmAction = {
+  type: "suspend_org" | "delete_org" | "suspend_user" | "delete_user" | "unsuspend_org" | "unsuspend_user";
+  id: string;
+  label: string;
+};
+
 export default function SuperAdminPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -51,6 +75,8 @@ export default function SuperAdminPage() {
   const [tab, setTab] = useState<"overview" | "orgs" | "users">("overview");
   const [recentSignups, setRecentSignups] = useState<RecentSignup[]>([]);
   const [newSignupCount, setNewSignupCount] = useState(0);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const initialLoadDone = useRef(false);
 
   const loadStats = async () => {
@@ -82,18 +108,14 @@ export default function SuperAdminPage() {
           const newProfile = payload.new as RecentSignup;
           const name = [newProfile.first_name, newProfile.last_name].filter(Boolean).join(" ") || "Nouvel utilisateur";
 
-          // Show toast notification
           toast.success(`Nouvelle inscription !`, {
             description: `${name} vient de créer un compte`,
             icon: <UserPlus className="w-4 h-4" />,
             duration: 8000,
           });
 
-          // Add to recent signups
           setRecentSignups((prev) => [newProfile, ...prev].slice(0, 20));
           setNewSignupCount((c) => c + 1);
-
-          // Refresh stats
           loadStats();
         }
       )
@@ -105,6 +127,61 @@ export default function SuperAdminPage() {
       supabase.removeChannel(channel);
     };
   }, [user, error]);
+
+  const executeAction = async () => {
+    if (!confirmAction) return;
+    setActionLoading(true);
+    try {
+      let rpcError: any = null;
+      switch (confirmAction.type) {
+        case "suspend_org":
+          ({ error: rpcError } = await supabase.rpc("admin_suspend_organization", { _org_id: confirmAction.id, _suspended: true }));
+          break;
+        case "unsuspend_org":
+          ({ error: rpcError } = await supabase.rpc("admin_suspend_organization", { _org_id: confirmAction.id, _suspended: false }));
+          break;
+        case "delete_org":
+          ({ error: rpcError } = await supabase.rpc("admin_delete_organization", { _org_id: confirmAction.id }));
+          break;
+        case "suspend_user":
+          ({ error: rpcError } = await supabase.rpc("admin_suspend_user", { _user_id: confirmAction.id, _suspended: true }));
+          break;
+        case "unsuspend_user":
+          ({ error: rpcError } = await supabase.rpc("admin_suspend_user", { _user_id: confirmAction.id, _suspended: false }));
+          break;
+        case "delete_user":
+          ({ error: rpcError } = await supabase.rpc("admin_delete_user", { _user_id: confirmAction.id }));
+          break;
+      }
+      if (rpcError) throw rpcError;
+
+      const actionLabels: Record<string, string> = {
+        suspend_org: "Organisation suspendue",
+        unsuspend_org: "Organisation réactivée",
+        delete_org: "Organisation supprimée",
+        suspend_user: "Utilisateur suspendu",
+        unsuspend_user: "Utilisateur réactivé",
+        delete_user: "Utilisateur supprimé",
+      };
+      toast.success(actionLabels[confirmAction.type]);
+      await loadStats();
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erreur : " + (err.message || "Action échouée"));
+    } finally {
+      setActionLoading(false);
+      setConfirmAction(null);
+    }
+  };
+
+  const confirmMessages: Record<string, { title: string; desc: string; destructive?: boolean }> = {
+    suspend_org: { title: "Suspendre l'organisation", desc: "Les membres ne pourront plus accéder à leurs données. Cette action est réversible." },
+    unsuspend_org: { title: "Réactiver l'organisation", desc: "L'organisation et ses membres retrouveront l'accès." },
+    delete_org: { title: "Supprimer l'organisation", desc: "⚠️ ATTENTION : Toutes les données (élèves, séances, factures, etc.) seront définitivement supprimées. Cette action est IRRÉVERSIBLE.", destructive: true },
+    suspend_user: { title: "Suspendre l'utilisateur", desc: "L'utilisateur ne pourra plus se connecter. Cette action est réversible." },
+    unsuspend_user: { title: "Réactiver l'utilisateur", desc: "L'utilisateur pourra à nouveau se connecter." },
+    delete_user: { title: "Supprimer l'utilisateur", desc: "⚠️ L'utilisateur sera retiré de toutes les organisations et ses données de profil seront supprimées. Cette action est IRRÉVERSIBLE.", destructive: true },
+  };
 
   if (loading) {
     return (
@@ -144,6 +221,32 @@ export default function SuperAdminPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1100px] mx-auto space-y-5">
+      {/* Confirmation Dialog */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction && confirmMessages[confirmAction.type]?.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="block mb-2 font-medium text-foreground">{confirmAction?.label}</span>
+              {confirmAction && confirmMessages[confirmAction.type]?.desc}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeAction}
+              disabled={actionLoading}
+              className={confirmAction && confirmMessages[confirmAction.type]?.destructive ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+            >
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Confirmer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="page-header">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate("/tableau-de-bord")} className="p-2 rounded-lg hover:bg-accent transition-colors">
@@ -238,12 +341,17 @@ export default function SuperAdminPage() {
             <h2 className="font-semibold text-foreground text-sm">Dernières organisations</h2>
             <div className="space-y-2">
               {(stats.organizations || []).slice(0, 5).map((org) => (
-                <div key={org.id} className="flex items-center gap-3 p-3 rounded-lg bg-accent/50 border border-border/60">
+                <div key={org.id} className={`flex items-center gap-3 p-3 rounded-lg border border-border/60 ${org.suspended ? "bg-destructive/5 border-destructive/20" : "bg-accent/50"}`}>
                   <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
                     <Building2 className="w-4 h-4 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{org.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground truncate">{org.name}</p>
+                      {org.suspended && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-medium">Suspendue</span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-muted-foreground">
                       {format(new Date(org.created_at), "d MMM yyyy", { locale: fr })} · {org.mode}
                     </p>
@@ -269,26 +377,60 @@ export default function SuperAdminPage() {
                 <tr className="border-b border-border text-left">
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Nom</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Mode</th>
+                  <th className="pb-2 text-xs font-medium text-muted-foreground">Statut</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Membres</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Élèves</th>
-                  <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Formateurs</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Séances</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Créée le</th>
+                  <th className="pb-2 text-xs font-medium text-muted-foreground text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {(stats.organizations || []).map((org) => (
-                  <tr key={org.id} className="border-b border-border/50 hover:bg-accent/30 transition-colors">
+                  <tr key={org.id} className={`border-b border-border/50 transition-colors ${org.suspended ? "bg-destructive/5" : "hover:bg-accent/30"}`}>
                     <td className="py-2.5 font-medium text-foreground">{org.name}</td>
                     <td className="py-2.5">
                       <span className="status-badge rounded-md bg-primary/10 text-primary capitalize">{org.mode}</span>
                     </td>
+                    <td className="py-2.5">
+                      {org.suspended ? (
+                        <span className="status-badge rounded-md bg-destructive/10 text-destructive text-[10px]">Suspendue</span>
+                      ) : (
+                        <span className="status-badge rounded-md bg-emerald-500/10 text-emerald-600 text-[10px]">Active</span>
+                      )}
+                    </td>
                     <td className="py-2.5 text-center text-muted-foreground">{org.member_count}</td>
                     <td className="py-2.5 text-center text-muted-foreground">{org.student_count}</td>
-                    <td className="py-2.5 text-center text-muted-foreground">{org.instructor_count}</td>
                     <td className="py-2.5 text-center text-muted-foreground">{org.lesson_count}</td>
                     <td className="py-2.5 text-muted-foreground text-xs">
                       {format(new Date(org.created_at), "d MMM yyyy", { locale: fr })}
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
+                          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {org.suspended ? (
+                            <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_org", id: org.id, label: org.name })}>
+                              <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
+                              Réactiver
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => setConfirmAction({ type: "suspend_org", id: org.id, label: org.name })}>
+                              <Ban className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                              Suspendre
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            onClick={() => setConfirmAction({ type: "delete_org", id: org.id, label: org.name })}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-2" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -303,28 +445,61 @@ export default function SuperAdminPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-5 space-y-3">
           <h2 className="font-semibold text-foreground text-sm">Tous les utilisateurs</h2>
           <div className="space-y-2">
-            {(stats.users || []).map((u) => (
-              <div key={u.user_id} className="flex items-center gap-3 p-3 rounded-lg bg-accent/50 border border-border/60">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                  {(u.first_name?.[0] || "?")}{(u.last_name?.[0] || "")}
+            {(stats.users || []).map((u) => {
+              const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Sans nom";
+              const isSelf = u.user_id === user?.id;
+              return (
+                <div key={u.user_id} className={`flex items-center gap-3 p-3 rounded-lg border border-border/60 ${u.suspended ? "bg-destructive/5 border-destructive/20" : "bg-accent/50"}`}>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${u.suspended ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+                    {(u.first_name?.[0] || "?")}{(u.last_name?.[0] || "")}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{name}</p>
+                      {isSelf && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">Vous</span>}
+                      {u.suspended && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-medium">Suspendu</span>}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Inscrit le {format(new Date(u.created_at), "d MMM yyyy", { locale: fr })}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {(u.org_roles || []).map((or, i) => (
+                      <span key={i} className="status-badge rounded-md bg-accent text-accent-foreground text-[10px]">
+                        {or.org_name} · {or.role}
+                      </span>
+                    ))}
+                  </div>
+                  {!isSelf && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
+                        <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {u.suspended ? (
+                          <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_user", id: u.user_id, label: name })}>
+                            <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
+                            Réactiver
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => setConfirmAction({ type: "suspend_user", id: u.user_id, label: name })}>
+                            <Ban className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                            Suspendre
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => setConfirmAction({ type: "delete_user", id: u.user_id, label: name })}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-2" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">
-                    {[u.first_name, u.last_name].filter(Boolean).join(" ") || "Sans nom"}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Inscrit le {format(new Date(u.created_at), "d MMM yyyy", { locale: fr })}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {(u.org_roles || []).map((or, i) => (
-                    <span key={i} className="status-badge rounded-md bg-accent text-accent-foreground text-[10px]">
-                      {or.org_name} · {or.role}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </motion.div>
       )}
