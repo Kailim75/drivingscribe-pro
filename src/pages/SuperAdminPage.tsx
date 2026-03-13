@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play } from "lucide-react";
+import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
