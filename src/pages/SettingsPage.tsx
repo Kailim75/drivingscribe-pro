@@ -182,7 +182,7 @@ export default function SettingsPage() {
           <div className="border-t border-border pt-4">
             <h3 className="text-sm font-medium text-foreground mb-2">Webhook sortant (CRM / Zapier)</h3>
             <p className="text-xs text-muted-foreground mb-3">URL notifiée automatiquement à chaque création d'élève (POST JSON)</p>
-            <Field label="URL du webhook" value={form.webhook_url || ""} onChange={(v) => update("webhook_url", v)} disabled={!isOwnerOrAdmin} />
+            <Field label="URL du webhook" value={(form as any).webhook_url || ""} onChange={(v) => update("webhook_url" as any, v)} disabled={!isOwnerOrAdmin} />
           </div>
           <div className="border-t border-border pt-4">
             <h3 className="text-sm font-medium text-foreground mb-2">Politique d'annulation par défaut</h3>
