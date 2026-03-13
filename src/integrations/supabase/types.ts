@@ -605,6 +605,7 @@ export type Database = {
           tva_rate: number
           updated_at: string
           webhook_api_key: string | null
+          webhook_calls_count: number
           webhook_url: string | null
         }
         Insert: {
@@ -630,6 +631,7 @@ export type Database = {
           tva_rate?: number
           updated_at?: string
           webhook_api_key?: string | null
+          webhook_calls_count?: number
           webhook_url?: string | null
         }
         Update: {
@@ -655,6 +657,7 @@ export type Database = {
           tva_rate?: number
           updated_at?: string
           webhook_api_key?: string | null
+          webhook_calls_count?: number
           webhook_url?: string | null
         }
         Relationships: []
