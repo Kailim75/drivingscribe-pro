@@ -185,6 +185,54 @@ export default function SettingsPage() {
             <Field label="URL du webhook" value={(form as any).webhook_url || ""} onChange={(v) => update("webhook_url" as any, v)} disabled={!isOwnerOrAdmin} />
           </div>
           <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-medium text-foreground mb-2">Webhook entrant (recevoir des élèves)</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Envoyez un POST JSON depuis votre CRM à cette URL pour créer des élèves automatiquement.
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">URL du webhook entrant</label>
+                <div className="flex gap-2">
+                  <input type="text" readOnly
+                    value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/receive-student-webhook`}
+                    className="flex-1 bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border opacity-70 font-mono text-xs" />
+                  <button type="button" onClick={() => { navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/receive-student-webhook`); toast.success("URL copiée"); }}
+                    className="btn-secondary text-xs px-3">Copier</button>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Clé API (header <code className="text-[10px] bg-accent px-1 py-0.5 rounded">x-api-key</code>)</label>
+                <div className="flex gap-2">
+                  <input type="text" readOnly value={(form as any).webhook_api_key || "—"}
+                    className="flex-1 bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border opacity-70 font-mono text-xs" />
+                  {(form as any).webhook_api_key && (
+                    <button type="button" onClick={() => { navigator.clipboard.writeText((form as any).webhook_api_key); toast.success("Clé copiée"); }}
+                      className="btn-secondary text-xs px-3">Copier</button>
+                  )}
+                </div>
+              </div>
+              {isOwnerOrAdmin && !(form as any).webhook_api_key && (
+                <button type="button" onClick={async () => {
+                  const key = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+                  const { error } = await supabase.from("organizations").update({ webhook_api_key: key } as any).eq("id", organization.id);
+                  if (!error) { update("webhook_api_key" as any, key); toast.success("Clé API générée"); await refreshOrg(); }
+                }} className="btn-primary text-xs">Générer une clé API</button>
+              )}
+            </div>
+            <div className="mt-3 p-3 rounded-lg bg-accent/50 border border-border/60">
+              <p className="text-[10px] font-medium text-foreground mb-1">Exemple d'appel :</p>
+              <pre className="text-[10px] text-muted-foreground whitespace-pre-wrap font-mono leading-relaxed">{`POST ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/receive-student-webhook
+Headers: x-api-key: VOTRE_CLE_API
+Body: {
+  "first_name": "Jean",
+  "last_name": "Dupont",
+  "email": "jean@mail.com",
+  "phone": "0612345678",
+  "activity_type": "auto_ecole"
+}`}</pre>
+            </div>
+          </div>
+          <div className="border-t border-border pt-4">
             <h3 className="text-sm font-medium text-foreground mb-2">Politique d'annulation par défaut</h3>
             <textarea value={form.cancellation_policy || ""} onChange={(e) => update("cancellation_policy", e.target.value)}
               disabled={!isOwnerOrAdmin}
