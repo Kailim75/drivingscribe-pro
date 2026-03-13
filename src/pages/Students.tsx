@@ -24,6 +24,7 @@ export default function Students() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
   const [showForm, setShowForm] = useState(false);
+  const [activityFilter, setActivityFilter] = useState("tous");
   const [editStudent, setEditStudent] = useState<any>(null);
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
   const [page, setPage] = useState(1);
@@ -31,7 +32,8 @@ export default function Students() {
   const filtered = students.filter((s) => {
     const matchSearch = `${s.first_name} ${s.last_name} ${s.email}`.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "tous" || s.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchActivity = activityFilter === "tous" || s.activity_type === activityFilter;
+    return matchSearch && matchStatus && matchActivity;
   });
 
   const { paginated, total } = usePagination(filtered, page);
@@ -39,6 +41,7 @@ export default function Students() {
   // Reset page when filters change
   const handleSearch = (v: string) => { setSearch(v); setPage(1); };
   const handleStatusFilter = (v: string) => { setStatusFilter(v); setPage(1); };
+  const handleActivityFilter = (v: string) => { setActivityFilter(v); setPage(1); };
 
   const handleCreate = (data: StudentFormData) => {
     create.mutate(data as { first_name: string; last_name: string; phone?: string; email?: string; address?: string; activity_type?: string; notes?: string }, {
@@ -99,6 +102,14 @@ export default function Students() {
           <option value="en_pause">En pause</option>
           <option value="termine">Terminé</option>
           <option value="archive">Archivé</option>
+        </select>
+        <select value={activityFilter} onChange={(e) => handleActivityFilter(e.target.value)}
+          className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="tous">Toutes les activités</option>
+          <option value="taxi">Taxi</option>
+          <option value="vtc">VTC</option>
+          <option value="vmdtr">VMDTR</option>
+          <option value="auto_ecole">Auto-école</option>
         </select>
       </div>
 
