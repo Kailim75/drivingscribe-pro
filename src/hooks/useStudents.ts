@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { toast } from "sonner";
+import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 export function useStudents() {
   const { organization } = useOrg();
@@ -23,7 +24,7 @@ export function useStudents() {
   });
 
   const create = useMutation({
-    mutationFn: async (input: { first_name: string; last_name: string; phone?: string; email?: string; address?: string; activity_type?: string; notes?: string }) => {
+    mutationFn: async (input: Omit<TablesInsert<"students">, "organization_id">) => {
       const { error } = await supabase.from("students").insert({ ...input, organization_id: orgId! });
       if (error) throw error;
     },
@@ -32,7 +33,7 @@ export function useStudents() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, ...input }: { id: string } & Record<string, any>) => {
+    mutationFn: async ({ id, ...input }: { id: string } & TablesUpdate<"students">) => {
       const { error } = await supabase.from("students").update(input).eq("id", id);
       if (error) throw error;
     },
@@ -42,7 +43,8 @@ export function useStudents() {
 
   const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("students").update({ status: "archive" as any }).eq("id", id);
+      const update: TablesUpdate<"students"> = { status: "archive" };
+      const { error } = await supabase.from("students").update(update).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["students"] }); toast.success("Élève archivé"); },

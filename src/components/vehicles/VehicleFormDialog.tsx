@@ -4,32 +4,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { vehicleSchema, type VehicleFormData } from "@/lib/validations";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: VehicleFormData) => void;
   loading?: boolean;
-  initial?: any;
+  initial?: Partial<VehicleFormData>;
 }
 
 export default function VehicleFormDialog({ open, onClose, onSubmit, loading, initial }: Props) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<VehicleFormData>({
     plate: "", brand: "", model: "", category: "auto_ecole", monthly_cost: 0, notes: "",
-    next_maintenance_date: "", last_maintenance_date: "", insurance_expiry: "", technical_control_date: "",
+    next_maintenance_date: null, last_maintenance_date: null, insurance_expiry: null, technical_control_date: null,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (initial) setForm({ ...form, ...initial, monthly_cost: Number(initial.monthly_cost) || 0 });
-    else setForm({ plate: "", brand: "", model: "", category: "auto_ecole", monthly_cost: 0, notes: "", next_maintenance_date: "", last_maintenance_date: "", insurance_expiry: "", technical_control_date: "" });
+    if (initial) setForm((f) => ({ ...f, ...initial, monthly_cost: Number(initial.monthly_cost) || 0 }));
+    else setForm({ plate: "", brand: "", model: "", category: "auto_ecole", monthly_cost: 0, notes: "", next_maintenance_date: null, last_maintenance_date: null, insurance_expiry: null, technical_control_date: null });
+    setErrors({});
   }, [initial, open]);
 
-  const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+  const set = (k: keyof VehicleFormData, v: string | number | null) => {
+    setForm((p) => ({ ...p, [k]: v }));
+    setErrors((e) => ({ ...e, [k]: "" }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.plate.trim()) return;
-    // Convert empty strings to null for date fields
     const payload = {
       ...form,
       next_maintenance_date: form.next_maintenance_date || null,
@@ -37,7 +42,18 @@ export default function VehicleFormDialog({ open, onClose, onSubmit, loading, in
       insurance_expiry: form.insurance_expiry || null,
       technical_control_date: form.technical_control_date || null,
     };
-    onSubmit(payload);
+    const result = vehicleSchema.safeParse(payload);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        const key = err.path[0] as string;
+        if (!fieldErrors[key]) fieldErrors[key] = err.message;
+      });
+      setErrors(fieldErrors);
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+    onSubmit(result.data);
   };
 
   return (
@@ -47,13 +63,16 @@ export default function VehicleFormDialog({ open, onClose, onSubmit, loading, in
           <DialogTitle>{initial ? "Modifier le véhicule" : "Nouveau véhicule"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Identification */}
           <div className="space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identification</p>
-            <div><Label>Immatriculation *</Label><Input value={form.plate} onChange={(e) => set("plate", e.target.value)} required placeholder="AB-123-CD" /></div>
+            <div>
+              <Label>Immatriculation *</Label>
+              <Input value={form.plate} onChange={(e) => set("plate", e.target.value)} placeholder="AB-123-CD" maxLength={20} />
+              {errors.plate && <p className="text-xs text-destructive mt-0.5">{errors.plate}</p>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Marque</Label><Input value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="Renault" /></div>
-              <div><Label>Modèle</Label><Input value={form.model} onChange={(e) => set("model", e.target.value)} placeholder="Clio" /></div>
+              <div><Label>Marque</Label><Input value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="Renault" maxLength={50} /></div>
+              <div><Label>Modèle</Label><Input value={form.model} onChange={(e) => set("model", e.target.value)} placeholder="Clio" maxLength={50} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -70,22 +89,21 @@ export default function VehicleFormDialog({ open, onClose, onSubmit, loading, in
             </div>
           </div>
 
-          {/* Dates d'entretien */}
           <div className="space-y-3 pt-2 border-t border-border">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Entretien & Suivi</p>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Dernier entretien</Label><Input type="date" value={form.last_maintenance_date} onChange={(e) => set("last_maintenance_date", e.target.value)} /></div>
-              <div><Label>Prochain entretien</Label><Input type="date" value={form.next_maintenance_date} onChange={(e) => set("next_maintenance_date", e.target.value)} /></div>
+              <div><Label>Dernier entretien</Label><Input type="date" value={form.last_maintenance_date ?? ""} onChange={(e) => set("last_maintenance_date", e.target.value || null)} /></div>
+              <div><Label>Prochain entretien</Label><Input type="date" value={form.next_maintenance_date ?? ""} onChange={(e) => set("next_maintenance_date", e.target.value || null)} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Contrôle technique</Label><Input type="date" value={form.technical_control_date} onChange={(e) => set("technical_control_date", e.target.value)} /></div>
-              <div><Label>Échéance assurance</Label><Input type="date" value={form.insurance_expiry} onChange={(e) => set("insurance_expiry", e.target.value)} /></div>
+              <div><Label>Contrôle technique</Label><Input type="date" value={form.technical_control_date ?? ""} onChange={(e) => set("technical_control_date", e.target.value || null)} /></div>
+              <div><Label>Échéance assurance</Label><Input type="date" value={form.insurance_expiry ?? ""} onChange={(e) => set("insurance_expiry", e.target.value || null)} /></div>
             </div>
           </div>
 
           <div className="pt-2 border-t border-border">
             <Label>Notes</Label>
-            <Input value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Informations complémentaires..." />
+            <Input value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Informations complémentaires..." maxLength={1000} />
           </div>
 
           <DialogFooter>

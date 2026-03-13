@@ -2,6 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { toast } from "sonner";
+import type { Database, TablesUpdate } from "@/integrations/supabase/types";
+
+type LessonStatus = Database["public"]["Enums"]["lesson_status"];
+type BillingRule = Database["public"]["Enums"]["billing_rule"];
 
 export interface LessonConflict {
   conflict_type: string;
@@ -51,7 +55,7 @@ export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?
       _exclude_lesson_id: params.exclude_lesson_id || null,
     });
     if (error) throw error;
-    return (data as any) ?? [];
+    return (data as LessonConflict[]) ?? [];
   };
 
   const create = useMutation({
@@ -60,11 +64,13 @@ export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?
       date: string; start_time: string; end_time: string; duration_hours: number;
       formula_id?: string; note?: string; billable_amount?: number;
     }) => {
+      const status: LessonStatus = "prevu";
+      const billing_rule: BillingRule = "totale";
       const { error } = await supabase.from("lessons").insert({
         ...input,
         organization_id: orgId!,
-        status: "prevu" as any,
-        billing_rule: "totale" as any,
+        status,
+        billing_rule,
       });
       if (error) throw error;
     },
@@ -73,7 +79,7 @@ export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, ...input }: { id: string } & Record<string, any>) => {
+    mutationFn: async ({ id, ...input }: { id: string } & TablesUpdate<"lessons">) => {
       const { error } = await supabase.from("lessons").update(input).eq("id", id);
       if (error) throw error;
     },
@@ -82,8 +88,9 @@ export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?
   });
 
   const updateStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from("lessons").update({ status: status as any }).eq("id", id);
+    mutationFn: async ({ id, status }: { id: string; status: LessonStatus }) => {
+      const update: TablesUpdate<"lessons"> = { status };
+      const { error } = await supabase.from("lessons").update(update).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["lessons"] }); toast.success("Statut mis à jour"); },
@@ -92,7 +99,8 @@ export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?
 
   const archive = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("lessons").update({ status: "annule" as any }).eq("id", id);
+      const status: LessonStatus = "annule";
+      const { error } = await supabase.from("lessons").update({ status }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["lessons"] }); toast.success("Séance annulée"); },

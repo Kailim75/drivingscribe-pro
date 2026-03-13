@@ -2,6 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { toast } from "sonner";
+import type { Database, TablesUpdate } from "@/integrations/supabase/types";
+
+type OfferType = Database["public"]["Enums"]["offer_type"];
 
 export function useOffers() {
   const { organization } = useOrg();
@@ -23,8 +26,29 @@ export function useOffers() {
   });
 
   const create = useMutation({
-    mutationFn: async (input: { name: string; type?: string; price?: number; hours?: number | null; tva_rate?: number; deposit_percent?: number; cancellation_policy?: string; activity_type?: string; active?: boolean }) => {
-      const { error } = await supabase.from("offers").insert({ ...input, organization_id: orgId! } as any);
+    mutationFn: async (input: {
+      name: string;
+      type?: OfferType;
+      price?: number;
+      hours?: number | null;
+      tva_rate?: number;
+      deposit_percent?: number;
+      cancellation_policy?: string;
+      activity_type?: string;
+      active?: boolean;
+    }) => {
+      const { error } = await supabase.from("offers").insert({
+        name: input.name,
+        type: input.type ?? "heure",
+        price: input.price,
+        hours: input.hours,
+        tva_rate: input.tva_rate,
+        deposit_percent: input.deposit_percent,
+        cancellation_policy: input.cancellation_policy,
+        activity_type: input.activity_type,
+        active: input.active,
+        organization_id: orgId!,
+      });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["offers"] }); toast.success("Offre créée"); },
@@ -32,7 +56,7 @@ export function useOffers() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, ...input }: { id: string } & Record<string, any>) => {
+    mutationFn: async ({ id, ...input }: { id: string } & TablesUpdate<"offers">) => {
       const { error } = await supabase.from("offers").update(input).eq("id", id);
       if (error) throw error;
     },

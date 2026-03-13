@@ -27,7 +27,7 @@ export default function OnboardingPage() {
     setError("");
 
     try {
-      // 1. Create organization (don't use .select() — RLS SELECT requires membership which doesn't exist yet)
+      // 1. Create organization (INSERT policy allows any authenticated user)
       const orgId = crypto.randomUUID();
       const { error: orgError } = await supabase
         .from("organizations")
@@ -35,23 +35,16 @@ export default function OnboardingPage() {
 
       if (orgError) throw orgError;
 
-      const org = { id: orgId };
+      // 2. Use SECURITY DEFINER RPC to add member + assign owner role
+      // This bypasses RLS safely — the function validates the org was just created
+      const { error: setupError } = await supabase.rpc("setup_organization_owner", {
+        _org_id: orgId,
+        _user_id: user.id,
+      });
 
-      // 2. Add user as member
-      const { error: memberError } = await supabase
-        .from("organization_members")
-        .insert({ organization_id: org.id, user_id: user.id });
+      if (setupError) throw setupError;
 
-      if (memberError) throw memberError;
-
-      // 3. Assign owner role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({ organization_id: org.id, user_id: user.id, role: "owner" as const });
-
-      if (roleError) throw roleError;
-
-      // 4. Create default activity types
+      // 3. Create default activity types (user now has owner role, RLS passes)
       const defaultTypes = [
         { name: "Auto-école", slug: "auto-ecole" },
         { name: "Taxi", slug: "taxi" },
@@ -60,27 +53,27 @@ export default function OnboardingPage() {
       ];
 
       await supabase.from("activity_types").insert(
-        defaultTypes.map((t) => ({ ...t, organization_id: org.id }))
+        defaultTypes.map((t) => ({ ...t, organization_id: orgId }))
       );
 
-      // 5. Audit log
+      // 4. Audit log
       const profile = await supabase.from("profiles").select("first_name, last_name").eq("user_id", user.id).single();
       const userName = profile.data ? `${profile.data.first_name} ${profile.data.last_name}`.trim() : user.email || "";
 
       await supabase.from("audit_logs").insert({
-        organization_id: org.id,
+        organization_id: orgId,
         user_id: user.id,
         user_name: userName,
         action: "Organisation créée",
         entity: "organization",
-        entity_id: org.id,
+        entity_id: orgId,
         details: `${name} — mode ${mode}`,
       });
 
-      // Seed demo data if requested
+      // 5. Seed demo data if requested
       if (withDemo) {
         try {
-          await seedDemoData(org.id, user.id);
+          await seedDemoData(orgId, user.id);
         } catch (e) {
           console.warn("Demo seed partial failure:", e);
         }
@@ -119,7 +112,7 @@ export default function OnboardingPage() {
             <label className="text-xs text-muted-foreground mb-1 block">Nom de l'organisation *</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} required
               className="w-full bg-secondary text-secondary-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-              placeholder="Ex: Auto-École Centrale" />
+              placeholder="Ex: Auto-École Centrale" maxLength={200} />
           </div>
 
           <div>

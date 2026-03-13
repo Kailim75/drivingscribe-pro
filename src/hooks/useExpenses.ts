@@ -2,6 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { toast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
+
+type ExpenseType = Database["public"]["Enums"]["expense_type"];
 
 export function useExpenses() {
   const { organization } = useOrg();
@@ -27,7 +30,7 @@ export function useExpenses() {
       category: string;
       description: string;
       amount: number;
-      type: string;
+      type: ExpenseType;
       date: string;
       recurring?: boolean;
       recurring_period?: string;
@@ -36,7 +39,18 @@ export function useExpenses() {
     }) => {
       const { data, error } = await supabase
         .from("expenses")
-        .insert({ ...input, organization_id: orgId! } as any)
+        .insert({
+          category: input.category,
+          description: input.description,
+          amount: input.amount,
+          type: input.type,
+          date: input.date,
+          recurring: input.recurring ?? false,
+          recurring_period: input.recurring_period,
+          vehicle_id: input.vehicle_id,
+          instructor_id: input.instructor_id,
+          organization_id: orgId!,
+        })
         .select()
         .single();
       if (error) throw error;

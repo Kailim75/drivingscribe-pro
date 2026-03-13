@@ -4,32 +4,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { offerSchema, type OfferFormData } from "@/lib/validations";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: OfferFormData) => void;
   loading?: boolean;
-  initial?: any;
+  initial?: Partial<OfferFormData>;
 }
 
 export default function OfferFormDialog({ open, onClose, onSubmit, loading, initial }: Props) {
-  const [form, setForm] = useState({
-    name: "", type: "heure" as string, price: 0, hours: 1 as number | null,
+  const [form, setForm] = useState<OfferFormData>({
+    name: "", type: "heure", price: 0, hours: 1,
     tva_rate: 20, deposit_percent: 0, cancellation_policy: "", activity_type: "auto_ecole", active: true,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (initial) setForm({ ...form, ...initial });
+    if (initial) setForm((f) => ({ ...f, ...initial }));
     else setForm({ name: "", type: "heure", price: 0, hours: 1, tva_rate: 20, deposit_percent: 0, cancellation_policy: "", activity_type: "auto_ecole", active: true });
+    setErrors({});
   }, [initial, open]);
 
-  const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
+  const set = (k: keyof OfferFormData, v: string | number | boolean | null) => {
+    setForm((p) => ({ ...p, [k]: v }));
+    setErrors((e) => ({ ...e, [k]: "" }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) return;
-    onSubmit({ ...form, hours: form.type === "heure" ? 1 : form.hours });
+    const data = { ...form, hours: form.type === "heure" ? 1 : form.hours };
+    const result = offerSchema.safeParse(data);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        const key = err.path[0] as string;
+        if (!fieldErrors[key]) fieldErrors[key] = err.message;
+      });
+      setErrors(fieldErrors);
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+    onSubmit(result.data);
   };
 
   return (
@@ -39,7 +57,11 @@ export default function OfferFormDialog({ open, onClose, onSubmit, loading, init
           <DialogTitle>{initial ? "Modifier l'offre" : "Nouvelle offre"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div><Label>Nom *</Label><Input value={form.name} onChange={(e) => set("name", e.target.value)} required placeholder="Pack 20h Auto-école" /></div>
+          <div>
+            <Label>Nom *</Label>
+            <Input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Pack 20h Auto-école" maxLength={200} />
+            {errors.name && <p className="text-xs text-destructive mt-0.5">{errors.name}</p>}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Type</Label>
@@ -71,7 +93,7 @@ export default function OfferFormDialog({ open, onClose, onSubmit, loading, init
             <div><Label>TVA (%)</Label><Input type="number" min={0} max={100} step={0.1} value={form.tva_rate} onChange={(e) => set("tva_rate", parseFloat(e.target.value) || 0)} /></div>
             <div><Label>Acompte (%)</Label><Input type="number" min={0} max={100} value={form.deposit_percent} onChange={(e) => set("deposit_percent", parseFloat(e.target.value) || 0)} /></div>
           </div>
-          <div><Label>Conditions d'annulation</Label><Input value={form.cancellation_policy} onChange={(e) => set("cancellation_policy", e.target.value)} /></div>
+          <div><Label>Conditions d'annulation</Label><Input value={form.cancellation_policy} onChange={(e) => set("cancellation_policy", e.target.value)} maxLength={1000} /></div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
             <Button type="submit" disabled={loading}>
