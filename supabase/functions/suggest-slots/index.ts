@@ -63,6 +63,7 @@ serve(async (req) => {
       .eq("day_of_week", dayOfWeek);
 
     const duration = preferred_duration || 1;
+    const DAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
     const workStart = 8; // 8:00
     const workEnd = 19; // 19:00
     const slotDuration = duration; // in hours
