@@ -56,7 +56,19 @@ Deno.serve(async (req) => {
       .update({ webhook_calls_count: (org.webhook_calls_count || 0) + 1 })
       .eq("id", org.id);
 
-    const body = await req.json();
+    const rawBody = await req.text();
+    console.log(`[webhook] Body received (${rawBody.length} chars):`, rawBody.substring(0, 500));
+    
+    let body: any;
+    try {
+      body = JSON.parse(rawBody);
+    } catch (parseErr) {
+      console.error("[webhook] JSON parse error:", parseErr);
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Support both single student and array of students
     const students = Array.isArray(body) ? body : [body];
