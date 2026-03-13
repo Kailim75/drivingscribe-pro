@@ -70,16 +70,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Support both single student and array of students
-    const students = Array.isArray(body) ? body : [body];
+    const extractStudents = (payload: any): any[] => {
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload?.students)) return payload.students;
+      if (Array.isArray(payload?.data)) return payload.data;
+      if (payload?.student && typeof payload.student === "object") return [payload.student];
+      if (payload?.data && typeof payload.data === "object") return [payload.data];
+      return [payload];
+    };
+
+    const normalizeActivityType = (value: unknown): string => {
+      const raw = String(value ?? "").trim().toLowerCase();
+      if (!raw) return "auto_ecole";
+
+      const normalized = raw.replace(/\s+/g, "_").replace(/-/g, "_");
+      if (normalized.includes("vtc")) return "vtc";
+      if (normalized.includes("taxi")) return "taxi";
+      if (normalized.includes("vmdtr")) return "vmdtr";
+      if (normalized.includes("auto") || normalized.includes("ecole")) return "auto_ecole";
+
+      return normalized;
+    };
+
+    const students = extractStudents(body);
     const results: { success: boolean; name?: string; error?: string }[] = [];
 
     for (const s of students) {
-      const firstName = s.first_name || s.prenom || s.firstName || "";
-      const lastName = s.last_name || s.nom || s.lastName || "";
+      const firstName = s.first_name || s.prenom || s.firstName || s.firstname || "";
+      const lastName = s.last_name || s.nom || s.lastName || s.lastname || "";
 
       if (!firstName || !lastName) {
-        results.push({ success: false, error: `Prénom ou nom manquant` });
+        results.push({ success: false, error: "Prénom ou nom manquant (payload non reconnu)" });
         continue;
       }
 
@@ -89,7 +110,7 @@ Deno.serve(async (req) => {
         last_name: lastName,
         phone: s.phone || s.telephone || s.tel || "",
         email: s.email || "",
-        activity_type: s.activity_type || s.type_activite || "auto_ecole",
+        activity_type: normalizeActivityType(s.activity_type || s.type_activite),
         address: s.address || s.adresse || "",
         notes: s.notes || "",
       });
