@@ -1,8 +1,9 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Building2, Users, GraduationCap, Car, CalendarDays, FileText, Loader2, ArrowLeft, Bell, UserPlus, Ban, Trash2, MoreHorizontal, Play, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { PaginationControls } from "@/components/PaginationControls";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -81,6 +82,9 @@ export default function SuperAdminPage() {
   const [userFilter, setUserFilter] = useState<"all" | "active" | "suspended">("all");
   const [orgSearch, setOrgSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
+  const [orgPage, setOrgPage] = useState(1);
+  const [userPage, setUserPage] = useState(1);
+  const PAGE_SIZE = 15;
   const initialLoadDone = useRef(false);
 
   const loadStats = async () => {
@@ -412,56 +416,75 @@ export default function SuperAdminPage() {
                 </tr>
               </thead>
               <tbody>
-                {(stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).filter(o => !orgSearch || o.name.toLowerCase().includes(orgSearch.toLowerCase())).map((org) => (
-                  <tr key={org.id} className={`border-b border-border/50 transition-colors ${org.suspended ? "bg-destructive/5" : "hover:bg-accent/30"}`}>
-                    <td className="py-2.5 font-medium text-foreground">{org.name}</td>
-                    <td className="py-2.5">
-                      <span className="status-badge rounded-md bg-primary/10 text-primary capitalize">{org.mode}</span>
-                    </td>
-                    <td className="py-2.5">
-                      {org.suspended ? (
-                        <span className="status-badge rounded-md bg-destructive/10 text-destructive text-[10px]">Suspendue</span>
-                      ) : (
-                        <span className="status-badge rounded-md bg-emerald-500/10 text-emerald-600 text-[10px]">Active</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 text-center text-muted-foreground">{org.member_count}</td>
-                    <td className="py-2.5 text-center text-muted-foreground">{org.student_count}</td>
-                    <td className="py-2.5 text-center text-muted-foreground">{org.lesson_count}</td>
-                    <td className="py-2.5 text-muted-foreground text-xs">
-                      {format(new Date(org.created_at), "d MMM yyyy", { locale: fr })}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
-                          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {org.suspended ? (
-                            <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_org", id: org.id, label: org.name })}>
-                              <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
-                              Réactiver
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onClick={() => setConfirmAction({ type: "suspend_org", id: org.id, label: org.name })}>
-                              <Ban className="w-3.5 h-3.5 mr-2 text-amber-500" />
-                              Suspendre
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            onClick={() => setConfirmAction({ type: "delete_org", id: org.id, label: org.name })}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 mr-2" />
-                            Supprimer
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
+                {(() => {
+                  const filtered = (stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).filter(o => !orgSearch || o.name.toLowerCase().includes(orgSearch.toLowerCase()));
+                  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+                  const safePage = Math.min(orgPage, totalPages || 1);
+                  const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+                  return (
+                    <>
+                      {paged.map((org) => (
+                        <tr key={org.id} className={`border-b border-border/50 transition-colors ${org.suspended ? "bg-destructive/5" : "hover:bg-accent/30"}`}>
+                          <td className="py-2.5 font-medium text-foreground">{org.name}</td>
+                          <td className="py-2.5">
+                            <span className="status-badge rounded-md bg-primary/10 text-primary capitalize">{org.mode}</span>
+                          </td>
+                          <td className="py-2.5">
+                            {org.suspended ? (
+                              <span className="status-badge rounded-md bg-destructive/10 text-destructive text-[10px]">Suspendue</span>
+                            ) : (
+                              <span className="status-badge rounded-md bg-emerald-500/10 text-emerald-600 text-[10px]">Active</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 text-center text-muted-foreground">{org.member_count}</td>
+                          <td className="py-2.5 text-center text-muted-foreground">{org.student_count}</td>
+                          <td className="py-2.5 text-center text-muted-foreground">{org.lesson_count}</td>
+                          <td className="py-2.5 text-muted-foreground text-xs">
+                            {format(new Date(org.created_at), "d MMM yyyy", { locale: fr })}
+                          </td>
+                          <td className="py-2.5 text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
+                                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {org.suspended ? (
+                                  <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_org", id: org.id, label: org.name })}>
+                                    <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
+                                    Réactiver
+                                  </DropdownMenuItem>
+                                ) : (
+                                  <DropdownMenuItem onClick={() => setConfirmAction({ type: "suspend_org", id: org.id, label: org.name })}>
+                                    <Ban className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                                    Suspendre
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                  onClick={() => setConfirmAction({ type: "delete_org", id: org.id, label: org.name })}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                  Supprimer
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      ))}
+                    </>
+                  );
+                })()}
               </tbody>
             </table>
+            {(() => {
+              const filtered = (stats.organizations || []).filter(o => orgFilter === "all" ? true : orgFilter === "suspended" ? o.suspended : !o.suspended).filter(o => !orgSearch || o.name.toLowerCase().includes(orgSearch.toLowerCase()));
+              const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+              if (totalPages <= 1) return null;
+              const safePage = Math.min(orgPage, totalPages);
+              return (
+                <PaginationControls page={safePage} total={filtered.length} pageSize={PAGE_SIZE} onChange={(p) => setOrgPage(p)} />
+              );
+            })()}
           </div>
         </motion.div>
       )}
@@ -493,62 +516,79 @@ export default function SuperAdminPage() {
             </div>
           </div>
           <div className="space-y-2">
-            {(stats.users || []).filter(u => userFilter === "all" ? true : userFilter === "suspended" ? u.suspended : !u.suspended).filter(u => { const name = [u.first_name, u.last_name].filter(Boolean).join(" ").toLowerCase(); return !userSearch || name.includes(userSearch.toLowerCase()); }).map((u) => {
-              const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Sans nom";
-              const isSelf = u.user_id === user?.id;
+            {(() => {
+              const filtered = (stats.users || []).filter(u => userFilter === "all" ? true : userFilter === "suspended" ? u.suspended : !u.suspended).filter(u => { const name = [u.first_name, u.last_name].filter(Boolean).join(" ").toLowerCase(); return !userSearch || name.includes(userSearch.toLowerCase()); });
+              const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+              const safePage = Math.min(userPage, totalPages || 1);
+              const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
               return (
-                <div key={u.user_id} className={`flex items-center gap-3 p-3 rounded-lg border border-border/60 ${u.suspended ? "bg-destructive/5 border-destructive/20" : "bg-accent/50"}`}>
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${u.suspended ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
-                    {(u.first_name?.[0] || "?")}{(u.last_name?.[0] || "")}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">{name}</p>
-                      {isSelf && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">Vous</span>}
-                      {u.suspended && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-medium">Suspendu</span>}
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      Inscrit le {format(new Date(u.created_at), "d MMM yyyy", { locale: fr })}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {(u.org_roles || []).map((or, i) => (
-                      <span key={i} className="status-badge rounded-md bg-accent text-accent-foreground text-[10px]">
-                        {or.org_name} · {or.role}
-                      </span>
-                    ))}
-                  </div>
-                  {!isSelf && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
-                        <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {u.suspended ? (
-                          <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_user", id: u.user_id, label: name })}>
-                            <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
-                            Réactiver
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => setConfirmAction({ type: "suspend_user", id: u.user_id, label: name })}>
-                            <Ban className="w-3.5 h-3.5 mr-2 text-amber-500" />
-                            Suspendre
-                          </DropdownMenuItem>
+                <>
+                  {paged.map((u) => {
+                    const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Sans nom";
+                    const isSelf = u.user_id === user?.id;
+                    return (
+                      <div key={u.user_id} className={`flex items-center gap-3 p-3 rounded-lg border border-border/60 ${u.suspended ? "bg-destructive/5 border-destructive/20" : "bg-accent/50"}`}>
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold ${u.suspended ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+                          {(u.first_name?.[0] || "?")}{(u.last_name?.[0] || "")}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-foreground">{name}</p>
+                            {isSelf && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">Vous</span>}
+                            {u.suspended && <span className="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-medium">Suspendu</span>}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            Inscrit le {format(new Date(u.created_at), "d MMM yyyy", { locale: fr })}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {(u.org_roles || []).map((or, i) => (
+                            <span key={i} className="status-badge rounded-md bg-accent text-accent-foreground text-[10px]">
+                              {or.org_name} · {or.role}
+                            </span>
+                          ))}
+                        </div>
+                        {!isSelf && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="p-1.5 rounded-md hover:bg-accent transition-colors">
+                              <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {u.suspended ? (
+                                <DropdownMenuItem onClick={() => setConfirmAction({ type: "unsuspend_user", id: u.user_id, label: name })}>
+                                  <Play className="w-3.5 h-3.5 mr-2 text-emerald-500" />
+                                  Réactiver
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => setConfirmAction({ type: "suspend_user", id: u.user_id, label: name })}>
+                                  <Ban className="w-3.5 h-3.5 mr-2 text-amber-500" />
+                                  Suspendre
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                onClick={() => setConfirmAction({ type: "delete_user", id: u.user_id, label: name })}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 mr-2" />
+                                Supprimer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
-                        <DropdownMenuItem
-                          onClick={() => setConfirmAction({ type: "delete_user", id: u.user_id, label: name })}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 mr-2" />
-                          Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
+                      </div>
+                    );
+                  })}
+                </>
               );
-            })}
+            })()}
           </div>
+          {(() => {
+            const filtered = (stats.users || []).filter(u => userFilter === "all" ? true : userFilter === "suspended" ? u.suspended : !u.suspended).filter(u => { const name = [u.first_name, u.last_name].filter(Boolean).join(" ").toLowerCase(); return !userSearch || name.includes(userSearch.toLowerCase()); });
+            const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+            if (totalPages <= 1) return null;
+            const safePage = Math.min(userPage, totalPages);
+            return <PaginationControls page={safePage} total={filtered.length} pageSize={PAGE_SIZE} onChange={(p) => setUserPage(p)} />;
+          })()}
         </motion.div>
       )}
     </div>
