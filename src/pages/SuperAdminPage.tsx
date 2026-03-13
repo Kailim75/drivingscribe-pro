@@ -500,6 +500,7 @@ export default function SuperAdminPage() {
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Mode</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Statut</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">API</th>
+                  <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Appels</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Membres</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Élèves</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Séances</th>
