@@ -145,6 +145,14 @@ export default function Instructors() {
 
       <InstructorFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
       <InstructorFormDialog open={!!editInstructor} onClose={() => setEditInstructor(null)} onSubmit={handleEdit} loading={update.isPending} initial={editInstructor} />
+      {availabilityInstructor && (
+        <InstructorAvailabilityDialog
+          open={!!availabilityInstructor}
+          onClose={() => setAvailabilityInstructor(null)}
+          instructorId={availabilityInstructor.id}
+          instructorName={`${availabilityInstructor.first_name} ${availabilityInstructor.last_name}`}
+        />
+      )}
 
       <AlertDialog open={!!archiveTarget} onOpenChange={(v) => !v && setArchiveTarget(null)}>
         <AlertDialogContent>
