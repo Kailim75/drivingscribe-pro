@@ -493,7 +493,7 @@ export default function SuperAdminPage() {
             </div>
           </div>
           <div className="space-y-2">
-            {(stats.users || []).filter(u => userFilter === "all" ? true : userFilter === "suspended" ? u.suspended : !u.suspended).map((u) => {
+            {(stats.users || []).filter(u => userFilter === "all" ? true : userFilter === "suspended" ? u.suspended : !u.suspended).filter(u => { const name = [u.first_name, u.last_name].filter(Boolean).join(" ").toLowerCase(); return !userSearch || name.includes(userSearch.toLowerCase()); }).map((u) => {
               const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Sans nom";
               const isSelf = u.user_id === user?.id;
               return (
