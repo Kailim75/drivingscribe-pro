@@ -93,7 +93,7 @@ export default function Import() {
           phone: row.phone,
           email: row.email,
           activity_type: row.activity_type,
-        } as any)
+        })
         .select()
         .single();
 
