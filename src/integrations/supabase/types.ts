@@ -1062,6 +1062,10 @@ export type Database = {
         Args: { _org_id: string; _type: string }
         Returns: string
       }
+      setup_organization_owner: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: undefined
+      }
       user_is_owner: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
