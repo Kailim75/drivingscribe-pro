@@ -102,6 +102,14 @@ export default function Students() {
           <option value="termine">Terminé</option>
           <option value="archive">Archivé</option>
         </select>
+        <select value={activityFilter} onChange={(e) => handleActivityFilter(e.target.value)}
+          className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+          <option value="tous">Toutes les activités</option>
+          <option value="taxi">Taxi</option>
+          <option value="vtc">VTC</option>
+          <option value="vmdtr">VMDTR</option>
+          <option value="auto_ecole">Auto-école</option>
+        </select>
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl overflow-hidden">
