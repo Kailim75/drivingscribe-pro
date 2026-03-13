@@ -53,7 +53,7 @@ export function useStudents() {
               },
             }),
           });
-          console.log("Webhook sent to", organization.webhook_url);
+          console.log("Webhook sent to", (organization as any).webhook_url);
         } catch (err) {
           console.warn("Webhook failed:", err);
         }
