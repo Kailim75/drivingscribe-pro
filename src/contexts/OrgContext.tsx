@@ -13,6 +13,8 @@ interface OrgContextType {
   hasRole: (role: AppRole) => boolean;
   hasAnyRole: (...roles: AppRole[]) => boolean;
   isOwnerOrAdmin: boolean;
+  userSuspended: boolean;
+  orgSuspended: boolean;
   refreshOrg: () => Promise<void>;
 }
 
