@@ -128,6 +128,7 @@ export default function Instructors() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => setEditInstructor(inst)}><Pencil className="w-3.5 h-3.5 mr-2" /> Modifier</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setAvailabilityInstructor(inst)}><CalendarClock className="w-3.5 h-3.5 mr-2" /> Disponibilités</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setArchiveTarget(inst)} className={inst.status === "archive" ? "text-success" : "text-destructive"}>
                             <Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Supprimer"}
                           </DropdownMenuItem>
