@@ -54,6 +54,14 @@ serve(async (req) => {
       .eq("organization_id", organization_id)
       .eq("status", "actif");
 
+    // Fetch instructor availabilities for the day of week
+    const dayOfWeek = (new Date(date).getDay() + 6) % 7; // Convert JS Sunday=0 to Monday=0
+    const { data: availabilities } = await supabase
+      .from("instructor_availabilities")
+      .select("instructor_id, start_time, end_time")
+      .eq("organization_id", organization_id)
+      .eq("day_of_week", dayOfWeek);
+
     const duration = preferred_duration || 1;
     const workStart = 8; // 8:00
     const workEnd = 19; // 19:00
