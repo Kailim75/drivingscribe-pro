@@ -47,7 +47,7 @@ export default function Planning() {
   };
 
   const handleStatusChange = (lessonId: string, status: string) => {
-    updateStatus.mutate({ id: lessonId, status }, { onSuccess: () => { setStatusConfirm(null); log({ action: "update_status", entity: "lesson", entity_id: lessonId, details: `Statut → ${lessonStatusLabels[status]}` }); } });
+    updateStatus.mutate({ id: lessonId, status: status as "prevu" | "effectue" | "annule" | "absent" }, { onSuccess: () => { setStatusConfirm(null); log({ action: "update_status", entity: "lesson", entity_id: lessonId, details: `Statut → ${lessonStatusLabels[status]}` }); } });
   };
 
   const confirmStatus = (lessonId: string, status: string) => {
