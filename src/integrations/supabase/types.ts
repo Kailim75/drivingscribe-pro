@@ -1024,6 +1024,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_get_global_stats: { Args: never; Returns: Json }
       check_lesson_conflicts: {
         Args: {
           _date: string

@@ -26,6 +26,7 @@ import AuthPage from "@/pages/AuthPage";
 import OnboardingPage from "@/pages/OnboardingPage";
 import PublicInvoice from "@/pages/PublicInvoice";
 import LandingPage from "@/pages/LandingPage";
+import SuperAdminPage from "@/pages/SuperAdminPage";
 import NotFound from "@/pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -56,6 +57,7 @@ function AppRoutes() {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/p/facture" element={<PublicInvoice />} />
       <Route path="/" element={<LandingPage />} />
+      <Route path="/admin" element={<SuperAdminPage />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/tableau-de-bord" element={<Dashboard />} />
         <Route path="/eleves" element={<Students />} />
