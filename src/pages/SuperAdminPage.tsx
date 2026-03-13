@@ -41,6 +41,7 @@ interface GlobalStats {
     created_at: string;
     suspended: boolean;
     webhook_api_key: string | null;
+    webhook_calls_count: number;
     student_count: number;
     instructor_count: number;
     lesson_count: number;
@@ -499,6 +500,7 @@ export default function SuperAdminPage() {
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Mode</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground">Statut</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">API</th>
+                  <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Appels</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Membres</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Élèves</th>
                   <th className="pb-2 text-xs font-medium text-muted-foreground text-center">Séances</th>
@@ -534,6 +536,13 @@ export default function SuperAdminPage() {
                               </span>
                             ) : (
                               <span className="text-[10px] text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 text-center">
+                            {org.webhook_calls_count > 0 ? (
+                              <span className="text-xs font-medium text-foreground">{org.webhook_calls_count}</span>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground">0</span>
                             )}
                           </td>
                           <td className="py-2.5 text-center text-muted-foreground">{org.member_count}</td>
