@@ -372,7 +372,17 @@ export default function SuperAdminPage() {
       {/* Organizations tab */}
       {tab === "orgs" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-5 space-y-3">
-          <h2 className="font-semibold text-foreground text-sm">Toutes les organisations</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-foreground text-sm">Toutes les organisations</h2>
+            <div className="flex gap-1 bg-accent/50 rounded-lg p-0.5">
+              {([["all", "Tous"], ["active", "Actives"], ["suspended", "Suspendues"]] as const).map(([key, label]) => (
+                <button key={key} onClick={() => setOrgFilter(key)}
+                  className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${orgFilter === key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
