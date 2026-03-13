@@ -28,7 +28,22 @@ export default function SettingsPage() {
   const [activityTypes, setActivityTypes] = useState<any[]>([]);
   const [newSkillName, setNewSkillName] = useState("");
   const { settings: notifSettings, upsert: upsertNotif } = useNotificationSettings();
-  const { categories: skillCategories, create: createSkill, remove: removeSkill } = useSkillCategories();
+  const { categories: skillCategories, create: createSkill, remove: removeSkill, reorder: reorderSkills } = useSkillCategories();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = skillCategories.findIndex((c) => c.id === active.id);
+    const newIndex = skillCategories.findIndex((c) => c.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(skillCategories, oldIndex, newIndex);
+    reorderSkills.mutate(reordered.map((c, i) => ({ id: c.id, sort_order: i + 1 })));
+  };
 
   useEffect(() => {
     if (organization) {
