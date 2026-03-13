@@ -79,6 +79,8 @@ export default function SuperAdminPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [orgFilter, setOrgFilter] = useState<"all" | "active" | "suspended">("all");
   const [userFilter, setUserFilter] = useState<"all" | "active" | "suspended">("all");
+  const [orgSearch, setOrgSearch] = useState("");
+  const [userSearch, setUserSearch] = useState("");
   const initialLoadDone = useRef(false);
 
   const loadStats = async () => {
