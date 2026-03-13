@@ -22,9 +22,11 @@ export default function Instructors() {
   const [editInstructor, setEditInstructor] = useState<any>(null);
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
 
-  const filtered = instructors.filter((i) =>
-    `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase()) && i.status !== "archive"
-  );
+  const filtered = instructors.filter((i) => {
+    const matchSearch = `${i.first_name} ${i.last_name} ${i.email}`.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "tous" ? i.status !== "archive" : i.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
   const handleCreate = (data: any) => {
     create.mutate(data, { onSuccess: () => { setShowForm(false); log({ action: "create", entity: "instructor", details: `${data.first_name} ${data.last_name}` }); } });
