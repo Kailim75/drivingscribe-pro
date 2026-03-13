@@ -410,20 +410,19 @@ Body: {
             </button>
           </div>
 
-          <div className="space-y-2">
-            {skillCategories.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Aucune compétence configurée</p>
-            ) : (
-              skillCategories.map((cat) => (
-                <div key={cat.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
-                  <span className="text-sm font-medium text-foreground">{cat.name}</span>
-                  <button onClick={() => removeSkill.mutate(cat.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={skillCategories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {skillCategories.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Aucune compétence configurée</p>
+                ) : (
+                  skillCategories.map((cat) => (
+                    <SortableSkillItem key={cat.id} id={cat.id} name={cat.name} onRemove={() => removeSkill.mutate(cat.id)} />
+                  ))
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
 
           {skillCategories.length === 0 && (
             <div className="p-3 rounded-lg bg-accent/50 border border-border/60">
