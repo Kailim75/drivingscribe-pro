@@ -7,11 +7,15 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
+  console.log(`[webhook] ${req.method} received from ${req.headers.get("origin") || req.headers.get("referer") || "unknown"}`);
+  console.log(`[webhook] Headers: content-type=${req.headers.get("content-type")}, x-api-key=${req.headers.get("x-api-key") ? "present" : "missing"}`);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
+    console.log(`[webhook] Rejected: method ${req.method}`);
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -20,7 +24,7 @@ Deno.serve(async (req) => {
 
   try {
     // Authenticate via X-Api-Key header matching the org's webhook_api_key
-    const apiKey = req.headers.get("x-api-key");
+    const apiKey = req.headers.get("x-api-key") || req.headers.get("X-Api-Key") || req.headers.get("authorization")?.replace("Bearer ", "");
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "Missing x-api-key header" }), {
         status: 401,
@@ -52,7 +56,19 @@ Deno.serve(async (req) => {
       .update({ webhook_calls_count: (org.webhook_calls_count || 0) + 1 })
       .eq("id", org.id);
 
-    const body = await req.json();
+    const rawBody = await req.text();
+    console.log(`[webhook] Body received (${rawBody.length} chars):`, rawBody.substring(0, 500));
+    
+    let body: any;
+    try {
+      body = JSON.parse(rawBody);
+    } catch (parseErr) {
+      console.error("[webhook] JSON parse error:", parseErr);
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Support both single student and array of students
     const students = Array.isArray(body) ? body : [body];
