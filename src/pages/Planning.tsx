@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil } from "lucide-react";
+import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLessons } from "@/hooks/useLessons";
 import { useStudents } from "@/hooks/useStudents";
@@ -10,6 +10,10 @@ import { useAuditLog } from "@/hooks/useAuditLog";
 import { lessonStatusLabels, lessonStatusColors } from "@/lib/labels";
 import LessonFormDialog from "@/components/lessons/LessonFormDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
+import { toast } from "sonner";
 
 const statusIcons: Record<string, React.ElementType> = {
   prevu: Clock, effectue: CheckCircle2, annule: XCircle, absent: UserX,
