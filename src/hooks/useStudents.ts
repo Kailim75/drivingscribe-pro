@@ -34,7 +34,7 @@ export function useStudents() {
       toast.success("Élève créé");
 
       // Fire webhook if configured
-      if (organization?.webhook_url) {
+      if ((organization as any)?.webhook_url) {
         try {
           await fetch(organization.webhook_url, {
             method: "POST",
