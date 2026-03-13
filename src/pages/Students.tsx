@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle } from "lucide-react";
+import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle, Pencil, Archive } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,13 @@ import { studentStatusLabels, studentStatusColors, activityTypeLabels, activityT
 import StudentFormDialog from "@/components/students/StudentFormDialog";
 import { PaginationControls, usePagination } from "@/components/PaginationControls";
 import type { StudentFormData } from "@/lib/validations";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Students() {
   const { students, isLoading, create } = useStudents();
