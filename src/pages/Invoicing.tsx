@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical, Loader2, Users } from "lucide-react";
+import { Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical, Loader2, Users, Zap } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { useInvoices } from "@/hooks/useInvoices";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import BatchInvoiceDialog from "@/components/invoicing/BatchInvoiceDialog";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   brouillon: { label: "Brouillon", color: "bg-muted text-muted-foreground" },
@@ -35,6 +36,7 @@ export default function Invoicing() {
   const [statusFilter, setStatusFilter] = useState("tous");
   const [typeFilter, setTypeFilter] = useState("tous");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [batchOpen, setBatchOpen] = useState(false);
   const [docType, setDocType] = useState<"devis" | "facture">("facture");
 
   const [form, setForm] = useState({ student_id: "", due_date: "", notes: "", lines: [{ description: "", quantity: 1, unit_price: 0 }] });
@@ -148,6 +150,9 @@ export default function Invoicing() {
           <p className="page-subtitle">{invoices.length} documents · {formatEur(totalUnpaid)} impayés</p>
         </div>
         <div className="flex gap-2">
+          <button onClick={() => setBatchOpen(true)} className="btn-secondary">
+            <Zap className="w-4 h-4" /> Auto lot
+          </button>
           <button onClick={() => openCreate("devis")} className="btn-secondary">
             <FileText className="w-4 h-4" /> Devis
           </button>
@@ -374,6 +379,7 @@ export default function Invoicing() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <BatchInvoiceDialog open={batchOpen} onOpenChange={setBatchOpen} />
     </div>
   );
 }
