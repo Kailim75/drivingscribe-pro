@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical, Loader2 } from "lucide-react";
+import { Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical, Loader2, Users } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useStudents } from "@/hooks/useStudents";
