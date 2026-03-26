@@ -8,7 +8,13 @@ import { useVehicles } from "@/hooks/useVehicles";
 import { useLessons } from "@/hooks/useLessons";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useInvoices } from "@/hooks/useInvoices";
+import { usePayments } from "@/hooks/usePayments";
 import { formatEur } from "@/lib/labels";
+import { cn } from "@/lib/utils";
+import CashFlowForecast from "@/components/finance/CashFlowForecast";
+import PaymentDelayAnalysis from "@/components/finance/PaymentDelayAnalysis";
+import RevenueByActivity from "@/components/finance/RevenueByActivity";
+import SeasonalityChart from "@/components/finance/SeasonalityChart";
 import { cn } from "@/lib/utils";
 
 type Period = "month" | "quarter" | "year" | "all";
