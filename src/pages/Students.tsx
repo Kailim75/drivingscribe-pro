@@ -207,7 +207,7 @@ export default function Students() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  })}
                 </tbody>
               </table>
             </div>
