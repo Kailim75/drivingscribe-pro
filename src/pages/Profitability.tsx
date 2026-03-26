@@ -15,7 +15,6 @@ import CashFlowForecast from "@/components/finance/CashFlowForecast";
 import PaymentDelayAnalysis from "@/components/finance/PaymentDelayAnalysis";
 import RevenueByActivity from "@/components/finance/RevenueByActivity";
 import SeasonalityChart from "@/components/finance/SeasonalityChart";
-import SeasonalityChart from "@/components/finance/SeasonalityChart";
 
 type Period = "month" | "quarter" | "year" | "all";
 
