@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Building2, Receipt, Users, Shield, Save, Loader2, Bell, Target, Plus, Trash2, GripVertical } from "lucide-react";
+import { Building2, Receipt, Users, Shield, Save, Loader2, Bell, Target, Plus, Trash2, GripVertical, Briefcase, Pencil, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
