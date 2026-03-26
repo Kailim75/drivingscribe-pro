@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical, Loader2 } from "lucide-react";
+import { Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical, Loader2, Users } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useStudents } from "@/hooks/useStudents";
@@ -42,7 +43,8 @@ export default function Invoicing() {
     const studentName = inv.students ? `${inv.students.first_name} ${inv.students.last_name}` : "";
     const matchSearch = inv.number.toLowerCase().includes(search.toLowerCase()) || studentName.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "tous" || inv.status === statusFilter;
-    const matchType = typeFilter === "tous" || inv.type === typeFilter;
+    const matchType = typeFilter === "tous"
+      || (typeFilter === "groupee" ? !!(inv as any).payer_id : inv.type === typeFilter);
     return matchSearch && matchStatus && matchType;
   });
 
@@ -180,6 +182,7 @@ export default function Invoicing() {
           <option value="tous">Tous types</option>
           <option value="devis">Devis</option>
           <option value="facture">Factures</option>
+          <option value="groupee">Groupées</option>
         </select>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="tous">Tous statuts</option>
@@ -222,7 +225,16 @@ export default function Invoicing() {
                           {inv.type === "devis" ? "Devis" : "Facture"}
                         </span>
                         {(inv as any).payer_id && (
-                          <span className="status-badge rounded-md bg-accent text-accent-foreground text-[10px]">Groupée</span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="status-badge rounded-md bg-accent text-accent-foreground text-[10px] inline-flex items-center gap-0.5 cursor-default">
+                                <Users className="w-3 h-3" /> Groupée
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Tiers payeur : {(inv as any).payers?.name || "—"}
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </td>
