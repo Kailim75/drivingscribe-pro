@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useStudents } from "@/hooks/useStudents";
+import { useLessons } from "@/hooks/useLessons";
+import { useStudentFormulas } from "@/hooks/useStudentFormulas";
+import { useSkillCategories, useSkillEvaluations } from "@/hooks/useSkills";
+import { computeHealthScore } from "@/hooks/useStudentHealthScore";
+import StudentHealthBadge from "@/components/students/StudentHealthBadge";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { studentStatusLabels, studentStatusColors, activityTypeLabels, activityTypeColors } from "@/lib/labels";
 import StudentFormDialog from "@/components/students/StudentFormDialog";
@@ -19,6 +24,9 @@ import {
 
 export default function Students() {
   const { students, isLoading, create, update, archive } = useStudents();
+  const { lessons } = useLessons({});
+  const { formulas } = useStudentFormulas();
+  const { categories } = useSkillCategories();
   const { log } = useAuditLog();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -129,32 +137,40 @@ export default function Students() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm data-table">
                 <thead>
-                  <tr className="border-b border-border text-left">
-                    <th>Élève</th>
-                    <th className="hidden md:table-cell">Activité</th>
-                    <th className="hidden sm:table-cell">Statut</th>
-                    <th className="w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginated.map((student) => (
-                    <tr key={student.id} onClick={() => navigate(`/eleves/${student.id}`)}
-                      className="cursor-pointer">
-                      <td>
-                        <p className="font-medium text-foreground">{student.first_name} {student.last_name}</p>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          {student.phone && <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>}
-                          {student.email && <span className="text-xs text-muted-foreground items-center gap-1 hidden sm:flex"><Mail className="w-3 h-3" /> {student.email}</span>}
-                        </div>
-                      </td>
-                      <td className="hidden md:table-cell">
-                        <span className={cn("status-badge", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
-                          {activityTypeLabels[student.activity_type] || student.activity_type}
-                        </span>
-                      </td>
-                      <td className="hidden sm:table-cell">
-                        <span className={cn("status-badge", studentStatusColors[student.status])}>
-                          {studentStatusLabels[student.status]}
+                   <tr className="border-b border-border text-left">
+                     <th>Élève</th>
+                     <th className="hidden lg:table-cell">Santé</th>
+                     <th className="hidden md:table-cell">Activité</th>
+                     <th className="hidden sm:table-cell">Statut</th>
+                     <th className="w-10"></th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {paginated.map((student) => {
+                     const sLessons = lessons.filter((l: any) => l.student_id === student.id);
+                     const sFormulas = formulas.filter((f: any) => f.student_id === student.id);
+                     const score = computeHealthScore(sLessons, sFormulas, [], categories.length);
+                     return (
+                     <tr key={student.id} onClick={() => navigate(`/eleves/${student.id}`)}
+                       className="cursor-pointer">
+                       <td>
+                         <p className="font-medium text-foreground">{student.first_name} {student.last_name}</p>
+                         <div className="flex items-center gap-3 mt-0.5">
+                           {student.phone && <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>}
+                           {student.email && <span className="text-xs text-muted-foreground items-center gap-1 hidden sm:flex"><Mail className="w-3 h-3" /> {student.email}</span>}
+                         </div>
+                       </td>
+                       <td className="hidden lg:table-cell">
+                         <StudentHealthBadge score={score} compact />
+                       </td>
+                       <td className="hidden md:table-cell">
+                         <span className={cn("status-badge", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
+                           {activityTypeLabels[student.activity_type] || student.activity_type}
+                         </span>
+                       </td>
+                       <td className="hidden sm:table-cell">
+                         <span className={cn("status-badge", studentStatusColors[student.status])}>
+                           {studentStatusLabels[student.status]}
                         </span>
                       </td>
                       <td>
@@ -191,7 +207,8 @@ export default function Students() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

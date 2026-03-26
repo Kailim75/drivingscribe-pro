@@ -13,6 +13,8 @@ import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { lessonStatusLabels, lessonStatusColors, formatEur } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
+import AtRiskStudentsAlert from "@/components/dashboard/AtRiskStudentsAlert";
+import { useSkillCategories } from "@/hooks/useSkills";
 
 type Period = "today" | "week" | "month" | "quarter";
 
@@ -44,6 +46,7 @@ export default function Dashboard() {
   const { payments } = usePayments();
   const { expenses } = useExpenses();
   const { formulas } = useStudentFormulas();
+  const { categories } = useSkillCategories();
 
   // Fetch next 30 days lessons for forecast
   const next30 = useMemo(() => {
@@ -295,6 +298,14 @@ export default function Dashboard() {
         lessons={periodLessons}
         students={students}
         period={period}
+      />
+
+      <AtRiskStudentsAlert
+        students={students}
+        allLessons={periodLessonsRaw}
+        allFormulas={formulas}
+        evaluations={[]}
+        categoryCount={categories.length}
       />
 
       <div className="grid md:grid-cols-2 gap-4">

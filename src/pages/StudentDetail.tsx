@@ -6,6 +6,8 @@ import { useStudents } from "@/hooks/useStudents";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { useLessons } from "@/hooks/useLessons";
 import { useSkillCategories, useSkillEvaluations } from "@/hooks/useSkills";
+import { computeHealthScore } from "@/hooks/useStudentHealthScore";
+import StudentHealthBadge from "@/components/students/StudentHealthBadge";
 import { studentStatusLabels, studentStatusColors, activityTypeLabels, lessonStatusLabels, lessonStatusColors, offerTypeLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import StudentFormDialog from "@/components/students/StudentFormDialog";
@@ -41,6 +43,7 @@ export default function StudentDetail() {
 
   const activeFormulas = formulas.filter((f) => f.active);
   const totalHoursBought = formulas.reduce((s, f) => s + Number(f.hours_bought), 0);
+  const healthScore = computeHealthScore(lessons, formulas, evaluations, categories.length);
   const completedLessons = lessons.filter((l: any) => l.status === "effectue");
   const totalHoursDone = completedLessons.reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
   const totalHoursRemaining = totalHoursBought - totalHoursDone;
@@ -62,6 +65,7 @@ export default function StudentDetail() {
             <span className={cn("status-badge", studentStatusColors[student.status])}>
               {studentStatusLabels[student.status]}
             </span>
+            <StudentHealthBadge score={healthScore} />
             <span className="text-sm text-muted-foreground">{activityTypeLabels[student.activity_type]}</span>
           </div>
         </div>
