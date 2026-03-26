@@ -328,7 +328,7 @@ Body: {
                     }
                   }}
                 >
-                  {editingPayer ? "Mettre à jour" : <><Plus className="w-4 h-4 mr-1" /> Ajouter</>}
+                  {editingPayer ? "Mettre à jour" : (<span className="flex items-center"><Plus className="w-4 h-4 mr-1" /> Ajouter</span>)}
                 </Button>
                 {editingPayer && (
                   <Button size="sm" variant="ghost" onClick={() => { setEditingPayer(null); setPayerForm({ name: "", email: "", phone: "", address: "", siret: "", notes: "" }); }}>
