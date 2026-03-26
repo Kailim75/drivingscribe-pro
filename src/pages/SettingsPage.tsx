@@ -397,7 +397,7 @@ Body: {
         </motion.div>
       )}
 
-
+      {tab === "utilisateurs" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-6 space-y-4">
           <h2 className="font-semibold text-foreground">Utilisateurs</h2>
           {members.length === 0 ? (
