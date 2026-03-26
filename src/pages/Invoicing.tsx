@@ -165,10 +165,19 @@ export default function Invoicing() {
             { label: "Total facturé", value: formatEur(invoices.filter((i) => i.type === "facture").reduce((s, i) => s + i.total_ttc, 0)) },
             { label: "Encaissé", value: formatEur(invoices.filter((i) => i.type === "facture").reduce((s, i) => s + i.paid_amount, 0)) },
             { label: "Reste à encaisser", value: formatEur(totalUnpaid), alert: totalUnpaid > 0 },
-            { label: "En retard", value: `${invoices.filter((i) => i.status === "en_retard").length}`, alert: true },
-            { label: "Groupées", value: `${groupedCount}`, grouped: true },
+            { label: "En retard", value: `${invoices.filter((i) => i.status === "en_retard").length}`, alert: true, filterAction: () => setStatusFilter("en_retard") },
+            { label: "Groupées", value: `${groupedCount}`, grouped: true, filterAction: () => setTypeFilter("groupee") },
           ].map((k) => (
-            <div key={k.label} className={cn("glass-card rounded-xl p-4 text-center", k.alert && totalUnpaid > 0 && "border-destructive/20", "grouped" in k && k.grouped && groupedCount > 0 && "border-primary/20")}>
+            <div
+              key={k.label}
+              onClick={k.filterAction}
+              className={cn(
+                "glass-card rounded-xl p-4 text-center",
+                k.alert && totalUnpaid > 0 && "border-destructive/20",
+                "grouped" in k && k.grouped && groupedCount > 0 && "border-primary/20",
+                k.filterAction && "cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all"
+              )}
+            >
               <p className={cn("text-lg font-bold", k.alert && totalUnpaid > 0 ? "text-destructive" : "grouped" in k && k.grouped && groupedCount > 0 ? "text-primary" : "text-foreground")}>
                 {"grouped" in k && k.grouped && <Users className="w-4 h-4 inline-block mr-1 -mt-0.5" />}
                 {k.value}
