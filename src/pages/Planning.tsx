@@ -156,7 +156,15 @@ export default function Planning() {
             {view === "jour" && ` — ${selectedDate.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}`}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          <BulkLessonActions
+            selectedIds={selectedIds}
+            totalCount={sortedLessons.filter((l: any) => l.status === "prevu").length}
+            onSelectAll={() => setSelectedIds(sortedLessons.filter((l: any) => l.status === "prevu").map((l: any) => l.id))}
+            onClearSelection={() => setSelectedIds([])}
+            onBulkStatusChange={handleBulkStatusChange}
+            isPending={bulkPending}
+          />
           <div className="flex items-center bg-muted rounded-lg p-0.5">
             <button onClick={() => setView("jour")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "jour" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
               <CalendarDays className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Jour</span>
@@ -199,8 +207,16 @@ export default function Planning() {
           sortedLessons.map((lesson: any) => {
             const Icon = statusIcons[lesson.status] || Clock;
             return (
-              <div key={lesson.id} className="glass-card rounded-xl p-4 hover:border-primary/20 transition-colors">
+              <div key={lesson.id} onClick={() => selectedIds.length > 0 && lesson.status === "prevu" ? toggleSelect(lesson.id) : undefined}
+                className={cn("glass-card rounded-xl p-4 hover:border-primary/20 transition-colors", selectedIds.includes(lesson.id) && "ring-2 ring-primary/40 border-primary/30")}>
                 <div className="flex items-start gap-3">
+                  {selectedIds.length > 0 && lesson.status === "prevu" && (
+                    <button onClick={(e) => { e.stopPropagation(); toggleSelect(lesson.id); }}
+                      className="mt-1 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+                      style={{ borderColor: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'hsl(var(--border))', background: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'transparent' }}>
+                      {selectedIds.includes(lesson.id) && <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />}
+                    </button>
+                  )}
                   <div className="w-14 flex-shrink-0 text-center">
                     <p className="text-sm font-bold text-foreground">{lesson.start_time?.slice(0, 5)}</p>
                     <p className="text-[10px] text-muted-foreground">{lesson.end_time?.slice(0, 5)}</p>
