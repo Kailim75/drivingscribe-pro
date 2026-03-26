@@ -43,8 +43,9 @@ export default function Students() {
   const handleStatusFilter = (v: string) => { setStatusFilter(v); setPage(1); };
   const handleActivityFilter = (v: string) => { setActivityFilter(v); setPage(1); };
 
-  const handleCreate = (data: StudentFormData) => {
-    create.mutate(data as { first_name: string; last_name: string; phone?: string; email?: string; address?: string; activity_type?: string; notes?: string }, {
+  const handleCreate = (data: StudentFormData & { payer_id?: string | null }) => {
+    const { payer_id, ...studentData } = data;
+    create.mutate({ ...studentData, payer_id: payer_id || null } as any, {
       onSuccess: () => {
         setShowForm(false);
         log({ action: "create", entity: "student", details: `${data.first_name} ${data.last_name}` });
@@ -52,9 +53,10 @@ export default function Students() {
     });
   };
 
-  const handleEdit = (data: StudentFormData) => {
+  const handleEdit = (data: StudentFormData & { payer_id?: string | null }) => {
     if (!editStudent) return;
-    update.mutate({ id: editStudent.id, ...data }, {
+    const { payer_id, ...studentData } = data;
+    update.mutate({ id: editStudent.id, ...studentData, payer_id: payer_id || null } as any, {
       onSuccess: () => {
         setEditStudent(null);
         log({ action: "update", entity: "student", entity_id: editStudent.id, details: `${data.first_name} ${data.last_name}` });

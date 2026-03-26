@@ -6,25 +6,33 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { studentSchema, type StudentFormData } from "@/lib/validations";
 import { toast } from "sonner";
+import { usePayers } from "@/hooks/usePayers";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: StudentFormData) => void;
+  onSubmit: (data: StudentFormData & { payer_id?: string | null }) => void;
   loading?: boolean;
-  initial?: Partial<StudentFormData>;
+  initial?: Partial<StudentFormData> & { payer_id?: string | null };
 }
 
 export default function StudentFormDialog({ open, onClose, onSubmit, loading, initial }: Props) {
+  const { payers } = usePayers();
   const [form, setForm] = useState<StudentFormData>({
     first_name: "", last_name: "", phone: "", email: "", address: "",
     activity_type: "auto_ecole", notes: "",
   });
+  const [payerId, setPayerId] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (initial) setForm((f) => ({ ...f, ...initial }));
-    else setForm({ first_name: "", last_name: "", phone: "", email: "", address: "", activity_type: "auto_ecole", notes: "" });
+    if (initial) {
+      setForm((f) => ({ ...f, ...initial }));
+      setPayerId(initial.payer_id || "");
+    } else {
+      setForm({ first_name: "", last_name: "", phone: "", email: "", address: "", activity_type: "auto_ecole", notes: "" });
+      setPayerId("");
+    }
     setErrors({});
   }, [initial, open]);
 
@@ -46,7 +54,7 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
       toast.error(result.error.errors[0].message);
       return;
     }
-    onSubmit(result.data);
+    onSubmit({ ...result.data, payer_id: payerId || null });
   };
 
   return (
@@ -88,6 +96,16 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
               <option value="taxi">Taxi</option>
               <option value="vtc">VTC</option>
               <option value="vmdtr">VMDTR</option>
+            </select>
+          </div>
+          <div>
+            <Label>Tiers payeur</Label>
+            <select value={payerId} onChange={(e) => setPayerId(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <option value="">Aucun (l'élève paie lui-même)</option>
+              {payers.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
             </select>
           </div>
           <div><Label>Notes</Label><Input value={form.notes} onChange={(e) => set("notes", e.target.value)} maxLength={1000} /></div>

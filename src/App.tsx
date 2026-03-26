@@ -14,6 +14,7 @@ import Vehicles from "@/pages/Vehicles";
 import Planning from "@/pages/Planning";
 import Offers from "@/pages/Offers";
 import Invoicing from "@/pages/Invoicing";
+import GroupedBilling from "@/pages/GroupedBilling";
 import Payments from "@/pages/Payments";
 import Expenses from "@/pages/Expenses";
 import Profitability from "@/pages/Profitability";
@@ -71,6 +72,7 @@ function AppRoutes() {
         <Route path="/planning" element={<Planning />} />
         <Route path="/offres" element={<Offers />} />
         <Route path="/facturation" element={<Invoicing />} />
+        <Route path="/facturation-groupee" element={<GroupedBilling />} />
         <Route path="/paiements" element={<Payments />} />
         <Route path="/depenses" element={<Expenses />} />
         <Route path="/rentabilite" element={<Profitability />} />

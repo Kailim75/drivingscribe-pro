@@ -20,7 +20,7 @@ export function useInvoices() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invoices")
-        .select("*, invoice_lines(*), students(first_name, last_name)")
+        .select("*, invoice_lines(*), students(first_name, last_name), payers(name)")
         .eq("organization_id", orgId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
