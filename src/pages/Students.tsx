@@ -4,6 +4,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useStudents } from "@/hooks/useStudents";
+import { useLessons } from "@/hooks/useLessons";
+import { useStudentFormulas } from "@/hooks/useStudentFormulas";
+import { useSkillCategories, useSkillEvaluations } from "@/hooks/useSkills";
+import { computeHealthScore } from "@/hooks/useStudentHealthScore";
+import StudentHealthBadge from "@/components/students/StudentHealthBadge";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { studentStatusLabels, studentStatusColors, activityTypeLabels, activityTypeColors } from "@/lib/labels";
 import StudentFormDialog from "@/components/students/StudentFormDialog";
@@ -19,6 +24,9 @@ import {
 
 export default function Students() {
   const { students, isLoading, create, update, archive } = useStudents();
+  const { lessons } = useLessons({});
+  const { formulas } = useStudentFormulas();
+  const { categories } = useSkillCategories();
   const { log } = useAuditLog();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
