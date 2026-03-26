@@ -36,6 +36,14 @@ export default function Planning() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkPending, setBulkPending] = useState(false);
 
+  const { organization } = useOrg();
+  const dateStr = selectedDate.toISOString().split("T")[0];
+  const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(view === "jour" ? { date: dateStr } : undefined);
+  const { students } = useStudents();
+  const { instructors } = useInstructors();
+  const { vehicles } = useVehicles();
+  const { log } = useAuditLog();
+
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   }, []);
@@ -54,14 +62,6 @@ export default function Planning() {
       setBulkPending(false);
     }
   }, [selectedIds, updateStatus, log]);
-
-  const { organization } = useOrg();
-  const dateStr = selectedDate.toISOString().split("T")[0];
-  const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(view === "jour" ? { date: dateStr } : undefined);
-  const { students } = useStudents();
-  const { instructors } = useInstructors();
-  const { vehicles } = useVehicles();
-  const { log } = useAuditLog();
 
   const handleAiSuggest = async () => {
     if (!aiStudent || !organization?.id) return;
