@@ -182,6 +182,7 @@ export default function Invoicing() {
           <option value="tous">Tous types</option>
           <option value="devis">Devis</option>
           <option value="facture">Factures</option>
+          <option value="groupee">Groupées</option>
         </select>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           <option value="tous">Tous statuts</option>
