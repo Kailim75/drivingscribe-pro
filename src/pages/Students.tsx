@@ -36,6 +36,7 @@ export default function Students() {
   const [activityFilter, setActivityFilter] = useState("tous");
   const [editStudent, setEditStudent] = useState<any>(null);
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
+  const [bulkArchiveOpen, setBulkArchiveOpen] = useState(false);
   const [page, setPage] = useState(1);
 
   const filtered = students.filter((s) => {
@@ -95,9 +96,14 @@ export default function Students() {
           <h1 className="page-title">Élèves</h1>
           <p className="page-subtitle">{students.length} élève{students.length > 1 ? "s" : ""} enregistré{students.length > 1 ? "s" : ""}</p>
         </div>
-        <button onClick={() => setShowForm(true)} className="btn-primary">
-          <Plus className="w-4 h-4" /> Nouvel élève
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setBulkArchiveOpen(true)} className="btn-secondary">
+            <UserX className="w-4 h-4" /> Inactifs
+          </button>
+          <button onClick={() => setShowForm(true)} className="btn-primary">
+            <Plus className="w-4 h-4" /> Nouvel élève
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">
@@ -242,6 +248,7 @@ export default function Students() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <BulkArchiveStudentsDialog open={bulkArchiveOpen} onOpenChange={setBulkArchiveOpen} />
     </div>
   );
 }
