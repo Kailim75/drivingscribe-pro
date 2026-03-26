@@ -43,7 +43,8 @@ export default function Invoicing() {
     const studentName = inv.students ? `${inv.students.first_name} ${inv.students.last_name}` : "";
     const matchSearch = inv.number.toLowerCase().includes(search.toLowerCase()) || studentName.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "tous" || inv.status === statusFilter;
-    const matchType = typeFilter === "tous" || inv.type === typeFilter;
+    const matchType = typeFilter === "tous"
+      || (typeFilter === "groupee" ? !!(inv as any).payer_id : inv.type === typeFilter);
     return matchSearch && matchStatus && matchType;
   });
 
