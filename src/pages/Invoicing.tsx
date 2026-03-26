@@ -158,18 +158,25 @@ export default function Invoicing() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "Total facturé", value: formatEur(invoices.filter((i) => i.type === "facture").reduce((s, i) => s + i.total_ttc, 0)) },
-          { label: "Encaissé", value: formatEur(invoices.filter((i) => i.type === "facture").reduce((s, i) => s + i.paid_amount, 0)) },
-          { label: "Reste à encaisser", value: formatEur(totalUnpaid), alert: totalUnpaid > 0 },
-          { label: "En retard", value: `${invoices.filter((i) => i.status === "en_retard").length}`, alert: true },
-        ].map((k) => (
-          <div key={k.label} className={cn("glass-card rounded-xl p-4 text-center", k.alert && totalUnpaid > 0 && "border-destructive/20")}>
-            <p className={cn("text-lg font-bold", k.alert && totalUnpaid > 0 ? "text-destructive" : "text-foreground")}>{k.value}</p>
-            <p className="text-xs text-muted-foreground mt-1">{k.label}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {(() => {
+          const groupedCount = invoices.filter((i) => !!(i as any).payer_id).length;
+          return [
+            { label: "Total facturé", value: formatEur(invoices.filter((i) => i.type === "facture").reduce((s, i) => s + i.total_ttc, 0)) },
+            { label: "Encaissé", value: formatEur(invoices.filter((i) => i.type === "facture").reduce((s, i) => s + i.paid_amount, 0)) },
+            { label: "Reste à encaisser", value: formatEur(totalUnpaid), alert: totalUnpaid > 0 },
+            { label: "En retard", value: `${invoices.filter((i) => i.status === "en_retard").length}`, alert: true },
+            { label: "Groupées", value: `${groupedCount}`, grouped: true },
+          ].map((k) => (
+            <div key={k.label} className={cn("glass-card rounded-xl p-4 text-center", k.alert && totalUnpaid > 0 && "border-destructive/20", "grouped" in k && k.grouped && groupedCount > 0 && "border-primary/20")}>
+              <p className={cn("text-lg font-bold", k.alert && totalUnpaid > 0 ? "text-destructive" : "grouped" in k && k.grouped && groupedCount > 0 ? "text-primary" : "text-foreground")}>
+                {"grouped" in k && k.grouped && <Users className="w-4 h-4 inline-block mr-1 -mt-0.5" />}
+                {k.value}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">{k.label}</p>
+            </div>
+          ));
+        })()}
       </div>
 
       {/* Filters */}
