@@ -41,6 +41,7 @@ export default function Profitability() {
   const { lessons, isLoading: lessonsLoading } = useLessons();
   const { expenses } = useExpenses();
   const { invoices } = useInvoices();
+  const { payments } = usePayments();
 
   if (instLoading || lessonsLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
