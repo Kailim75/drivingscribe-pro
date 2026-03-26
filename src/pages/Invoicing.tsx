@@ -379,6 +379,7 @@ export default function Invoicing() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <BatchInvoiceDialog open={batchOpen} onOpenChange={setBatchOpen} />
     </div>
   );
 }
