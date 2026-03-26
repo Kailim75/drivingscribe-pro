@@ -210,7 +210,9 @@ export default function Invoicing() {
             <tbody>
               {filtered.map((inv) => {
                 const cfg = statusConfig[inv.status] || statusConfig.brouillon;
-                const studentName = inv.students ? `${inv.students.first_name} ${inv.students.last_name}` : "—";
+                const studentName = (inv as any).payer_id && (inv as any).payers?.name
+                  ? (inv as any).payers.name
+                  : inv.students ? `${inv.students.first_name} ${inv.students.last_name}` : "—";
                 return (
                   <tr key={inv.id}>
                     <td className="font-mono text-xs text-foreground">{inv.number}</td>
