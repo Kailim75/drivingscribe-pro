@@ -215,9 +215,14 @@ export default function Invoicing() {
                   <tr key={inv.id}>
                     <td className="font-mono text-xs text-foreground">{inv.number}</td>
                     <td>
-                      <span className={cn("status-badge rounded-md", inv.type === "devis" ? "bg-info/10 text-info" : "bg-primary/10 text-primary")}>
-                        {inv.type === "devis" ? "Devis" : "Facture"}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className={cn("status-badge rounded-md", inv.type === "devis" ? "bg-info/10 text-info" : "bg-primary/10 text-primary")}>
+                          {inv.type === "devis" ? "Devis" : "Facture"}
+                        </span>
+                        {(inv as any).payer_id && (
+                          <span className="status-badge rounded-md bg-accent text-accent-foreground text-[10px]">Groupée</span>
+                        )}
+                      </div>
                     </td>
                     <td className="font-medium text-foreground">{studentName}</td>
                     <td className="text-muted-foreground text-xs hidden md:table-cell">{formatDate(inv.issue_date)}</td>
