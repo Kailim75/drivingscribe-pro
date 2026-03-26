@@ -180,7 +180,10 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Alerts */}
+      {/* Quick Actions */}
+      <QuickActions />
+
+
       {alerts.length > 0 && (
         <div className="space-y-2">
           {alerts.map((a, i) => (
