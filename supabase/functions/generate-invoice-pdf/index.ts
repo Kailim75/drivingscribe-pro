@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
 
     const { data: invoice, error } = await supabase
       .from("invoices")
-      .select("*, invoice_lines(*), students(first_name, last_name, email, phone, address)")
+      .select("*, invoice_lines(*), students(first_name, last_name, email, phone, address), payers(name, email, phone, address, siret)")
       .eq("id", invoice_id)
       .single();
     if (error || !invoice) throw new Error("Invoice not found");
@@ -96,22 +96,30 @@ Deno.serve(async (req) => {
     doc.text(`Statut : ${invoice.status}`, margin, y);
     y += 8;
 
-    // Client info
+    // Client info - show payer if grouped, otherwise student
+    const payer = invoice.payer_id ? invoice.payers : null;
     const student = invoice.students;
-    if (student) {
+    const recipientName = payer ? payer.name : (student ? `${student.first_name} ${student.last_name}` : "");
+    const recipientEmail = payer ? payer.email : student?.email;
+    const recipientPhone = payer ? payer.phone : student?.phone;
+    const recipientSiret = payer?.siret;
+
+    if (recipientName) {
       doc.setFillColor(245, 245, 245);
-      doc.roundedRect(pageW / 2, 20, contentW / 2, 28, 2, 2, "F");
+      doc.roundedRect(pageW / 2, 20, contentW / 2, recipientSiret ? 33 : 28, 2, 2, "F");
       doc.setTextColor(80, 80, 80);
       doc.setFontSize(8);
-      doc.text("DESTINATAIRE", pageW / 2 + 5, 26);
+      doc.text(payer ? "TIERS PAYEUR" : "DESTINATAIRE", pageW / 2 + 5, 26);
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.text(`${student.first_name} ${student.last_name}`, pageW / 2 + 5, 32);
+      doc.text(recipientName, pageW / 2 + 5, 32);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      if (student.email) doc.text(student.email, pageW / 2 + 5, 37);
-      if (student.phone) doc.text(student.phone, pageW / 2 + 5, 42);
+      let ry = 37;
+      if (recipientEmail) { doc.text(recipientEmail, pageW / 2 + 5, ry); ry += 5; }
+      if (recipientPhone) { doc.text(recipientPhone, pageW / 2 + 5, ry); ry += 5; }
+      if (recipientSiret) { doc.text(`SIRET: ${recipientSiret}`, pageW / 2 + 5, ry); }
     }
 
     // Table header
