@@ -27,6 +27,7 @@ const navGroups: NavGroup[] = [
   { title: "COMMERCIAL", items: [
     { label: "Offres", path: "/offres", icon: Package, roles: ["owner", "admin"] },
     { label: "Devis & Factures", path: "/facturation", icon: FileText, roles: ["owner", "admin", "accountant"] },
+    { label: "Factu. groupée", path: "/facturation-groupee", icon: Receipt, roles: ["owner", "admin", "accountant"] },
     { label: "Paiements", path: "/paiements", icon: CreditCard, roles: ["owner", "admin", "accountant"] },
   ]},
   { title: "ANALYSE", items: [
