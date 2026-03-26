@@ -8,8 +8,13 @@ import { useVehicles } from "@/hooks/useVehicles";
 import { useLessons } from "@/hooks/useLessons";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useInvoices } from "@/hooks/useInvoices";
+import { usePayments } from "@/hooks/usePayments";
 import { formatEur } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import CashFlowForecast from "@/components/finance/CashFlowForecast";
+import PaymentDelayAnalysis from "@/components/finance/PaymentDelayAnalysis";
+import RevenueByActivity from "@/components/finance/RevenueByActivity";
+import SeasonalityChart from "@/components/finance/SeasonalityChart";
 
 type Period = "month" | "quarter" | "year" | "all";
 
@@ -36,6 +41,7 @@ export default function Profitability() {
   const { lessons, isLoading: lessonsLoading } = useLessons();
   const { expenses } = useExpenses();
   const { invoices } = useInvoices();
+  const { payments } = usePayments();
 
   if (instLoading || lessonsLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
@@ -262,6 +268,16 @@ export default function Profitability() {
           ⚠ Revenus estimés au prorata des heures réalisées par rapport aux heures achetées dans les formules.
         </p>
       </div>
+
+      {/* Financial Intelligence */}
+      <CashFlowForecast invoices={invoices} expenses={expenses} payments={payments} />
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <PaymentDelayAnalysis invoices={invoices} payments={payments} />
+        <RevenueByActivity lessons={lessons} students={students} />
+      </div>
+
+      <SeasonalityChart invoices={invoices} lessons={lessons} />
     </div>
   );
 }
