@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Building2, Receipt, Users, Shield, Save, Loader2, Bell, Target, Plus, Trash2, GripVertical } from "lucide-react";
+import { Building2, Receipt, Users, Shield, Save, Loader2, Bell, Target, Plus, Trash2, GripVertical, Briefcase, Pencil, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
@@ -12,11 +12,12 @@ import { useSkillCategories } from "@/hooks/useSkills";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { usePayers } from "@/hooks/usePayers";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Tab = "organisation" | "facturation" | "utilisateurs" | "roles" | "notifications" | "competences";
+type Tab = "organisation" | "facturation" | "payeurs" | "utilisateurs" | "roles" | "notifications" | "competences";
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
 export default function SettingsPage() {
@@ -30,6 +31,10 @@ export default function SettingsPage() {
   const [newSkillName, setNewSkillName] = useState("");
   const { settings: notifSettings, upsert: upsertNotif } = useNotificationSettings();
   const { categories: skillCategories, create: createSkill, remove: removeSkill, reorder: reorderSkills } = useSkillCategories();
+  const { payers, allPayers, isLoading: payersLoading, create: createPayer, update: updatePayer, remove: removePayer } = usePayers();
+  const [editingPayer, setEditingPayer] = useState<any | null>(null);
+  const [payerForm, setPayerForm] = useState({ name: "", email: "", phone: "", address: "", siret: "", notes: "" });
+  const [showArchived, setShowArchived] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -134,6 +139,7 @@ export default function SettingsPage() {
   const tabs = [
     { key: "organisation" as Tab, label: "Organisation", icon: Building2 },
     { key: "facturation" as Tab, label: "Facturation", icon: Receipt },
+    { key: "payeurs" as Tab, label: "Tiers payeurs", icon: Briefcase },
     { key: "competences" as Tab, label: "Compétences", icon: Target },
     { key: "notifications" as Tab, label: "Notifications", icon: Bell },
     { key: "utilisateurs" as Tab, label: "Utilisateurs", icon: Users },
@@ -276,6 +282,118 @@ Body: {
               disabled={!isOwnerOrAdmin}
               className="w-full bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-20 resize-none disabled:opacity-50" />
           </div>
+        </motion.div>
+      )}
+
+      {tab === "payeurs" && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-foreground">Tiers payeurs</h2>
+              <p className="text-xs text-muted-foreground mt-1">Entreprises ou partenaires qui financent les formations de vos élèves</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                <Switch checked={showArchived} onCheckedChange={setShowArchived} />
+                Archivés
+              </label>
+            </div>
+          </div>
+
+          {/* Add / Edit form */}
+          {isOwnerOrAdmin && (
+            <div className="p-4 rounded-xl border border-border bg-accent/30 space-y-3">
+              <h3 className="text-sm font-medium text-foreground">{editingPayer ? "Modifier le tiers payeur" : "Ajouter un tiers payeur"}</h3>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <Input placeholder="Nom *" value={payerForm.name} onChange={(e) => setPayerForm(f => ({ ...f, name: e.target.value }))} />
+                <Input placeholder="Email" value={payerForm.email} onChange={(e) => setPayerForm(f => ({ ...f, email: e.target.value }))} />
+                <Input placeholder="Téléphone" value={payerForm.phone} onChange={(e) => setPayerForm(f => ({ ...f, phone: e.target.value }))} />
+                <Input placeholder="SIRET" value={payerForm.siret} onChange={(e) => setPayerForm(f => ({ ...f, siret: e.target.value }))} />
+                <Input placeholder="Adresse" value={payerForm.address} onChange={(e) => setPayerForm(f => ({ ...f, address: e.target.value }))} className="sm:col-span-2" />
+                <Input placeholder="Notes" value={payerForm.notes} onChange={(e) => setPayerForm(f => ({ ...f, notes: e.target.value }))} className="sm:col-span-2" />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={!payerForm.name.trim() || createPayer.isPending || updatePayer.isPending}
+                  onClick={() => {
+                    if (editingPayer) {
+                      updatePayer.mutate({ id: editingPayer.id, ...payerForm }, {
+                        onSuccess: () => { setEditingPayer(null); setPayerForm({ name: "", email: "", phone: "", address: "", siret: "", notes: "" }); }
+                      });
+                    } else {
+                      createPayer.mutate(payerForm, {
+                        onSuccess: () => setPayerForm({ name: "", email: "", phone: "", address: "", siret: "", notes: "" })
+                      });
+                    }
+                  }}
+                >
+                  {editingPayer ? "Mettre à jour" : (<span className="flex items-center"><Plus className="w-4 h-4 mr-1" /> Ajouter</span>)}
+                </Button>
+                {editingPayer && (
+                  <Button size="sm" variant="ghost" onClick={() => { setEditingPayer(null); setPayerForm({ name: "", email: "", phone: "", address: "", siret: "", notes: "" }); }}>
+                    Annuler
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* List */}
+          {payersLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(showArchived ? allPayers.filter(p => !p.active) : payers).length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-6">
+                  {showArchived ? "Aucun tiers payeur archivé" : "Aucun tiers payeur configuré"}
+                </p>
+              ) : (
+                (showArchived ? allPayers.filter(p => !p.active) : payers).map((p) => (
+                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:shadow-sm transition-shadow">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Briefcase className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{p.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {[p.email, p.phone, p.siret].filter(Boolean).join(" · ") || "Aucun détail"}
+                      </p>
+                    </div>
+                    {!p.active && <span className="text-[10px] px-2 py-0.5 rounded-md bg-muted text-muted-foreground font-medium">Archivé</span>}
+                    {isOwnerOrAdmin && p.active && (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => {
+                            setEditingPayer(p);
+                            setPayerForm({ name: p.name, email: p.email || "", phone: p.phone || "", address: p.address || "", siret: p.siret || "", notes: p.notes || "" });
+                          }}
+                          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors"
+                          title="Modifier"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => removePayer.mutate(p.id)}
+                          className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
+                          title="Archiver"
+                        >
+                          <Archive className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                    {isOwnerOrAdmin && !p.active && (
+                      <Button size="sm" variant="ghost" className="text-xs" onClick={() => updatePayer.mutate({ id: p.id, active: true })}>
+                        Réactiver
+                      </Button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </motion.div>
       )}
 
