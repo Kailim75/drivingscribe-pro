@@ -137,32 +137,40 @@ export default function Students() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm data-table">
                 <thead>
-                  <tr className="border-b border-border text-left">
-                    <th>Élève</th>
-                    <th className="hidden md:table-cell">Activité</th>
-                    <th className="hidden sm:table-cell">Statut</th>
-                    <th className="w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginated.map((student) => (
-                    <tr key={student.id} onClick={() => navigate(`/eleves/${student.id}`)}
-                      className="cursor-pointer">
-                      <td>
-                        <p className="font-medium text-foreground">{student.first_name} {student.last_name}</p>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          {student.phone && <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>}
-                          {student.email && <span className="text-xs text-muted-foreground items-center gap-1 hidden sm:flex"><Mail className="w-3 h-3" /> {student.email}</span>}
-                        </div>
-                      </td>
-                      <td className="hidden md:table-cell">
-                        <span className={cn("status-badge", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
-                          {activityTypeLabels[student.activity_type] || student.activity_type}
-                        </span>
-                      </td>
-                      <td className="hidden sm:table-cell">
-                        <span className={cn("status-badge", studentStatusColors[student.status])}>
-                          {studentStatusLabels[student.status]}
+                   <tr className="border-b border-border text-left">
+                     <th>Élève</th>
+                     <th className="hidden lg:table-cell">Santé</th>
+                     <th className="hidden md:table-cell">Activité</th>
+                     <th className="hidden sm:table-cell">Statut</th>
+                     <th className="w-10"></th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {paginated.map((student) => {
+                     const sLessons = lessons.filter((l: any) => l.student_id === student.id);
+                     const sFormulas = formulas.filter((f: any) => f.student_id === student.id);
+                     const score = computeHealthScore(sLessons, sFormulas, [], categories.length);
+                     return (
+                     <tr key={student.id} onClick={() => navigate(`/eleves/${student.id}`)}
+                       className="cursor-pointer">
+                       <td>
+                         <p className="font-medium text-foreground">{student.first_name} {student.last_name}</p>
+                         <div className="flex items-center gap-3 mt-0.5">
+                           {student.phone && <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" /> {student.phone}</span>}
+                           {student.email && <span className="text-xs text-muted-foreground items-center gap-1 hidden sm:flex"><Mail className="w-3 h-3" /> {student.email}</span>}
+                         </div>
+                       </td>
+                       <td className="hidden lg:table-cell">
+                         <StudentHealthBadge score={score} compact />
+                       </td>
+                       <td className="hidden md:table-cell">
+                         <span className={cn("status-badge", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
+                           {activityTypeLabels[student.activity_type] || student.activity_type}
+                         </span>
+                       </td>
+                       <td className="hidden sm:table-cell">
+                         <span className={cn("status-badge", studentStatusColors[student.status])}>
+                           {studentStatusLabels[student.status]}
                         </span>
                       </td>
                       <td>
