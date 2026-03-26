@@ -268,6 +268,16 @@ export default function Profitability() {
           ⚠ Revenus estimés au prorata des heures réalisées par rapport aux heures achetées dans les formules.
         </p>
       </div>
+
+      {/* Financial Intelligence */}
+      <CashFlowForecast invoices={invoices} expenses={expenses} payments={payments} />
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <PaymentDelayAnalysis invoices={invoices} payments={payments} />
+        <RevenueByActivity lessons={lessons} students={students} />
+      </div>
+
+      <SeasonalityChart invoices={invoices} lessons={lessons} />
     </div>
   );
 }
