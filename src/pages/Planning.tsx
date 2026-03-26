@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles } from "lucide-react";
+import BulkLessonActions from "@/components/planning/BulkLessonActions";
 import { cn } from "@/lib/utils";
 import { useLessons } from "@/hooks/useLessons";
 import { useStudents } from "@/hooks/useStudents";
@@ -32,6 +33,8 @@ export default function Planning() {
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [aiStudent, setAiStudent] = useState("");
   const [aiDuration, setAiDuration] = useState("1");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkPending, setBulkPending] = useState(false);
 
   const { organization } = useOrg();
   const dateStr = selectedDate.toISOString().split("T")[0];
@@ -40,6 +43,25 @@ export default function Planning() {
   const { instructors } = useInstructors();
   const { vehicles } = useVehicles();
   const { log } = useAuditLog();
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  }, []);
+
+  const handleBulkStatusChange = useCallback(async (status: string) => {
+    setBulkPending(true);
+    try {
+      for (const id of selectedIds) {
+        await updateStatus.mutateAsync({ id, status: status as "prevu" | "effectue" | "annule" | "absent" });
+      }
+      setSelectedIds([]);
+      log({ action: "bulk_update_status", entity: "lesson", details: `${selectedIds.length} séances → ${status}` });
+    } catch {
+      // errors handled by mutation
+    } finally {
+      setBulkPending(false);
+    }
+  }, [selectedIds, updateStatus, log]);
 
   const handleAiSuggest = async () => {
     if (!aiStudent || !organization?.id) return;
@@ -134,7 +156,15 @@ export default function Planning() {
             {view === "jour" && ` — ${selectedDate.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}`}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          <BulkLessonActions
+            selectedIds={selectedIds}
+            totalCount={sortedLessons.filter((l: any) => l.status === "prevu").length}
+            onSelectAll={() => setSelectedIds(sortedLessons.filter((l: any) => l.status === "prevu").map((l: any) => l.id))}
+            onClearSelection={() => setSelectedIds([])}
+            onBulkStatusChange={handleBulkStatusChange}
+            isPending={bulkPending}
+          />
           <div className="flex items-center bg-muted rounded-lg p-0.5">
             <button onClick={() => setView("jour")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "jour" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
               <CalendarDays className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Jour</span>
@@ -177,8 +207,16 @@ export default function Planning() {
           sortedLessons.map((lesson: any) => {
             const Icon = statusIcons[lesson.status] || Clock;
             return (
-              <div key={lesson.id} className="glass-card rounded-xl p-4 hover:border-primary/20 transition-colors">
+              <div key={lesson.id} onClick={() => selectedIds.length > 0 && lesson.status === "prevu" ? toggleSelect(lesson.id) : undefined}
+                className={cn("glass-card rounded-xl p-4 hover:border-primary/20 transition-colors", selectedIds.includes(lesson.id) && "ring-2 ring-primary/40 border-primary/30")}>
                 <div className="flex items-start gap-3">
+                  {selectedIds.length > 0 && lesson.status === "prevu" && (
+                    <button onClick={(e) => { e.stopPropagation(); toggleSelect(lesson.id); }}
+                      className="mt-1 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+                      style={{ borderColor: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'hsl(var(--border))', background: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'transparent' }}>
+                      {selectedIds.includes(lesson.id) && <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />}
+                    </button>
+                  )}
                   <div className="w-14 flex-shrink-0 text-center">
                     <p className="text-sm font-bold text-foreground">{lesson.start_time?.slice(0, 5)}</p>
                     <p className="text-[10px] text-muted-foreground">{lesson.end_time?.slice(0, 5)}</p>

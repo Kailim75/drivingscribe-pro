@@ -14,7 +14,9 @@ import { lessonStatusLabels, lessonStatusColors, formatEur } from "@/lib/labels"
 import { cn } from "@/lib/utils";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import AtRiskStudentsAlert from "@/components/dashboard/AtRiskStudentsAlert";
+import QuickActions from "@/components/dashboard/QuickActions";
 import { useSkillCategories } from "@/hooks/useSkills";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 type Period = "today" | "week" | "month" | "quarter";
 
@@ -33,6 +35,7 @@ function getDateRange(period: Period): { start: string; end: string } {
 export default function Dashboard() {
   const [period, setPeriod] = useState<Period>("month");
   const [instructorFilter, setInstructorFilter] = useState("");
+  useKeyboardShortcuts();
 
   const todayStr = new Date().toISOString().split("T")[0];
   const range = useMemo(() => getDateRange(period), [period]);
@@ -177,7 +180,10 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Alerts */}
+      {/* Quick Actions */}
+      <QuickActions />
+
+
       {alerts.length > 0 && (
         <div className="space-y-2">
           {alerts.map((a, i) => (
