@@ -12,11 +12,12 @@ import { useSkillCategories } from "@/hooks/useSkills";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { usePayers } from "@/hooks/usePayers";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Tab = "organisation" | "facturation" | "utilisateurs" | "roles" | "notifications" | "competences";
+type Tab = "organisation" | "facturation" | "payeurs" | "utilisateurs" | "roles" | "notifications" | "competences";
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
 export default function SettingsPage() {
@@ -30,6 +31,10 @@ export default function SettingsPage() {
   const [newSkillName, setNewSkillName] = useState("");
   const { settings: notifSettings, upsert: upsertNotif } = useNotificationSettings();
   const { categories: skillCategories, create: createSkill, remove: removeSkill, reorder: reorderSkills } = useSkillCategories();
+  const { payers, allPayers, isLoading: payersLoading, create: createPayer, update: updatePayer, remove: removePayer } = usePayers();
+  const [editingPayer, setEditingPayer] = useState<any | null>(null);
+  const [payerForm, setPayerForm] = useState({ name: "", email: "", phone: "", address: "", siret: "", notes: "" });
+  const [showArchived, setShowArchived] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -134,6 +139,7 @@ export default function SettingsPage() {
   const tabs = [
     { key: "organisation" as Tab, label: "Organisation", icon: Building2 },
     { key: "facturation" as Tab, label: "Facturation", icon: Receipt },
+    { key: "payeurs" as Tab, label: "Tiers payeurs", icon: Briefcase },
     { key: "competences" as Tab, label: "Compétences", icon: Target },
     { key: "notifications" as Tab, label: "Notifications", icon: Bell },
     { key: "utilisateurs" as Tab, label: "Utilisateurs", icon: Users },
