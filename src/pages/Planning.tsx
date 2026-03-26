@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles } from "lucide-react";
+import BulkLessonActions from "@/components/planning/BulkLessonActions";
 import { cn } from "@/lib/utils";
 import { useLessons } from "@/hooks/useLessons";
 import { useStudents } from "@/hooks/useStudents";
@@ -32,6 +33,27 @@ export default function Planning() {
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [aiStudent, setAiStudent] = useState("");
   const [aiDuration, setAiDuration] = useState("1");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkPending, setBulkPending] = useState(false);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  }, []);
+
+  const handleBulkStatusChange = useCallback(async (status: string) => {
+    setBulkPending(true);
+    try {
+      for (const id of selectedIds) {
+        await updateStatus.mutateAsync({ id, status: status as "prevu" | "effectue" | "annule" | "absent" });
+      }
+      setSelectedIds([]);
+      log({ action: "bulk_update_status", entity: "lesson", details: `${selectedIds.length} séances → ${status}` });
+    } catch {
+      // errors handled by mutation
+    } finally {
+      setBulkPending(false);
+    }
+  }, [selectedIds, updateStatus, log]);
 
   const { organization } = useOrg();
   const dateStr = selectedDate.toISOString().split("T")[0];
