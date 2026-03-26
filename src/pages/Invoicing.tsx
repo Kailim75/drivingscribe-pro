@@ -225,7 +225,16 @@ export default function Invoicing() {
                           {inv.type === "devis" ? "Devis" : "Facture"}
                         </span>
                         {(inv as any).payer_id && (
-                          <span className="status-badge rounded-md bg-accent text-accent-foreground text-[10px]">Groupée</span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="status-badge rounded-md bg-accent text-accent-foreground text-[10px] inline-flex items-center gap-0.5 cursor-default">
+                                <Users className="w-3 h-3" /> Groupée
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Tiers payeur : {(inv as any).payers?.name || "—"}
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </td>
