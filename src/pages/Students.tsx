@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle, Pencil, Archive } from "lucide-react";
+import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle, Pencil, Archive, UserX } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { studentStatusLabels, studentStatusColors, activityTypeLabels, activityT
 import StudentFormDialog from "@/components/students/StudentFormDialog";
 import { PaginationControls, usePagination } from "@/components/PaginationControls";
 import type { StudentFormData } from "@/lib/validations";
+import BulkArchiveStudentsDialog from "@/components/students/BulkArchiveStudentsDialog";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
