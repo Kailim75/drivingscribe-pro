@@ -332,6 +332,8 @@ export type Database = {
           id: string
           invoice_id: string
           quantity: number
+          source_formula_id: string | null
+          source_lesson_id: string | null
           total_ht: number
           unit_price: number
         }
@@ -341,6 +343,8 @@ export type Database = {
           id?: string
           invoice_id: string
           quantity?: number
+          source_formula_id?: string | null
+          source_lesson_id?: string | null
           total_ht?: number
           unit_price?: number
         }
@@ -350,6 +354,8 @@ export type Database = {
           id?: string
           invoice_id?: string
           quantity?: number
+          source_formula_id?: string | null
+          source_lesson_id?: string | null
           total_ht?: number
           unit_price?: number
         }
@@ -359,6 +365,20 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_source_formula_id_fkey"
+            columns: ["source_formula_id"]
+            isOneToOne: false
+            referencedRelation: "student_formulas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_source_lesson_id_fkey"
+            columns: ["source_lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
             referencedColumns: ["id"]
           },
         ]
@@ -374,6 +394,7 @@ export type Database = {
           number: string
           organization_id: string
           paid_amount: number
+          payer_id: string | null
           remaining_amount: number
           status: Database["public"]["Enums"]["invoice_status"]
           student_id: string
@@ -393,6 +414,7 @@ export type Database = {
           number: string
           organization_id: string
           paid_amount?: number
+          payer_id?: string | null
           remaining_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"]
           student_id: string
@@ -412,6 +434,7 @@ export type Database = {
           number?: string
           organization_id?: string
           paid_amount?: number
+          payer_id?: string | null
           remaining_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"]
           student_id?: string
@@ -434,6 +457,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "payers"
             referencedColumns: ["id"]
           },
           {
@@ -747,6 +777,56 @@ export type Database = {
           webhook_url?: string | null
         }
         Relationships: []
+      }
+      payers: {
+        Row: {
+          active: boolean
+          address: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          notes: string
+          organization_id: string
+          phone: string
+          siret: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          address?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name: string
+          notes?: string
+          organization_id: string
+          phone?: string
+          siret?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          notes?: string
+          organization_id?: string
+          phone?: string
+          siret?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -1088,6 +1168,7 @@ export type Database = {
           last_name: string
           notes: string
           organization_id: string
+          payer_id: string | null
           phone: string
           status: Database["public"]["Enums"]["student_status"]
           updated_at: string
@@ -1102,6 +1183,7 @@ export type Database = {
           last_name: string
           notes?: string
           organization_id: string
+          payer_id?: string | null
           phone?: string
           status?: Database["public"]["Enums"]["student_status"]
           updated_at?: string
@@ -1116,6 +1198,7 @@ export type Database = {
           last_name?: string
           notes?: string
           organization_id?: string
+          payer_id?: string | null
           phone?: string
           status?: Database["public"]["Enums"]["student_status"]
           updated_at?: string
@@ -1126,6 +1209,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "payers"
             referencedColumns: ["id"]
           },
         ]
