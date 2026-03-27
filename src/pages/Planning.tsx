@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { fr } from "date-fns/locale";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 import BulkLessonActions from "@/components/planning/BulkLessonActions";
 import { cn } from "@/lib/utils";
 import { useLessons } from "@/hooks/useLessons";
