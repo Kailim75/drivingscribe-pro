@@ -52,6 +52,7 @@ interface Props {
   vehicles: Vehicle[];
   onCreateLesson: (data: any) => void;
   onEditLesson: (lesson: any) => void;
+  onUpdateLesson: (data: any) => void;
   creating: boolean;
   checkConflicts: (params: any) => Promise<any[]>;
 }
