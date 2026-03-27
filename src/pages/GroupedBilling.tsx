@@ -462,7 +462,7 @@ export default function GroupedBilling() {
       <Dialog open={payerDialogOpen} onOpenChange={setPayerDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nouveau tiers payeur</DialogTitle>
+            <DialogTitle>{editingPayer ? "Modifier le tiers payeur" : "Nouveau tiers payeur"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
