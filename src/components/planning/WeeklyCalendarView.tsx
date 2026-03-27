@@ -268,11 +268,32 @@ export default function WeeklyCalendarView({
           toast.error("Conflit détecté : ce créneau est déjà occupé");
           return;
         }
+        const oldDate = lesson.date;
+        const oldStart = lesson.start_time;
+        const oldEnd = lesson.end_time;
+
         onUpdateLesson({
           id: lesson.id,
           date: dateStr,
           start_time: newStart,
           end_time: newEnd,
+        });
+
+        toast.success("Séance déplacée", {
+          description: `${lesson.students?.first_name} ${lesson.students?.last_name?.[0]}. → ${format(date, "EEE d MMM", { locale: fr })} à ${newStart.slice(0, 5)}`,
+          action: {
+            label: "Annuler",
+            onClick: () => {
+              onUpdateLesson({
+                id: lesson.id,
+                date: oldDate,
+                start_time: oldStart,
+                end_time: oldEnd,
+              });
+              toast.info("Déplacement annulé");
+            },
+          },
+          duration: 6000,
         });
       } catch {
         toast.error("Erreur lors du déplacement de la séance");
