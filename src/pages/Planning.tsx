@@ -48,7 +48,7 @@ export default function Planning() {
   const weekEndDate = addDays(weekStartDate, 6);
   const weekFrom = format(weekStartDate, "yyyy-MM-dd");
   const weekTo = format(weekEndDate, "yyyy-MM-dd");
-  const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(
+  const { lessons, isLoading, checkConflicts, create, update, updateStatus, archive } = useLessons(
     view === "jour" ? { date: dateStr } : view === "semaine" ? { dateFrom: weekFrom, dateTo: weekTo } : undefined
   );
   const { lessons: monthLessons } = useLessons({ dateFrom: monthStart, dateTo: monthEnd });
@@ -217,6 +217,7 @@ export default function Planning() {
           onEditLesson={setEditLesson}
           onUpdateLesson={(data) => update.mutate(data)}
           onUpdateStatus={(data) => updateStatus.mutate({ id: data.id, status: data.status as any })}
+          onDeleteLesson={(id) => archive.mutate(id)}
           creating={create.isPending}
           checkConflicts={checkConflicts}
         />

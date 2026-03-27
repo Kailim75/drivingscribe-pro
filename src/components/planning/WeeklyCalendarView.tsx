@@ -3,7 +3,7 @@ import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, Drag
 import { format, startOfWeek, addDays, isSameDay, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, GripVertical, User, Loader2, Search, Clock, Car, UserCheck, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { ChevronLeft, ChevronRight, GripVertical, User, Loader2, Search, Clock, Car, UserCheck, CheckCircle2, XCircle, AlertTriangle, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,6 +65,7 @@ interface Props {
   onEditLesson: (lesson: any) => void;
   onUpdateLesson: (data: any) => void;
   onUpdateStatus?: (data: { id: string; status: string }) => void;
+  onDeleteLesson?: (id: string) => void;
   creating: boolean;
   checkConflicts: (params: any) => Promise<any[]>;
 }
@@ -118,7 +119,7 @@ function TimeSlotCell({ date, hour, isEven, children }: { date: Date; hour: numb
 }
 
 // Draggable lesson block rendered on the grid
-function DraggableLessonBlock({ lesson, onClick, onUpdateStatus }: { lesson: Lesson; onClick: () => void; onUpdateStatus?: (data: { id: string; status: string }) => void }) {
+function DraggableLessonBlock({ lesson, onClick, onUpdateStatus, onDeleteLesson }: { lesson: Lesson; onClick: () => void; onUpdateStatus?: (data: { id: string; status: string }) => void; onDeleteLesson?: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `lesson-${lesson.id}`,
     data: { type: "lesson", lesson },
@@ -207,6 +208,17 @@ function DraggableLessonBlock({ lesson, onClick, onUpdateStatus }: { lesson: Les
             )}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteLesson?.(lesson.id);
+          }}
+          className="gap-2 text-xs text-destructive focus:text-destructive"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          Supprimer la séance
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -223,6 +235,7 @@ export default function WeeklyCalendarView({
   onEditLesson,
   onUpdateLesson,
   onUpdateStatus,
+  onDeleteLesson,
   creating,
   checkConflicts,
 }: Props) {
@@ -574,7 +587,7 @@ export default function WeeklyCalendarView({
                     return (
                       <TimeSlotCell key={`${dateKey}-${hour}`} date={day} hour={hour} isEven={hourIdx % 2 === 0}>
                         {hour === HOURS[0] && (lessonsByDay[dateKey] || []).map((l) => (
-                          <DraggableLessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} onUpdateStatus={onUpdateStatus} />
+                          <DraggableLessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} onUpdateStatus={onUpdateStatus} onDeleteLesson={onDeleteLesson} />
                         ))}
                       </TimeSlotCell>
                     );
