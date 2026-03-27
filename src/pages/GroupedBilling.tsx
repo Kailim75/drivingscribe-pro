@@ -275,7 +275,7 @@ export default function GroupedBilling() {
   const handleSavePayer = () => {
     if (!payerForm.name.trim()) return;
     if (editingPayer) {
-      update.mutate({ id: editingPayer, ...payerForm }, {
+      updatePayer.mutate({ id: editingPayer, ...payerForm }, {
         onSuccess: () => {
           setPayerDialogOpen(false);
           setEditingPayer(null);
@@ -482,10 +482,10 @@ export default function GroupedBilling() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPayerDialogOpen(false)}>Annuler</Button>
-            <Button onClick={handleCreatePayer} disabled={createPayer.isPending}>
-              {createPayer.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Créer
+            <Button variant="outline" onClick={() => { setPayerDialogOpen(false); setEditingPayer(null); }}>Annuler</Button>
+            <Button onClick={handleSavePayer} disabled={createPayer.isPending || updatePayer.isPending}>
+              {(createPayer.isPending || updatePayer.isPending) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {editingPayer ? "Enregistrer" : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
