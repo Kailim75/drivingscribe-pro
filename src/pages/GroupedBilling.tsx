@@ -299,7 +299,7 @@ export default function GroupedBilling() {
           <h1 className="page-title">Facturation groupée</h1>
           <p className="page-subtitle">Générez des factures brouillon par tiers payeur</p>
         </div>
-        <Button onClick={() => setPayerDialogOpen(true)} variant="outline" className="gap-2">
+        <Button onClick={() => { setEditingPayer(null); setPayerForm({ name: "", email: "", phone: "", siret: "", address: "" }); setPayerDialogOpen(true); }} variant="outline" className="gap-2">
           <Plus className="w-4 h-4" /> Nouveau payeur
         </Button>
       </div>
