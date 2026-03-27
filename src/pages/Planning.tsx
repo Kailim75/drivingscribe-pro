@@ -45,7 +45,12 @@ export default function Planning() {
   const dateStr = selectedDate.toISOString().split("T")[0];
   const monthStart = format(startOfMonth(selectedDate), "yyyy-MM-dd");
   const monthEnd = format(endOfMonth(selectedDate), "yyyy-MM-dd");
-  const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(view === "jour" ? { date: dateStr } : undefined);
+  const weekEndDate = addDays(weekStartDate, 6);
+  const weekFrom = format(weekStartDate, "yyyy-MM-dd");
+  const weekTo = format(weekEndDate, "yyyy-MM-dd");
+  const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(
+    view === "jour" ? { date: dateStr } : view === "semaine" ? { dateFrom: weekFrom, dateTo: weekTo } : undefined
+  );
   const { lessons: monthLessons } = useLessons({ dateFrom: monthStart, dateTo: monthEnd });
   const { students } = useStudents();
   const { instructors } = useInstructors();
