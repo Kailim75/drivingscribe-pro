@@ -64,6 +64,7 @@ interface Props {
   onCreateLesson: (data: any) => void;
   onEditLesson: (lesson: any) => void;
   onUpdateLesson: (data: any) => void;
+  onUpdateStatus?: (data: { id: string; status: string }) => void;
   creating: boolean;
   checkConflicts: (params: any) => Promise<any[]>;
 }
