@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, CreditCard, Banknote, Building2, FileText, Loader2 } from "lucide-react";
+import { Plus, Search, CreditCard, Banknote, Building2, FileText, Loader2, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
 import { useState } from "react";
 import { usePayments } from "@/hooks/usePayments";
 import { useInvoices } from "@/hooks/useInvoices";
@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { exportToCsv } from "@/lib/exportCsv";
 
 type PaymentMethod = "espèces" | "virement" | "carte" | "chèque";
 const methodConfig: Record<PaymentMethod, { label: string; icon: React.ElementType; color: string }> = {
@@ -21,12 +24,36 @@ const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "curren
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 
 export default function Payments() {
-  const { payments, isLoading, create } = usePayments();
+  const { payments, isLoading, create, update, remove } = usePayments();
   const { invoices } = useInvoices();
   const { students } = useStudents();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [form, setForm] = useState({ student_id: "", invoice_id: "", amount: 0, method: "carte" as PaymentMethod, date: new Date().toISOString().split("T")[0], reference: "", notes: "" });
+
+  // Smart payment: auto-select invoice & pre-fill amount when student changes
+  const handleStudentChange = (studentId: string) => {
+    const unpaid = invoices.filter((i) => i.student_id === studentId && i.type === "facture" && i.remaining_amount > 0);
+    if (unpaid.length === 1) {
+      setForm((f) => ({ ...f, student_id: studentId, invoice_id: unpaid[0].id, amount: unpaid[0].remaining_amount }));
+    } else if (unpaid.length > 1) {
+      const sorted = [...unpaid].sort((a, b) => a.due_date.localeCompare(b.due_date));
+      setForm((f) => ({ ...f, student_id: studentId, invoice_id: sorted[0].id, amount: sorted[0].remaining_amount }));
+    } else {
+      setForm((f) => ({ ...f, student_id: studentId, invoice_id: "", amount: 0 }));
+    }
+  };
+
+  const handleInvoiceChange = (invoiceId: string) => {
+    if (invoiceId) {
+      const inv = invoices.find((i) => i.id === invoiceId);
+      setForm((f) => ({ ...f, invoice_id: invoiceId, amount: inv ? inv.remaining_amount : f.amount }));
+    } else {
+      setForm((f) => ({ ...f, invoice_id: "", amount: 0 }));
+    }
+  };
 
   const filtered = payments.filter((p) => {
     const name = p.students ? `${p.students.first_name} ${p.students.last_name}` : "";
@@ -41,20 +68,76 @@ export default function Payments() {
     count: payments.filter((p) => p.method === m).length,
   }));
 
-  const handleSubmit = () => {
-    if (!form.student_id || !form.amount) return;
-    create.mutate({
-      student_id: form.student_id,
-      invoice_id: form.invoice_id || undefined,
-      amount: form.amount,
-      method: form.method,
-      date: form.date,
-      reference: form.reference,
-      notes: form.notes,
-    }, { onSuccess: () => setDialogOpen(false) });
+  const studentInvoices = invoices.filter((i) => i.student_id === form.student_id && i.type === "facture" && i.remaining_amount > 0);
+
+  const openCreate = () => {
+    setEditingPayment(null);
+    setForm({ student_id: "", invoice_id: "", amount: 0, method: "carte", date: new Date().toISOString().split("T")[0], reference: "", notes: "" });
+    setDialogOpen(true);
   };
 
-  const studentInvoices = invoices.filter((i) => i.student_id === form.student_id && i.type === "facture" && i.remaining_amount > 0);
+  const openEdit = (p: any) => {
+    setEditingPayment(p);
+    setForm({
+      student_id: p.student_id,
+      invoice_id: p.invoice_id || "",
+      amount: p.amount,
+      method: p.method,
+      date: p.date,
+      reference: p.reference || "",
+      notes: p.notes || "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = () => {
+    if (!form.student_id || !form.amount) return;
+    if (editingPayment) {
+      update.mutate({
+        id: editingPayment.id,
+        student_id: form.student_id,
+        invoice_id: form.invoice_id || null,
+        amount: form.amount,
+        method: form.method,
+        date: form.date,
+        reference: form.reference,
+        notes: form.notes,
+        _old_invoice_id: editingPayment.invoice_id,
+      }, { onSuccess: () => setDialogOpen(false) });
+    } else {
+      create.mutate({
+        student_id: form.student_id,
+        invoice_id: form.invoice_id || undefined,
+        amount: form.amount,
+        method: form.method,
+        date: form.date,
+        reference: form.reference,
+        notes: form.notes,
+      }, { onSuccess: () => setDialogOpen(false) });
+    }
+  };
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    remove.mutate({ id: deleteTarget.id, invoice_id: deleteTarget.invoice_id }, {
+      onSuccess: () => setDeleteTarget(null),
+    });
+  };
+
+  const handleExport = () => {
+    exportToCsv("paiements.csv",
+      ["Date", "Élève", "Facture", "Mode", "Montant", "Référence", "Notes"],
+      filtered.map((p) => [
+        p.date,
+        p.students ? `${p.students.first_name} ${p.students.last_name}` : "",
+        p.invoices?.number || "",
+        methodConfig[p.method as PaymentMethod]?.label || p.method,
+        p.amount,
+        p.reference,
+        p.notes,
+      ])
+    );
+  };
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
 
@@ -65,9 +148,14 @@ export default function Payments() {
           <h1 className="page-title">Paiements</h1>
           <p className="page-subtitle">{payments.length} paiements · {formatEur(totalReceived)} encaissés</p>
         </div>
-        <button onClick={() => { setForm({ student_id: "", invoice_id: "", amount: 0, method: "carte", date: new Date().toISOString().split("T")[0], reference: "", notes: "" }); setDialogOpen(true); }} className="btn-primary">
-          <Plus className="w-4 h-4" /> Enregistrer un paiement
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleExport} className="btn-secondary" title="Exporter CSV">
+            <Download className="w-4 h-4" /> Export
+          </button>
+          <button onClick={openCreate} className="btn-primary">
+            <Plus className="w-4 h-4" /> Enregistrer un paiement
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -104,6 +192,7 @@ export default function Payments() {
                 <th className="hidden sm:table-cell">Mode</th>
                 <th className="text-right">Montant</th>
                 <th className="hidden lg:table-cell">Référence</th>
+                <th className="w-10"></th>
               </tr>
             </thead>
             <tbody>
@@ -121,6 +210,21 @@ export default function Payments() {
                     </td>
                     <td className="text-right font-semibold text-success">{formatEur(p.amount)}</td>
                     <td className="font-mono text-xs text-muted-foreground hidden lg:table-cell">{p.reference}</td>
+                    <td>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="p-1 rounded hover:bg-muted">
+                          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(p)}>
+                            <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeleteTarget(p)} className="text-destructive">
+                            <Trash2 className="w-3.5 h-3.5 mr-2" /> Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
                   </tr>
                 );
               })}
@@ -135,16 +239,16 @@ export default function Payments() {
         )}
       </motion.div>
 
-      {/* Payment dialog */}
+      {/* Create/Edit Payment dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Enregistrer un paiement</DialogTitle>
+            <DialogTitle>{editingPayment ? "Modifier le paiement" : "Enregistrer un paiement"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Élève</Label>
-              <select value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value, invoice_id: "" }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+              <select value={form.student_id} onChange={(e) => handleStudentChange(e.target.value)} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 <option value="">Sélectionner...</option>
                 {students.map((s) => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
               </select>
@@ -152,7 +256,7 @@ export default function Payments() {
             {studentInvoices.length > 0 && (
               <div>
                 <Label>Facture (optionnel)</Label>
-                <select value={form.invoice_id} onChange={(e) => setForm((f) => ({ ...f, invoice_id: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                <select value={form.invoice_id} onChange={(e) => handleInvoiceChange(e.target.value)} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   <option value="">Sans facture</option>
                   {studentInvoices.map((i) => <option key={i.id} value={i.id}>{i.number} — reste {formatEur(i.remaining_amount)}</option>)}
                 </select>
@@ -184,12 +288,28 @@ export default function Payments() {
               <Label>Notes</Label>
               <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="mt-1" />
             </div>
-            <button onClick={handleSubmit} disabled={create.isPending} className="w-full btn-primary justify-center">
-              {create.isPending ? "Enregistrement..." : "Enregistrer"}
+            <button onClick={handleSubmit} disabled={create.isPending || update.isPending} className="w-full btn-primary justify-center">
+              {(create.isPending || update.isPending) ? "Enregistrement..." : editingPayment ? "Modifier" : "Enregistrer"}
             </button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce paiement ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Le paiement de {deleteTarget ? formatEur(deleteTarget.amount) : ""} sera supprimé et les montants de la facture liée seront recalculés.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

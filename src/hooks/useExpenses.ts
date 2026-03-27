@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { toast } from "@/hooks/use-toast";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, TablesUpdate } from "@/integrations/supabase/types";
 
 type ExpenseType = Database["public"]["Enums"]["expense_type"];
 
@@ -63,5 +63,52 @@ export function useExpenses() {
     onError: () => toast({ title: "Erreur", variant: "destructive" }),
   });
 
-  return { expenses: expensesQuery.data || [], isLoading: expensesQuery.isLoading, create };
+  const update = useMutation({
+    mutationFn: async (input: { id: string } & Partial<{
+      category: string;
+      description: string;
+      amount: number;
+      type: ExpenseType;
+      date: string;
+      recurring: boolean;
+      recurring_period: string | null;
+      vehicle_id: string | null;
+      instructor_id: string | null;
+    }>) => {
+      const { id, ...rest } = input;
+      const updateData: TablesUpdate<"expenses"> = { ...rest };
+      const { data, error } = await supabase
+        .from("expenses")
+        .update(updateData)
+        .eq("id", id)
+        .eq("organization_id", orgId!)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["expenses"] });
+      toast({ title: "Dépense modifiée" });
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("expenses")
+        .delete()
+        .eq("id", id)
+        .eq("organization_id", orgId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["expenses"] });
+      toast({ title: "Dépense supprimée" });
+    },
+    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+  });
+
+  return { expenses: expensesQuery.data || [], isLoading: expensesQuery.isLoading, create, update, remove };
 }

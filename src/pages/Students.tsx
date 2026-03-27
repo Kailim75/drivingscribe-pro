@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle, Pencil, Archive, UserX, Building2 } from "lucide-react";
+import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle, Pencil, Archive, UserX, Building2, Download } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,8 @@ import { PaginationControls, usePagination } from "@/components/PaginationContro
 import type { StudentFormData } from "@/lib/validations";
 import BulkArchiveStudentsDialog from "@/components/students/BulkArchiveStudentsDialog";
 import BulkAssignPayerDialog from "@/components/students/BulkAssignPayerDialog";
+import { exportToCsv } from "@/lib/exportCsv";
+import { studentStatusLabels as statusLabels } from "@/lib/labels";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -101,6 +103,9 @@ export default function Students() {
           <p className="page-subtitle">{students.length} élève{students.length > 1 ? "s" : ""} enregistré{students.length > 1 ? "s" : ""}</p>
         </div>
         <div className="flex gap-2">
+          <button onClick={() => exportToCsv("eleves.csv", ["Prénom", "Nom", "Email", "Téléphone", "Statut", "Activité"], filtered.map((s) => [s.first_name, s.last_name, s.email, s.phone, statusLabels[s.status] || s.status, s.activity_type]))} className="btn-secondary" title="Exporter CSV">
+            <Download className="w-4 h-4" /> Export
+          </button>
           <button onClick={() => setBulkPayerOpen(true)} className="btn-secondary" title="Assigner un payeur en lot">
             <Building2 className="w-4 h-4" /> Payeur lot
           </button>
@@ -225,7 +230,7 @@ export default function Students() {
                                 <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setArchiveTarget(student); }} className={student.status === "archive" ? "text-success" : "text-warning"}>
-                                <Archive className="w-3.5 h-3.5 mr-2" /> {student.status === "archive" ? "Réactiver" : "Supprimer"}
+                                <Archive className="w-3.5 h-3.5 mr-2" /> {student.status === "archive" ? "Réactiver" : "Archiver"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -249,7 +254,7 @@ export default function Students() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {archiveTarget?.status === "archive" ? "Réactiver cet élève ?" : "Supprimer cet élève ?"}
+              {archiveTarget?.status === "archive" ? "Réactiver cet élève ?" : "Archiver cet élève ?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {archiveTarget?.status === "archive"
@@ -261,7 +266,7 @@ export default function Students() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleArchive}>
-              {archiveTarget?.status === "archive" ? "Réactiver" : "Supprimer"}
+              {archiveTarget?.status === "archive" ? "Réactiver" : "Archiver"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
