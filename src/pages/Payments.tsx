@@ -28,6 +28,32 @@ export default function Payments() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ student_id: "", invoice_id: "", amount: 0, method: "carte" as PaymentMethod, date: new Date().toISOString().split("T")[0], reference: "", notes: "" });
 
+  // Smart payment: auto-select invoice & pre-fill amount when student changes
+  const handleStudentChange = (studentId: string) => {
+    const unpaid = invoices.filter((i) => i.student_id === studentId && i.type === "facture" && i.remaining_amount > 0);
+    if (unpaid.length === 1) {
+      // Single unpaid invoice: auto-select and pre-fill
+      setForm((f) => ({ ...f, student_id: studentId, invoice_id: unpaid[0].id, amount: unpaid[0].remaining_amount }));
+    } else if (unpaid.length > 1) {
+      // Multiple: select oldest (first by due_date), pre-fill its amount
+      const sorted = [...unpaid].sort((a, b) => a.due_date.localeCompare(b.due_date));
+      setForm((f) => ({ ...f, student_id: studentId, invoice_id: sorted[0].id, amount: sorted[0].remaining_amount }));
+    } else {
+      // No unpaid invoice
+      setForm((f) => ({ ...f, student_id: studentId, invoice_id: "", amount: 0 }));
+    }
+  };
+
+  // When invoice selection changes manually, update amount
+  const handleInvoiceChange = (invoiceId: string) => {
+    if (invoiceId) {
+      const inv = invoices.find((i) => i.id === invoiceId);
+      setForm((f) => ({ ...f, invoice_id: invoiceId, amount: inv ? inv.remaining_amount : f.amount }));
+    } else {
+      setForm((f) => ({ ...f, invoice_id: "", amount: 0 }));
+    }
+  };
+
   const filtered = payments.filter((p) => {
     const name = p.students ? `${p.students.first_name} ${p.students.last_name}` : "";
     return name.toLowerCase().includes(search.toLowerCase()) || p.reference.toLowerCase().includes(search.toLowerCase());
