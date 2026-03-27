@@ -176,10 +176,12 @@ export default function WeeklyCalendarView({
   vehicles,
   onCreateLesson,
   onEditLesson,
+  onUpdateLesson,
   creating,
   checkConflicts,
 }: Props) {
   const [draggedStudent, setDraggedStudent] = useState<Student | null>(null);
+  const [draggedLesson, setDraggedLesson] = useState<Lesson | null>(null);
   const [searchStudent, setSearchStudent] = useState("");
   const [pendingDrop, setPendingDrop] = useState<{ student: Student; date: Date; hour: number } | null>(null);
 
@@ -221,16 +223,60 @@ export default function WeeklyCalendarView({
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current;
     if (data?.type === "student") setDraggedStudent(data.student);
+    if (data?.type === "lesson") setDraggedLesson(data.lesson);
   };
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     setDraggedStudent(null);
+    setDraggedLesson(null);
     const { over, active } = event;
     if (!over || !active.data.current) return;
-    const student = active.data.current.student as Student;
+    const data = active.data.current;
     const { date, hour } = over.data.current as { date: Date; hour: number };
-    setPendingDrop({ student, date, hour });
-  }, []);
+
+    if (data.type === "student") {
+      setPendingDrop({ student: data.student as Student, date, hour });
+      return;
+    }
+
+    if (data.type === "lesson") {
+      const lesson = data.lesson as Lesson;
+      const dateStr = format(date, "yyyy-MM-dd");
+      const startParts = lesson.start_time.split(":").map(Number);
+      const endParts = lesson.end_time.split(":").map(Number);
+      const durationMin = (endParts[0] * 60 + endParts[1]) - (startParts[0] * 60 + startParts[1]);
+
+      const newStart = `${String(hour).padStart(2, "0")}:00`;
+      const endTotal = hour * 60 + durationMin;
+      const newEnd = `${String(Math.floor(endTotal / 60)).padStart(2, "0")}:${String(endTotal % 60).padStart(2, "0")}`;
+
+      // Skip if same slot
+      if (dateStr === lesson.date && newStart === lesson.start_time.slice(0, 5)) return;
+
+      try {
+        const conflicts = await checkConflicts({
+          instructor_id: lesson.instructor_id || (lesson as any).instructors?.id,
+          vehicle_id: lesson.vehicle_id || (lesson as any).vehicles?.id,
+          date: dateStr,
+          start_time: newStart,
+          end_time: newEnd,
+          exclude_lesson_id: lesson.id,
+        });
+        if (conflicts.length > 0) {
+          toast.error("Conflit détecté : ce créneau est déjà occupé");
+          return;
+        }
+        onUpdateLesson({
+          id: lesson.id,
+          date: dateStr,
+          start_time: newStart,
+          end_time: newEnd,
+        });
+      } catch {
+        toast.error("Erreur lors du déplacement de la séance");
+      }
+    }
+  }, [checkConflicts, onUpdateLesson]);
 
   const confirmDrop = useCallback(async (durationHours: number) => {
     if (!pendingDrop) return;
@@ -458,7 +504,7 @@ export default function WeeklyCalendarView({
                     return (
                       <TimeSlotCell key={`${dateKey}-${hour}`} date={day} hour={hour} isEven={hourIdx % 2 === 0}>
                         {hour === HOURS[0] && (lessonsByDay[dateKey] || []).map((l) => (
-                          <LessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} />
+                          <DraggableLessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} />
                         ))}
                       </TimeSlotCell>
                     );
