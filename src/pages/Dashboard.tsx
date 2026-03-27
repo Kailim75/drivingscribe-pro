@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CalendarDays, CheckCircle2, Clock, Users, Loader2, ArrowRight, Euro, AlertTriangle, TrendingUp, XCircle, UserX, FileText, TrendingDown, Zap } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Users, Loader2, ArrowRight, Euro, AlertTriangle, TrendingUp, XCircle, UserX, FileText, TrendingDown, Zap, Activity, Car, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useMemo } from "react";
 import { useLessons } from "@/hooks/useLessons";
@@ -17,6 +17,7 @@ import AtRiskStudentsAlert from "@/components/dashboard/AtRiskStudentsAlert";
 import QuickActions from "@/components/dashboard/QuickActions";
 import { useSkillCategories } from "@/hooks/useSkills";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { Progress } from "@/components/ui/progress";
 
 type Period = "today" | "week" | "month" | "quarter";
 
@@ -30,6 +31,13 @@ function getDateRange(period: Period): { start: string; end: string } {
     case "month": { const s = new Date(now.getFullYear(), now.getMonth(), 1); return { start: fmt(s), end }; }
     case "quarter": { const s = new Date(now); s.setMonth(s.getMonth() - 3); return { start: fmt(s), end }; }
   }
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Bonjour";
+  if (h < 18) return "Bon après-midi";
+  return "Bonsoir";
 }
 
 export default function Dashboard() {
@@ -51,7 +59,6 @@ export default function Dashboard() {
   const { formulas } = useStudentFormulas();
   const { categories } = useSkillCategories();
 
-  // Fetch next 30 days lessons for forecast
   const next30 = useMemo(() => {
     const now = new Date();
     const future = new Date(now);
@@ -86,15 +93,12 @@ export default function Dashboard() {
   const totalUnpaid = unpaidInvoices.reduce((s, i) => s + i.remaining_amount, 0);
   const overdueCount = invoices.filter((i) => i.status === "en_retard").length;
 
-  // === FEATURE 1: Alertes heures restantes ===
-  const allLessons = periodLessonsRaw; // Use all lessons for hour calculations
+  const allLessons = periodLessonsRaw;
   const studentsLowHours = useMemo(() => {
     const activeStudentsList = students.filter(s => s.status === "actif");
     return activeStudentsList.map(student => {
       const studentFormulas = formulas.filter(f => f.student_id === student.id);
       const totalBought = studentFormulas.reduce((s, f) => s + Number(f.hours_bought), 0);
-      // We need all completed lessons for this student - use a broader approach
-      // Since we might not have all lessons, we approximate with what we have
       const completedHours = allLessons
         .filter((l: any) => l.student_id === student.id && l.status === "effectue")
         .reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
@@ -103,16 +107,13 @@ export default function Dashboard() {
     }).filter(s => s.totalBought > 0 && s.remaining <= 3);
   }, [students, formulas, allLessons]);
 
-  // === FEATURE 2: Tableau de bord prédictif ===
   const forecast = useMemo(() => {
-    // CA prévisionnel = séances planifiées × montant facturable moyen
     const plannedFuture = futureLessons.filter((l: any) => l.status === "prevu");
     const avgBillable = periodLessons.length > 0
       ? periodLessons.reduce((s: number, l: any) => s + Number(l.billable_amount || 0), 0) / periodLessons.length
       : 0;
-    const forecastRevenue = plannedFuture.length * (avgBillable || 45); // fallback 45€/h
+    const forecastRevenue = plannedFuture.length * (avgBillable || 45);
 
-    // Tendance: comparer la période actuelle avec la période précédente
     const periodDays = period === "today" ? 1 : period === "week" ? 7 : period === "month" ? 30 : 90;
     const prevStart = new Date();
     prevStart.setDate(prevStart.getDate() - periodDays * 2);
@@ -122,7 +123,6 @@ export default function Dashboard() {
     const prevRevenue = prevPayments.reduce((s, p) => s + p.amount, 0);
     const trend = prevRevenue > 0 ? ((periodRevenue - prevRevenue) / prevRevenue) * 100 : 0;
 
-    // Taux d'occupation formateurs
     const maxHoursPerDay = 8;
     const workingDays = period === "today" ? 1 : period === "week" ? 5 : period === "month" ? 22 : 66;
     const maxCapacity = activeInstructors * maxHoursPerDay * workingDays;
@@ -144,158 +144,290 @@ export default function Dashboard() {
 
   const sorted = [...todayLessons].sort((a: any, b: any) => (a.start_time || "").localeCompare(b.start_time || ""));
 
-  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
-  const item = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } };
-
   const periodLabels: Record<Period, string> = { today: "Aujourd'hui", week: "7 jours", month: "Ce mois", quarter: "3 mois" };
+  const netResult = periodRevenue - periodExpenseTotal;
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Chargement du tableau de bord…</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
+    <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-6">
       {/* Header */}
-      <div className="page-header">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <h1 className="page-title">Tableau de bord</h1>
-          <p className="page-subtitle">
+          <motion.h1
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-2xl md:text-3xl font-bold text-foreground tracking-tight"
+          >
+            {getGreeting()} 👋
+          </motion.h1>
+          <p className="text-muted-foreground text-sm mt-1">
             {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <select value={instructorFilter} onChange={(e) => setInstructorFilter(e.target.value)} className="bg-card text-foreground text-xs px-3 py-2 rounded-lg border border-border">
+        <div className="flex items-center gap-3">
+          <select
+            value={instructorFilter}
+            onChange={(e) => setInstructorFilter(e.target.value)}
+            className="bg-card text-foreground text-xs px-3 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          >
             <option value="">Tous les formateurs</option>
-            {instructors.filter(i => i.status === "actif").map((i) => <option key={i.id} value={i.id}>{i.first_name} {i.last_name}</option>)}
+            {instructors.filter(i => i.status === "actif").map((i) => (
+              <option key={i.id} value={i.id}>{i.first_name} {i.last_name}</option>
+            ))}
           </select>
         </div>
       </div>
 
       {/* Period tabs */}
-      <div className="flex items-center bg-muted rounded-lg p-1 w-fit">
+      <div className="flex items-center gap-1 bg-muted/60 backdrop-blur-sm rounded-xl p-1 w-fit border border-border/50">
         {(["today", "week", "month", "quarter"] as Period[]).map((p) => (
-          <button key={p} onClick={() => setPeriod(p)} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", period === p ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            className={cn(
+              "px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200",
+              period === p
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+            )}
+          >
             {periodLabels[p]}
           </button>
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <QuickActions />
-
-
+      {/* Alerts */}
       {alerts.length > 0 && (
-        <div className="space-y-2">
+        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2">
           {alerts.map((a, i) => (
-            <div key={i} className={cn("flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium", a.type === "error" ? "bg-destructive/8 text-destructive border border-destructive/15" : "bg-warning/8 text-warning border border-warning/15")}>
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <div
+              key={i}
+              className={cn(
+                "inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-semibold transition-colors",
+                a.type === "error"
+                  ? "bg-destructive/10 text-destructive border border-destructive/20"
+                  : "bg-warning/10 text-warning border border-warning/20"
+              )}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
               {a.message}
             </div>
           ))}
-        </div>
+        </motion.div>
       )}
 
-      {/* Financial KPIs */}
-      <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: "CA encaissé", value: formatEur(periodRevenue), icon: Euro, color: "text-success" },
-          { label: "Dépenses", value: formatEur(periodExpenseTotal), icon: TrendingUp, color: "text-destructive" },
-          { label: "Résultat net", value: formatEur(periodRevenue - periodExpenseTotal), icon: TrendingUp, color: periodRevenue - periodExpenseTotal >= 0 ? "text-success" : "text-destructive" },
-          { label: "Impayés", value: formatEur(totalUnpaid), icon: FileText, color: totalUnpaid > 0 ? "text-warning" : "text-muted-foreground" },
-        ].map((kpi) => (
-          <motion.div key={kpi.label} variants={item} className="glass-card rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                <kpi.icon className="w-4 h-4 text-muted-foreground" />
-              </div>
-              <span className="text-xs text-muted-foreground font-medium">{kpi.label}</span>
-            </div>
-            <p className={cn("text-xl md:text-2xl font-bold tabular-nums", kpi.color)}>{kpi.value}</p>
-          </motion.div>
-        ))}
-      </motion.div>
+      {/* Quick Actions */}
+      <QuickActions />
 
-      {/* FEATURE 2: Prédictif */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Zap className="w-4 h-4 text-primary" />
+      {/* Hero Financial KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* CA */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.02 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/15 p-4"
+        >
+          <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
+                <Euro className="w-4 h-4 text-primary" />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">CA encaissé</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatEur(periodRevenue)}</p>
+            {forecast.trend !== 0 && (
+              <div className="flex items-center gap-1 mt-1.5">
+                {forecast.trend >= 0 ? <TrendingUp className="w-3 h-3 text-success" /> : <TrendingDown className="w-3 h-3 text-destructive" />}
+                <span className={cn("text-[11px] font-semibold", forecast.trend >= 0 ? "text-success" : "text-destructive")}>
+                  {forecast.trend > 0 ? "+" : ""}{forecast.trend}%
+                </span>
+                <span className="text-[10px] text-muted-foreground">vs précédent</span>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Dépenses */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.04 }}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-destructive/8 via-destructive/3 to-transparent border border-destructive/12 p-4"
+        >
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <TrendingDown className="w-4 h-4 text-destructive" />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">Dépenses</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground tabular-nums">{formatEur(periodExpenseTotal)}</p>
+          </div>
+        </motion.div>
+
+        {/* Résultat net */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06 }}
+          className={cn(
+            "relative overflow-hidden rounded-2xl border p-4",
+            netResult >= 0
+              ? "bg-gradient-to-br from-success/8 via-success/3 to-transparent border-success/12"
+              : "bg-gradient-to-br from-destructive/8 via-destructive/3 to-transparent border-destructive/12"
+          )}
+        >
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", netResult >= 0 ? "bg-success/10" : "bg-destructive/10")}>
+                <TrendingUp className={cn("w-4 h-4", netResult >= 0 ? "text-success" : "text-destructive")} />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">Résultat net</span>
+            </div>
+            <p className={cn("text-2xl font-bold tabular-nums", netResult >= 0 ? "text-success" : "text-destructive")}>
+              {formatEur(netResult)}
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Impayés */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className={cn(
+            "relative overflow-hidden rounded-2xl border p-4",
+            totalUnpaid > 0
+              ? "bg-gradient-to-br from-warning/8 via-warning/3 to-transparent border-warning/12"
+              : "bg-card border-border"
+          )}
+        >
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-3">
+              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", totalUnpaid > 0 ? "bg-warning/10" : "bg-muted")}>
+                <FileText className={cn("w-4 h-4", totalUnpaid > 0 ? "text-warning" : "text-muted-foreground")} />
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">Impayés</span>
+            </div>
+            <p className={cn("text-2xl font-bold tabular-nums", totalUnpaid > 0 ? "text-warning" : "text-foreground")}>
+              {formatEur(totalUnpaid)}
+            </p>
+            {overdueCount > 0 && (
+              <p className="text-[11px] text-destructive font-medium mt-1">{overdueCount} en retard</p>
+            )}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Forecast strip */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="rounded-2xl border border-border bg-card overflow-hidden"
+      >
+        <div className="px-5 py-3.5 border-b border-border flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Zap className="w-3.5 h-3.5 text-primary" />
+          </div>
           <h2 className="font-semibold text-foreground text-sm">Prévisions à 30 jours</h2>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="p-3 rounded-lg bg-muted/50">
-            <p className="text-xs text-muted-foreground mb-1">CA prévisionnel</p>
-            <p className="text-lg font-bold text-primary tabular-nums">{formatEur(forecast.forecastRevenue)}</p>
-            <p className="text-[10px] text-muted-foreground">{forecast.plannedSessions} séances planifiées</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-border">
+          <div className="p-4 lg:p-5">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">CA prévisionnel</p>
+            <p className="text-xl font-bold text-primary tabular-nums">{formatEur(forecast.forecastRevenue)}</p>
+            <p className="text-[11px] text-muted-foreground mt-1">{forecast.plannedSessions} séances planifiées</p>
           </div>
-          <div className="p-3 rounded-lg bg-muted/50">
-            <p className="text-xs text-muted-foreground mb-1">Tendance CA</p>
-            <div className="flex items-center gap-1.5">
-              {forecast.trend >= 0 ? <TrendingUp className="w-4 h-4 text-success" /> : <TrendingDown className="w-4 h-4 text-destructive" />}
-              <p className={cn("text-lg font-bold tabular-nums", forecast.trend >= 0 ? "text-success" : "text-destructive")}>
+          <div className="p-4 lg:p-5">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">Tendance</p>
+            <div className="flex items-center gap-2">
+              <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", forecast.trend >= 0 ? "bg-success/10" : "bg-destructive/10")}>
+                {forecast.trend >= 0 ? <TrendingUp className="w-4 h-4 text-success" /> : <TrendingDown className="w-4 h-4 text-destructive" />}
+              </div>
+              <p className={cn("text-xl font-bold tabular-nums", forecast.trend >= 0 ? "text-success" : "text-destructive")}>
                 {forecast.trend > 0 ? "+" : ""}{forecast.trend}%
               </p>
             </div>
-            <p className="text-[10px] text-muted-foreground">vs période précédente</p>
           </div>
-          <div className="p-3 rounded-lg bg-muted/50">
-            <p className="text-xs text-muted-foreground mb-1">Taux d'occupation</p>
-            <p className={cn("text-lg font-bold tabular-nums", forecast.occupancyRate >= 60 ? "text-success" : forecast.occupancyRate >= 30 ? "text-warning" : "text-destructive")}>
+          <div className="p-4 lg:p-5">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">Occupation</p>
+            <p className={cn("text-xl font-bold tabular-nums mb-2", forecast.occupancyRate >= 60 ? "text-success" : forecast.occupancyRate >= 30 ? "text-warning" : "text-destructive")}>
               {forecast.occupancyRate}%
             </p>
-            <p className="text-[10px] text-muted-foreground">{activeInstructors} formateur{activeInstructors > 1 ? "s" : ""} actif{activeInstructors > 1 ? "s" : ""}</p>
+            <Progress
+              value={forecast.occupancyRate}
+              className="h-1.5"
+            />
           </div>
-          <div className="p-3 rounded-lg bg-muted/50">
-            <p className="text-xs text-muted-foreground mb-1">Élèves à renouveler</p>
-            <p className={cn("text-lg font-bold tabular-nums", studentsLowHours.length > 0 ? "text-warning" : "text-foreground")}>
+          <div className="p-4 lg:p-5">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">À renouveler</p>
+            <p className={cn("text-xl font-bold tabular-nums", studentsLowHours.length > 0 ? "text-warning" : "text-foreground")}>
               {studentsLowHours.length}
             </p>
-            <p className="text-[10px] text-muted-foreground">≤ 3h restantes</p>
+            <p className="text-[11px] text-muted-foreground mt-1">élèves ≤ 3h restantes</p>
           </div>
         </div>
       </motion.div>
 
-      {/* FEATURE 1: Élèves en fin de forfait */}
+      {/* Operational KPIs — compact chips */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.12 }} className="flex flex-wrap gap-2">
+        {[
+          { label: "Élèves", value: activeStudents, icon: Users, accent: "bg-primary/8 text-primary border-primary/12" },
+          { label: "Prévues", value: planned, icon: CalendarDays, accent: "bg-info/8 text-info border-info/12" },
+          { label: "Effectuées", value: completed, icon: CheckCircle2, accent: "bg-success/8 text-success border-success/12" },
+          { label: "Annulées", value: cancelled, icon: XCircle, accent: cancelled > 0 ? "bg-destructive/8 text-destructive border-destructive/12" : "bg-muted/50 text-muted-foreground border-border" },
+          { label: "Absents", value: absent, icon: UserX, accent: absent > 0 ? "bg-warning/8 text-warning border-warning/12" : "bg-muted/50 text-muted-foreground border-border" },
+          { label: "Heures", value: `${totalHoursDone}h`, icon: Clock, accent: "bg-primary/8 text-primary border-primary/12" },
+        ].map((kpi) => (
+          <div
+            key={kpi.label}
+            className={cn("inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-semibold transition-colors", kpi.accent)}
+          >
+            <kpi.icon className="w-3.5 h-3.5" />
+            <span className="tabular-nums">{kpi.value}</span>
+            <span className="text-xs font-medium opacity-70">{kpi.label}</span>
+          </div>
+        ))}
+      </motion.div>
+
+      {/* Low hours alert */}
       {studentsLowHours.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-warning/15 bg-warning/5 overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-warning/10 flex items-center justify-between">
             <h2 className="font-semibold text-foreground text-sm flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-warning" /> Élèves en fin de forfait
             </h2>
-            <Link to="/eleves" className="text-xs text-primary hover:underline font-medium">Voir tous</Link>
+            <Link to="/eleves" className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
+              Voir tous <ChevronRight className="w-3 h-3" />
+            </Link>
           </div>
-          <div className="p-4 space-y-1">
+          <div className="p-2">
             {studentsLowHours.slice(0, 5).map((s) => (
-              <Link key={s.id} to={`/eleves/${s.id}`} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+              <Link key={s.id} to={`/eleves/${s.id}`} className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-warning/5 transition-colors group">
                 <div>
-                  <p className="text-sm font-medium text-foreground">{s.first_name} {s.last_name}</p>
+                  <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{s.first_name} {s.last_name}</p>
                   <p className="text-xs text-muted-foreground">{s.completedHours}h / {s.totalBought}h utilisées</p>
                 </div>
-                <span className={cn("text-sm font-bold tabular-nums", s.remaining <= 0 ? "text-destructive" : "text-warning")}>
-                  {s.remaining}h restantes
+                <span className={cn("text-sm font-bold tabular-nums px-2.5 py-1 rounded-lg", s.remaining <= 0 ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning")}>
+                  {s.remaining}h
                 </span>
               </Link>
             ))}
           </div>
         </motion.div>
       )}
-
-      {/* Operational KPIs */}
-      <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { label: "Élèves actifs", value: activeStudents, icon: Users },
-          { label: "Prévues", value: planned, icon: CalendarDays },
-          { label: "Effectuées", value: completed, icon: CheckCircle2, color: "text-success" },
-          { label: "Annulées", value: cancelled, icon: XCircle, color: cancelled > 0 ? "text-destructive" : "" },
-          { label: "Absents", value: absent, icon: UserX, color: absent > 0 ? "text-warning" : "" },
-          { label: "Heures", value: `${totalHoursDone}h`, icon: Clock },
-        ].map((kpi) => (
-          <motion.div key={kpi.label} variants={item} className="glass-card rounded-xl p-3 flex flex-col gap-1.5">
-            <kpi.icon className="w-4 h-4 text-muted-foreground" />
-            <p className={cn("text-lg md:text-xl font-bold tabular-nums", ("color" in kpi && typeof kpi.color === "string" ? kpi.color : "") || "text-foreground")}>{kpi.value}</p>
-            <p className="text-[11px] text-muted-foreground font-medium">{kpi.label}</p>
-          </motion.div>
-        ))}
-      </motion.div>
 
       {/* Charts */}
       <DashboardCharts
@@ -314,32 +446,43 @@ export default function Dashboard() {
         categoryCount={categories.length}
       />
 
+      {/* Bottom grid: Today + Resources */}
       <div className="grid md:grid-cols-2 gap-4">
         {/* Today's lessons */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-xl">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <h2 className="font-semibold text-foreground text-sm">Séances du jour</h2>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+            <h2 className="font-semibold text-foreground text-sm flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-primary" />
+              Séances du jour
+            </h2>
             <Link to="/planning" className="text-xs text-primary hover:underline flex items-center gap-1 font-medium">
               Planning <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="p-4">
+          <div className="p-3">
             {sorted.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                <CalendarDays className="w-8 h-8 opacity-30 mb-2" />
-                <p className="text-sm">Aucune séance aujourd'hui</p>
+              <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+                <CalendarDays className="w-10 h-10 opacity-20 mb-3" />
+                <p className="text-sm font-medium">Aucune séance aujourd'hui</p>
+                <p className="text-xs text-muted-foreground/60 mt-0.5">Profitez-en pour planifier !</p>
               </div>
             ) : (
-              <div className="space-y-1">
-                {sorted.slice(0, 6).map((session: any) => (
-                  <div key={session.id} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="w-12 text-center flex-shrink-0">
-                      <span className="text-sm font-semibold text-foreground">{session.start_time?.slice(0, 5)}</span>
-                      <span className="block text-[10px] text-muted-foreground">{session.duration_hours}h</span>
+              <div className="space-y-0.5">
+                {sorted.slice(0, 6).map((session: any, idx: number) => (
+                  <motion.div
+                    key={session.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.03 }}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/50 transition-colors group"
+                  >
+                    <div className="w-14 text-center flex-shrink-0">
+                      <span className="text-sm font-bold text-foreground tabular-nums">{session.start_time?.slice(0, 5)}</span>
+                      <span className="block text-[10px] text-muted-foreground font-medium">{session.duration_hours}h</span>
                     </div>
-                    <div className="w-px h-8 bg-border flex-shrink-0" />
+                    <div className="w-0.5 h-9 rounded-full bg-primary/20 flex-shrink-0 group-hover:bg-primary/40 transition-colors" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
+                      <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                         {session.students?.first_name} {session.students?.last_name}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
@@ -349,11 +492,11 @@ export default function Dashboard() {
                     <span className={cn("status-badge flex-shrink-0", lessonStatusColors[session.status])}>
                       {lessonStatusLabels[session.status]}
                     </span>
-                  </div>
+                  </motion.div>
                 ))}
                 {sorted.length > 6 && (
-                  <Link to="/planning" className="block text-center text-xs text-primary hover:underline py-2 font-medium">
-                    +{sorted.length - 6} autres séances
+                  <Link to="/planning" className="flex items-center justify-center gap-1 text-xs text-primary hover:underline py-3 font-semibold">
+                    +{sorted.length - 6} autres séances <ArrowRight className="w-3 h-3" />
                   </Link>
                 )}
               </div>
@@ -362,53 +505,79 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Resources */}
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass-card rounded-xl">
-          <div className="px-4 py-3 border-b border-border">
-            <h2 className="font-semibold text-foreground text-sm">Ressources</h2>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-border">
+            <h2 className="font-semibold text-foreground text-sm flex items-center gap-2">
+              <Activity className="w-4 h-4 text-primary" />
+              Ressources
+            </h2>
           </div>
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-5">
+            {/* Instructors */}
             <div>
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-muted-foreground font-medium">Formateurs actifs</span>
-                <span className="font-semibold text-foreground">{activeInstructors}</span>
+              <div className="flex justify-between items-center text-xs mb-3">
+                <span className="text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">Formateurs</span>
+                <span className="text-xs font-bold text-foreground bg-muted px-2 py-0.5 rounded-md">{activeInstructors}</span>
               </div>
-              {instructors.filter(i => i.status === "actif").slice(0, 4).map((inst) => {
-                const instHours = periodLessons.filter((l: any) => l.instructor_id === inst.id && l.status === "effectue").reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
-                return (
-                  <div key={inst.id} className="flex items-center justify-between py-1.5 text-sm">
-                    <span className="text-foreground">{inst.first_name} {inst.last_name}</span>
-                    <span className="text-muted-foreground tabular-nums text-xs">{instHours}h</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="border-t border-border pt-3">
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-muted-foreground font-medium">Véhicules actifs</span>
-                <span className="font-semibold text-foreground">{activeVehicles}</span>
+              <div className="space-y-1">
+                {instructors.filter(i => i.status === "actif").slice(0, 4).map((inst) => {
+                  const instHours = periodLessons.filter((l: any) => l.instructor_id === inst.id && l.status === "effectue").reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
+                  return (
+                    <div key={inst.id} className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-muted/40 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                          {inst.first_name[0]}
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{inst.first_name} {inst.last_name}</span>
+                      </div>
+                      <span className="text-xs font-semibold tabular-nums text-muted-foreground bg-muted px-2 py-0.5 rounded-md">{instHours}h</span>
+                    </div>
+                  );
+                })}
               </div>
-              {vehicles.filter(v => v.status === "actif").slice(0, 3).map((v) => {
-                const vHours = periodLessons.filter((l: any) => l.vehicle_id === v.id && l.status === "effectue").reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
-                return (
-                  <div key={v.id} className="flex items-center justify-between py-1.5 text-sm">
-                    <span className="text-foreground">{v.brand} {v.model}</span>
-                    <span className="text-muted-foreground font-mono text-xs">{v.plate} · {vHours}h</span>
-                  </div>
-                );
-              })}
             </div>
+
+            {/* Vehicles */}
+            <div className="border-t border-border pt-4">
+              <div className="flex justify-between items-center text-xs mb-3">
+                <span className="text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">Véhicules</span>
+                <span className="text-xs font-bold text-foreground bg-muted px-2 py-0.5 rounded-md">{activeVehicles}</span>
+              </div>
+              <div className="space-y-1">
+                {vehicles.filter(v => v.status === "actif").slice(0, 3).map((v) => {
+                  const vHours = periodLessons.filter((l: any) => l.vehicle_id === v.id && l.status === "effectue").reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
+                  return (
+                    <div key={v.id} className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-muted/40 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-info/10 flex items-center justify-center">
+                          <Car className="w-3.5 h-3.5 text-info" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{v.brand} {v.model}</span>
+                      </div>
+                      <span className="text-xs font-mono text-muted-foreground">{v.plate} · {vHours}h</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Unpaid */}
             {unpaidInvoices.length > 0 && (
-              <div className="border-t border-border pt-3">
-                <div className="flex justify-between text-xs mb-2">
-                  <span className="text-muted-foreground font-medium">Factures impayées</span>
-                  <Link to="/facturation" className="text-primary hover:underline text-xs font-medium">Voir tout</Link>
+              <div className="border-t border-border pt-4">
+                <div className="flex justify-between items-center text-xs mb-3">
+                  <span className="text-muted-foreground font-semibold uppercase tracking-wider text-[11px]">Factures impayées</span>
+                  <Link to="/facturation" className="text-primary hover:underline text-xs font-semibold flex items-center gap-1">
+                    Voir tout <ChevronRight className="w-3 h-3" />
+                  </Link>
                 </div>
-                {unpaidInvoices.slice(0, 3).map((inv) => (
-                  <div key={inv.id} className="flex items-center justify-between py-1.5 text-sm">
-                    <span className="text-foreground font-mono text-xs">{inv.number}</span>
-                    <span className="text-destructive font-semibold tabular-nums">{formatEur(inv.remaining_amount)}</span>
-                  </div>
-                ))}
+                <div className="space-y-1">
+                  {unpaidInvoices.slice(0, 3).map((inv) => (
+                    <div key={inv.id} className="flex items-center justify-between py-2 px-2.5 rounded-lg hover:bg-muted/40 transition-colors">
+                      <span className="text-sm font-mono text-foreground">{inv.number}</span>
+                      <span className="text-sm font-bold text-destructive tabular-nums">{formatEur(inv.remaining_amount)}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
