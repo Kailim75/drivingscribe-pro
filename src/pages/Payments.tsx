@@ -178,7 +178,7 @@ export default function Payments() {
             {studentInvoices.length > 0 && (
               <div>
                 <Label>Facture (optionnel)</Label>
-                <select value={form.invoice_id} onChange={(e) => setForm((f) => ({ ...f, invoice_id: e.target.value }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                <select value={form.invoice_id} onChange={(e) => handleInvoiceChange(e.target.value)} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                   <option value="">Sans facture</option>
                   {studentInvoices.map((i) => <option key={i.id} value={i.id}>{i.number} — reste {formatEur(i.remaining_amount)}</option>)}
                 </select>
