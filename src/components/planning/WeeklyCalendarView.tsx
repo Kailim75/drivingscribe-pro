@@ -208,6 +208,17 @@ function DraggableLessonBlock({ lesson, onClick, onUpdateStatus, onDeleteLesson 
             )}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteLesson?.(lesson.id);
+          }}
+          className="gap-2 text-xs text-destructive focus:text-destructive"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          Supprimer la séance
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
