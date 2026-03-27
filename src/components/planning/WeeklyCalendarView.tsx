@@ -370,8 +370,11 @@ export default function WeeklyCalendarView({
   const today = new Date();
   const totalWeekLessons = lessons.length;
 
+  const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 8 } });
+  const sensors = useSensors(pointerSensor);
+
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Student sidebar */}
         <div className="lg:w-60 flex-shrink-0 space-y-3">
