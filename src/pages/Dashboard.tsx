@@ -18,6 +18,7 @@ import QuickActions from "@/components/dashboard/QuickActions";
 import { useSkillCategories } from "@/hooks/useSkills";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Progress } from "@/components/ui/progress";
+import { AnimatedCurrency, AnimatedNumber } from "@/components/dashboard/AnimatedValue";
 
 type Period = "today" | "week" | "month" | "quarter";
 
@@ -246,7 +247,7 @@ export default function Dashboard() {
               </div>
               <span className="text-xs text-muted-foreground font-medium">CA encaissé</span>
             </div>
-            <p className="text-2xl font-bold text-foreground tabular-nums">{formatEur(periodRevenue)}</p>
+            <AnimatedCurrency value={periodRevenue} className="text-2xl font-bold text-foreground tabular-nums" />
             {forecast.trend !== 0 && (
               <div className="flex items-center gap-1 mt-1.5">
                 {forecast.trend >= 0 ? <TrendingUp className="w-3 h-3 text-success" /> : <TrendingDown className="w-3 h-3 text-destructive" />}
@@ -273,7 +274,7 @@ export default function Dashboard() {
               </div>
               <span className="text-xs text-muted-foreground font-medium">Dépenses</span>
             </div>
-            <p className="text-2xl font-bold text-foreground tabular-nums">{formatEur(periodExpenseTotal)}</p>
+            <AnimatedCurrency value={periodExpenseTotal} className="text-2xl font-bold text-foreground tabular-nums" />
           </div>
         </motion.div>
 
@@ -296,9 +297,7 @@ export default function Dashboard() {
               </div>
               <span className="text-xs text-muted-foreground font-medium">Résultat net</span>
             </div>
-            <p className={cn("text-2xl font-bold tabular-nums", netResult >= 0 ? "text-success" : "text-destructive")}>
-              {formatEur(netResult)}
-            </p>
+            <AnimatedCurrency value={netResult} className={cn("text-2xl font-bold tabular-nums", netResult >= 0 ? "text-success" : "text-destructive")} />
           </div>
         </motion.div>
 
@@ -321,9 +320,7 @@ export default function Dashboard() {
               </div>
               <span className="text-xs text-muted-foreground font-medium">Impayés</span>
             </div>
-            <p className={cn("text-2xl font-bold tabular-nums", totalUnpaid > 0 ? "text-warning" : "text-foreground")}>
-              {formatEur(totalUnpaid)}
-            </p>
+            <AnimatedCurrency value={totalUnpaid} className={cn("text-2xl font-bold tabular-nums", totalUnpaid > 0 ? "text-warning" : "text-foreground")} />
             {overdueCount > 0 && (
               <p className="text-[11px] text-destructive font-medium mt-1">{overdueCount} en retard</p>
             )}
@@ -347,7 +344,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-border">
           <div className="p-4 lg:p-5">
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">CA prévisionnel</p>
-            <p className="text-xl font-bold text-primary tabular-nums">{formatEur(forecast.forecastRevenue)}</p>
+            <AnimatedCurrency value={forecast.forecastRevenue} className="text-xl font-bold text-primary tabular-nums" />
             <p className="text-[11px] text-muted-foreground mt-1">{forecast.plannedSessions} séances planifiées</p>
           </div>
           <div className="p-4 lg:p-5">
@@ -356,16 +353,12 @@ export default function Dashboard() {
               <div className={cn("w-8 h-8 rounded-full flex items-center justify-center", forecast.trend >= 0 ? "bg-success/10" : "bg-destructive/10")}>
                 {forecast.trend >= 0 ? <TrendingUp className="w-4 h-4 text-success" /> : <TrendingDown className="w-4 h-4 text-destructive" />}
               </div>
-              <p className={cn("text-xl font-bold tabular-nums", forecast.trend >= 0 ? "text-success" : "text-destructive")}>
-                {forecast.trend > 0 ? "+" : ""}{forecast.trend}%
-              </p>
+              <AnimatedNumber value={forecast.trend} suffix="%" className={cn("text-xl font-bold tabular-nums", forecast.trend >= 0 ? "text-success" : "text-destructive")} />
             </div>
           </div>
           <div className="p-4 lg:p-5">
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">Occupation</p>
-            <p className={cn("text-xl font-bold tabular-nums mb-2", forecast.occupancyRate >= 60 ? "text-success" : forecast.occupancyRate >= 30 ? "text-warning" : "text-destructive")}>
-              {forecast.occupancyRate}%
-            </p>
+            <AnimatedNumber value={forecast.occupancyRate} suffix="%" className={cn("text-xl font-bold tabular-nums mb-2", forecast.occupancyRate >= 60 ? "text-success" : forecast.occupancyRate >= 30 ? "text-warning" : "text-destructive")} />
             <Progress
               value={forecast.occupancyRate}
               className="h-1.5"
