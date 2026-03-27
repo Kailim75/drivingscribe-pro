@@ -3,7 +3,16 @@ import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, Drag
 import { format, startOfWeek, addDays, isSameDay, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, GripVertical, User, Loader2, Search, Clock, Car, UserCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, GripVertical, User, Loader2, Search, Clock, Car, UserCheck, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { lessonStatusLabels } from "@/lib/labels";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
