@@ -188,7 +188,6 @@ export default function Students() {
                            <span className="text-xs text-muted-foreground">—</span>
                          )}
                        </td>
-                       </td>
                        <td className="hidden md:table-cell">
                          <span className={cn("status-badge", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
                            {activityTypeLabels[student.activity_type] || student.activity_type}
