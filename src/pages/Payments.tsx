@@ -170,7 +170,7 @@ export default function Payments() {
           <div className="space-y-4">
             <div>
               <Label>Élève</Label>
-              <select value={form.student_id} onChange={(e) => setForm((f) => ({ ...f, student_id: e.target.value, invoice_id: "" }))} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+              <select value={form.student_id} onChange={(e) => handleStudentChange(e.target.value)} className="w-full mt-1 bg-card text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 <option value="">Sélectionner...</option>
                 {students.map((s) => <option key={s.id} value={s.id}>{s.first_name} {s.last_name}</option>)}
               </select>
