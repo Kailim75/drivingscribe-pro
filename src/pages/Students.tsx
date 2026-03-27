@@ -103,6 +103,9 @@ export default function Students() {
           <p className="page-subtitle">{students.length} élève{students.length > 1 ? "s" : ""} enregistré{students.length > 1 ? "s" : ""}</p>
         </div>
         <div className="flex gap-2">
+          <button onClick={() => exportToCsv("eleves.csv", ["Prénom", "Nom", "Email", "Téléphone", "Statut", "Activité"], filtered.map((s) => [s.first_name, s.last_name, s.email, s.phone, statusLabels[s.status] || s.status, s.activity_type]))} className="btn-secondary" title="Exporter CSV">
+            <Download className="w-4 h-4" /> Export
+          </button>
           <button onClick={() => setBulkPayerOpen(true)} className="btn-secondary" title="Assigner un payeur en lot">
             <Building2 className="w-4 h-4" /> Payeur lot
           </button>
