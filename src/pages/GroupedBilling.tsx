@@ -310,7 +310,14 @@ export default function GroupedBilling() {
           {payers.slice(0, 4).map((p) => {
             const count = studentsWithPayer.filter((s) => (s as any).payer_id === p.id).length;
             return (
-              <div key={p.id} className="glass-card rounded-xl p-4">
+              <div key={p.id} className="glass-card rounded-xl p-4 group relative">
+                <button
+                  onClick={() => handleOpenEditPayer(p.id)}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-accent"
+                  title="Modifier"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
                 <div className="flex items-center gap-2 mb-1">
                   <Building2 className="w-4 h-4 text-primary" />
                   <span className="text-sm font-semibold text-foreground truncate">{p.name}</span>
