@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Users, FileText, Calendar, ChevronRight, Check, Loader2, AlertCircle, Plus, Building2 } from "lucide-react";
+import { Users, FileText, Calendar, ChevronRight, Check, Loader2, AlertCircle, Plus, Building2, Pencil } from "lucide-react";
 import { usePayers } from "@/hooks/usePayers";
 import { useStudents } from "@/hooks/useStudents";
 import { useInvoices } from "@/hooks/useInvoices";
@@ -43,7 +43,7 @@ interface PayerPreview {
 }
 
 export default function GroupedBilling() {
-  const { payers, create: createPayer } = usePayers();
+  const { payers, create: createPayer, update: updatePayer } = usePayers();
   const { students } = useStudents();
   const { create: createInvoice } = useInvoices();
   const { organization } = useOrg();
@@ -60,8 +60,9 @@ export default function GroupedBilling() {
   const [expandedPayer, setExpandedPayer] = useState<string | null>(null);
   const [generated, setGenerated] = useState<Set<string>>(new Set());
 
-  // New payer dialog
+  // New/Edit payer dialog
   const [payerDialogOpen, setPayerDialogOpen] = useState(false);
+  const [editingPayer, setEditingPayer] = useState<string | null>(null);
   const [payerForm, setPayerForm] = useState({ name: "", email: "", phone: "", siret: "", address: "" });
 
   const studentsWithPayer = useMemo(
@@ -263,14 +264,32 @@ export default function GroupedBilling() {
     }
   };
 
-  const handleCreatePayer = () => {
+  const handleOpenEditPayer = (payerId: string) => {
+    const payer = payers.find((p) => p.id === payerId);
+    if (!payer) return;
+    setEditingPayer(payerId);
+    setPayerForm({ name: payer.name, email: payer.email || "", phone: payer.phone || "", siret: payer.siret || "", address: payer.address || "" });
+    setPayerDialogOpen(true);
+  };
+
+  const handleSavePayer = () => {
     if (!payerForm.name.trim()) return;
-    createPayer.mutate(payerForm, {
-      onSuccess: () => {
-        setPayerDialogOpen(false);
-        setPayerForm({ name: "", email: "", phone: "", siret: "", address: "" });
-      },
-    });
+    if (editingPayer) {
+      updatePayer.mutate({ id: editingPayer, ...payerForm }, {
+        onSuccess: () => {
+          setPayerDialogOpen(false);
+          setEditingPayer(null);
+          setPayerForm({ name: "", email: "", phone: "", siret: "", address: "" });
+        },
+      });
+    } else {
+      createPayer.mutate(payerForm, {
+        onSuccess: () => {
+          setPayerDialogOpen(false);
+          setPayerForm({ name: "", email: "", phone: "", siret: "", address: "" });
+        },
+      });
+    }
   };
 
   return (
@@ -280,7 +299,7 @@ export default function GroupedBilling() {
           <h1 className="page-title">Facturation groupée</h1>
           <p className="page-subtitle">Générez des factures brouillon par tiers payeur</p>
         </div>
-        <Button onClick={() => setPayerDialogOpen(true)} variant="outline" className="gap-2">
+        <Button onClick={() => { setEditingPayer(null); setPayerForm({ name: "", email: "", phone: "", siret: "", address: "" }); setPayerDialogOpen(true); }} variant="outline" className="gap-2">
           <Plus className="w-4 h-4" /> Nouveau payeur
         </Button>
       </div>
@@ -291,7 +310,14 @@ export default function GroupedBilling() {
           {payers.slice(0, 4).map((p) => {
             const count = studentsWithPayer.filter((s) => (s as any).payer_id === p.id).length;
             return (
-              <div key={p.id} className="glass-card rounded-xl p-4">
+              <div key={p.id} className="glass-card rounded-xl p-4 group relative">
+                <button
+                  onClick={() => handleOpenEditPayer(p.id)}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-accent"
+                  title="Modifier"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
                 <div className="flex items-center gap-2 mb-1">
                   <Building2 className="w-4 h-4 text-primary" />
                   <span className="text-sm font-semibold text-foreground truncate">{p.name}</span>
@@ -436,7 +462,7 @@ export default function GroupedBilling() {
       <Dialog open={payerDialogOpen} onOpenChange={setPayerDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nouveau tiers payeur</DialogTitle>
+            <DialogTitle>{editingPayer ? "Modifier le tiers payeur" : "Nouveau tiers payeur"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
@@ -463,10 +489,10 @@ export default function GroupedBilling() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPayerDialogOpen(false)}>Annuler</Button>
-            <Button onClick={handleCreatePayer} disabled={createPayer.isPending}>
-              {createPayer.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Créer
+            <Button variant="outline" onClick={() => { setPayerDialogOpen(false); setEditingPayer(null); }}>Annuler</Button>
+            <Button onClick={handleSavePayer} disabled={createPayer.isPending || updatePayer.isPending}>
+              {(createPayer.isPending || updatePayer.isPending) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {editingPayer ? "Enregistrer" : "Créer"}
             </Button>
           </DialogFooter>
         </DialogContent>
