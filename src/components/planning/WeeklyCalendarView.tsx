@@ -349,6 +349,35 @@ export default function WeeklyCalendarView({
         </div>
       </div>
 
+      {/* Duration picker popover */}
+      {pendingDrop && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={() => setPendingDrop(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-xl shadow-xl p-4 space-y-3 w-64 animate-in fade-in zoom-in-95">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Durée de la séance</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {pendingDrop.student.first_name} {pendingDrop.student.last_name} — {format(pendingDrop.date, "EEE d MMM", { locale: fr })} à {pendingDrop.hour}h
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[{ label: "1h", value: 1 }, { label: "1h30", value: 1.5 }, { label: "2h", value: 2 }].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => confirmDrop(opt.value)}
+                  disabled={creating}
+                  className="px-3 py-2.5 rounded-lg border border-border bg-background text-sm font-semibold text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => setPendingDrop(null)} className="w-full text-xs text-muted-foreground hover:text-foreground text-center py-1">
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Drag overlay */}
       <DragOverlay>
         {draggedStudent && (
