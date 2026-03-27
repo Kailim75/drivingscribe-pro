@@ -24,11 +24,12 @@ const statusIcons: Record<string, React.ElementType> = {
   prevu: Clock, effectue: CheckCircle2, annule: XCircle, absent: UserX,
 };
 
-type View = "jour" | "liste";
+type View = "jour" | "semaine" | "liste";
 
 export default function Planning() {
-  const [view, setView] = useState<View>("jour");
+  const [view, setView] = useState<View>("semaine");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [weekStartDate, setWeekStartDate] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [showForm, setShowForm] = useState(false);
   const [editLesson, setEditLesson] = useState<any>(null);
   const [statusConfirm, setStatusConfirm] = useState<{ lessonId: string; status: string; label: string } | null>(null);
