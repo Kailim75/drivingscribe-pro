@@ -189,6 +189,9 @@ export default function Planning() {
             <button onClick={() => setView("jour")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "jour" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
               <CalendarDays className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Jour</span>
             </button>
+            <button onClick={() => setView("semaine")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "semaine" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
+              <LayoutGrid className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Semaine</span>
+            </button>
             <button onClick={() => setView("liste")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "liste" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
               <List className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Liste</span>
             </button>
