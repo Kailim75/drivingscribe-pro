@@ -41,11 +41,21 @@ export default function Planning() {
 
   const { organization } = useOrg();
   const dateStr = selectedDate.toISOString().split("T")[0];
+  const monthStart = format(startOfMonth(selectedDate), "yyyy-MM-dd");
+  const monthEnd = format(endOfMonth(selectedDate), "yyyy-MM-dd");
   const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(view === "jour" ? { date: dateStr } : undefined);
+  const { lessons: monthLessons } = useLessons({ dateFrom: monthStart, dateTo: monthEnd });
   const { students } = useStudents();
   const { instructors } = useInstructors();
   const { vehicles } = useVehicles();
   const { log } = useAuditLog();
+
+  // Days with lessons for calendar dot indicators
+  const daysWithLessons = useMemo(() => {
+    const set = new Set<string>();
+    monthLessons.forEach((l: any) => set.add(l.date));
+    return set;
+  }, [monthLessons]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
