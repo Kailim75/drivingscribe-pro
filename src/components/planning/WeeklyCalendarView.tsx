@@ -140,6 +140,7 @@ export default function WeeklyCalendarView({
 }: Props) {
   const [draggedStudent, setDraggedStudent] = useState<Student | null>(null);
   const [searchStudent, setSearchStudent] = useState("");
+  const [pendingDrop, setPendingDrop] = useState<{ student: Student; date: Date; hour: number } | null>(null);
 
   const weekDays = useMemo(() =>
     Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -172,18 +173,28 @@ export default function WeeklyCalendarView({
     if (data?.type === "student") setDraggedStudent(data.student);
   };
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     setDraggedStudent(null);
     const { over, active } = event;
     if (!over || !active.data.current) return;
 
     const student = active.data.current.student as Student;
     const { date, hour } = over.data.current as { date: Date; hour: number };
+    setPendingDrop({ student, date, hour });
+  }, []);
+
+  const confirmDrop = useCallback(async (durationHours: number) => {
+    if (!pendingDrop) return;
+    const { student, date, hour } = pendingDrop;
+    setPendingDrop(null);
+
     const dateStr = format(date, "yyyy-MM-dd");
     const startTime = `${String(hour).padStart(2, "0")}:00`;
-    const endTime = `${String(hour + 1).padStart(2, "0")}:00`;
+    const endMinutes = hour * 60 + durationHours * 60;
+    const endH = Math.floor(endMinutes / 60);
+    const endM = endMinutes % 60;
+    const endTime = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
 
-    // Find first available instructor
     const activeInstructors = instructors.filter((i) => i.status === "actif");
     const activeVehicles = vehicles.filter((v) => v.status === "actif");
 
@@ -192,7 +203,6 @@ export default function WeeklyCalendarView({
       return;
     }
 
-    // Try each instructor/vehicle combo until no conflict
     let foundInstructor: Instructor | null = null;
     let foundVehicle: Vehicle | null = null;
 
@@ -230,9 +240,9 @@ export default function WeeklyCalendarView({
       date: dateStr,
       start_time: startTime,
       end_time: endTime,
-      duration_hours: 1,
+      duration_hours: durationHours,
     });
-  }, [instructors, vehicles, checkConflicts, onCreateLesson]);
+  }, [pendingDrop, instructors, vehicles, checkConflicts, onCreateLesson]);
 
   const today = new Date();
 
