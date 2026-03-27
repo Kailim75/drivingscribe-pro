@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle, Pencil, Archive, UserX } from "lucide-react";
+import { Search, Plus, Phone, Mail, MoreHorizontal, Loader2, Users, MessageCircle, Pencil, Archive, UserX, Building2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ import StudentFormDialog from "@/components/students/StudentFormDialog";
 import { PaginationControls, usePagination } from "@/components/PaginationControls";
 import type { StudentFormData } from "@/lib/validations";
 import BulkArchiveStudentsDialog from "@/components/students/BulkArchiveStudentsDialog";
+import BulkAssignPayerDialog from "@/components/students/BulkAssignPayerDialog";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -37,6 +38,7 @@ export default function Students() {
   const [editStudent, setEditStudent] = useState<any>(null);
   const [archiveTarget, setArchiveTarget] = useState<any>(null);
   const [bulkArchiveOpen, setBulkArchiveOpen] = useState(false);
+  const [bulkPayerOpen, setBulkPayerOpen] = useState(false);
   const [page, setPage] = useState(1);
 
   const filtered = students.filter((s) => {
@@ -97,6 +99,9 @@ export default function Students() {
           <p className="page-subtitle">{students.length} élève{students.length > 1 ? "s" : ""} enregistré{students.length > 1 ? "s" : ""}</p>
         </div>
         <div className="flex gap-2">
+          <button onClick={() => setBulkPayerOpen(true)} className="btn-secondary" title="Assigner un payeur en lot">
+            <Building2 className="w-4 h-4" /> Payeur lot
+          </button>
           <button onClick={() => setBulkArchiveOpen(true)} className="btn-secondary">
             <UserX className="w-4 h-4" /> Inactifs
           </button>
@@ -249,6 +254,7 @@ export default function Students() {
         </AlertDialogContent>
       </AlertDialog>
       <BulkArchiveStudentsDialog open={bulkArchiveOpen} onOpenChange={setBulkArchiveOpen} />
+      <BulkAssignPayerDialog open={bulkPayerOpen} onOpenChange={setBulkPayerOpen} />
     </div>
   );
 }
