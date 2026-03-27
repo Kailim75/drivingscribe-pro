@@ -205,6 +205,21 @@ export default function Planning() {
         </div>
       </div>
 
+      {view === "semaine" && (
+        <WeeklyCalendarView
+          weekStart={weekStartDate}
+          onWeekChange={setWeekStartDate}
+          lessons={lessons}
+          students={students}
+          instructors={instructors}
+          vehicles={vehicles}
+          onCreateLesson={handleCreate}
+          onEditLesson={setEditLesson}
+          creating={create.isPending}
+          checkConflicts={checkConflicts}
+        />
+      )}
+
       {view === "jour" && (
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Calendar sidebar */}
