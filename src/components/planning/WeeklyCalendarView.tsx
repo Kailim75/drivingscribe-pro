@@ -105,8 +105,13 @@ function TimeSlotCell({ date, hour, isEven, children }: { date: Date; hour: numb
   );
 }
 
-// Lesson block rendered on the grid
-function LessonBlock({ lesson, onClick }: { lesson: Lesson; onClick: () => void }) {
+// Draggable lesson block rendered on the grid
+function DraggableLessonBlock({ lesson, onClick }: { lesson: Lesson; onClick: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `lesson-${lesson.id}`,
+    data: { type: "lesson", lesson },
+  });
+
   const startParts = lesson.start_time.split(":").map(Number);
   const endParts = lesson.end_time.split(":").map(Number);
   const startMinFromBase = (startParts[0] - 7) * 60 + startParts[1];
@@ -133,12 +138,16 @@ function LessonBlock({ lesson, onClick }: { lesson: Lesson; onClick: () => void 
 
   return (
     <motion.div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
       initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      animate={{ opacity: isDragging ? 0.3 : 1, scale: 1 }}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       className={cn(
-        "absolute left-1 right-1 rounded-lg px-2 py-1 text-[10px] leading-tight cursor-pointer overflow-hidden border-l-[3px] border transition-all duration-200 z-10 shadow-sm hover:shadow-md",
-        style
+        "absolute left-1 right-1 rounded-lg px-2 py-1 text-[10px] leading-tight cursor-grab active:cursor-grabbing overflow-hidden border-l-[3px] border transition-all duration-200 z-10 shadow-sm hover:shadow-md",
+        style,
+        isDragging && "ring-2 ring-primary/40"
       )}
       style={{ top: `${topPx}px`, height: `${heightPx}px` }}
     >
