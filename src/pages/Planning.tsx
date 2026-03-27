@@ -196,25 +196,113 @@ export default function Planning() {
       </div>
 
       {view === "jour" && (
-        <div className="flex items-center justify-between glass-card rounded-xl px-4 py-2.5">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button onClick={() => setSelectedDate(new Date())} className="text-sm font-medium text-primary hover:underline px-4 py-1">
-            Aujourd'hui
-          </button>
-          <button onClick={() => navigate(1)} className="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors">
-            <ChevronRight className="w-5 h-5" />
-          </button>
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Calendar sidebar */}
+          <div className="glass-card rounded-xl p-2 lg:w-auto flex-shrink-0">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(d) => d && setSelectedDate(d)}
+              locale={fr}
+              className="pointer-events-auto"
+              modifiers={{ hasLessons: (date) => daysWithLessons.has(format(date, "yyyy-MM-dd")) }}
+              modifiersClassNames={{ hasLessons: "font-bold underline decoration-primary decoration-2 underline-offset-4" }}
+              onMonthChange={(month) => setSelectedDate(month)}
+            />
+            <div className="px-3 pb-2 flex items-center gap-2 text-[10px] text-muted-foreground">
+              <span className="font-bold underline decoration-primary decoration-2 underline-offset-4">14</span>
+              <span>= jour avec séance(s)</span>
+            </div>
+          </div>
+
+          {/* Lessons list */}
+          <div className="flex-1 space-y-2 min-w-0">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-semibold text-foreground">
+                {selectedDate.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+              </h2>
+              <button onClick={() => setSelectedDate(new Date())} className="text-xs text-primary hover:underline font-medium">
+                Aujourd'hui
+              </button>
+            </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+              {sortedLessons.length === 0 ? (
+                <div className="glass-card rounded-xl flex flex-col items-center justify-center py-12 text-center">
+                  <CalendarDays className="w-10 h-10 text-muted-foreground/30 mb-3" />
+                  <p className="text-sm font-medium text-foreground">Aucune séance</p>
+                  <p className="text-sm text-muted-foreground mt-1">Pas de séance prévue pour cette date</p>
+                  <button onClick={() => setShowForm(true)} className="btn-primary mt-4 text-xs">
+                    <Plus className="w-3.5 h-3.5" /> Ajouter une séance
+                  </button>
+                </div>
+              ) : (
+                sortedLessons.map((lesson: any) => {
+                  const Icon = statusIcons[lesson.status] || Clock;
+                  return (
+                    <div key={lesson.id} onClick={() => selectedIds.length > 0 && lesson.status === "prevu" ? toggleSelect(lesson.id) : undefined}
+                      className={cn("glass-card rounded-xl p-4 hover:border-primary/20 transition-colors", selectedIds.includes(lesson.id) && "ring-2 ring-primary/40 border-primary/30")}>
+                      <div className="flex items-start gap-3">
+                        {selectedIds.length > 0 && lesson.status === "prevu" && (
+                          <button onClick={(e) => { e.stopPropagation(); toggleSelect(lesson.id); }}
+                            className="mt-1 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+                            style={{ borderColor: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'hsl(var(--border))', background: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'transparent' }}>
+                            {selectedIds.includes(lesson.id) && <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />}
+                          </button>
+                        )}
+                        <div className="w-14 flex-shrink-0 text-center">
+                          <p className="text-sm font-bold text-foreground">{lesson.start_time?.slice(0, 5)}</p>
+                          <p className="text-[10px] text-muted-foreground">{lesson.end_time?.slice(0, 5)}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{lesson.duration_hours}h</p>
+                        </div>
+                        <div className="w-px h-10 bg-border self-center flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-foreground text-sm truncate">
+                              {lesson.students?.first_name} {lesson.students?.last_name}
+                            </p>
+                            <span className={cn("status-badge inline-flex items-center gap-1 flex-shrink-0", lessonStatusColors[lesson.status])}>
+                              <Icon className="w-3 h-3" />{lessonStatusLabels[lesson.status]}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs text-muted-foreground">
+                            <span className="truncate">🚗 {lesson.vehicles?.brand} {lesson.vehicles?.model}</span>
+                            <span className="truncate">👤 {lesson.instructors?.first_name}</span>
+                          </div>
+                          {lesson.note && (
+                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 truncate">
+                              <MessageSquare className="w-3 h-3 flex-shrink-0" /> {lesson.note}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-1.5 mt-2.5">
+                            {lesson.status === "prevu" && (
+                              <>
+                                <button onClick={() => confirmStatus(lesson.id, "effectue")} className="text-xs px-3 py-1.5 rounded-lg bg-success/10 text-success hover:bg-success/15 transition-colors font-medium">✓ Effectué</button>
+                                <button onClick={() => confirmStatus(lesson.id, "annule")} className="text-xs px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/15 transition-colors font-medium">✗ Annulé</button>
+                                <button onClick={() => confirmStatus(lesson.id, "absent")} className="text-xs px-3 py-1.5 rounded-lg bg-warning/10 text-warning hover:bg-warning/15 transition-colors font-medium">⚠ Absent</button>
+                              </>
+                            )}
+                            <button onClick={() => setEditLesson(lesson)} className="text-xs px-2.5 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors font-medium ml-auto">
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </motion.div>
+          </div>
         </div>
       )}
 
+      {view === "liste" && (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
         {sortedLessons.length === 0 ? (
           <div className="glass-card rounded-xl flex flex-col items-center justify-center py-16 text-center">
             <CalendarDays className="w-10 h-10 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-medium text-foreground">Aucune séance</p>
-            <p className="text-sm text-muted-foreground mt-1">{view === "jour" ? "Pas de séance prévue pour cette date" : "Aucune séance enregistrée"}</p>
+            <p className="text-sm text-muted-foreground mt-1">Aucune séance enregistrée</p>
           </div>
         ) : (
           sortedLessons.map((lesson: any) => {
@@ -254,11 +342,9 @@ export default function Planning() {
                         <MessageSquare className="w-3 h-3 flex-shrink-0" /> {lesson.note}
                       </p>
                     )}
-                    {view === "liste" && (
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        {new Date(lesson.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
-                      </p>
-                    )}
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      {new Date(lesson.date).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}
+                    </p>
                     <div className="flex items-center gap-1.5 mt-2.5">
                       {lesson.status === "prevu" && (
                         <>
@@ -278,6 +364,7 @@ export default function Planning() {
           })
         )}
       </motion.div>
+      )}
 
       <LessonFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} onCheckConflicts={checkConflicts} loading={create.isPending} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} />
       <LessonFormDialog open={!!editLesson} onClose={() => setEditLesson(null)} onSubmit={handleEdit} onCheckConflicts={checkConflicts} loading={update.isPending} initial={editLesson} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} />
