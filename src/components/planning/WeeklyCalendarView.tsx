@@ -1,13 +1,13 @@
 import { useState, useMemo, useCallback } from "react";
 import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
-import { format, startOfWeek, addDays, isSameDay } from "date-fns";
+import { format, startOfWeek, addDays, isSameDay, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, GripVertical, User, Loader2 } from "lucide-react";
-import { lessonStatusColors, lessonStatusLabels } from "@/lib/labels";
+import { ChevronLeft, ChevronRight, GripVertical, User, Loader2, Search, Clock, Car, UserCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7h to 19h
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 7);
 
 interface Student {
   id: string;
@@ -69,19 +69,24 @@ function DraggableStudent({ student }: { student: Student }) {
       {...listeners}
       {...attributes}
       className={cn(
-        "flex items-center gap-1.5 px-2 py-1.5 rounded-lg border border-border bg-card text-xs font-medium cursor-grab active:cursor-grabbing transition-all hover:border-primary/30 hover:shadow-sm",
-        isDragging && "opacity-30"
+        "flex items-center gap-2 px-2.5 py-2 rounded-lg border border-border/60 bg-card text-xs font-medium cursor-grab active:cursor-grabbing transition-all duration-200",
+        "hover:border-primary/40 hover:shadow-sm hover:bg-primary/[0.03]",
+        isDragging && "opacity-20 scale-95"
       )}
     >
-      <GripVertical className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-      <User className="w-3 h-3 text-primary flex-shrink-0" />
-      <span className="truncate">{student.first_name} {student.last_name[0]}.</span>
+      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <span className="text-[10px] font-bold text-primary">
+          {student.first_name[0]}{student.last_name[0]}
+        </span>
+      </div>
+      <span className="truncate flex-1">{student.first_name} {student.last_name}</span>
+      <GripVertical className="w-3 h-3 text-muted-foreground/40 flex-shrink-0" />
     </div>
   );
 }
 
 // Droppable time slot cell
-function TimeSlotCell({ date, hour, children }: { date: Date; hour: number; children?: React.ReactNode }) {
+function TimeSlotCell({ date, hour, isEven, children }: { date: Date; hour: number; isEven: boolean; children?: React.ReactNode }) {
   const id = `slot-${format(date, "yyyy-MM-dd")}-${hour}`;
   const { isOver, setNodeRef } = useDroppable({ id, data: { date, hour } });
 
@@ -89,8 +94,9 @@ function TimeSlotCell({ date, hour, children }: { date: Date; hour: number; chil
     <div
       ref={setNodeRef}
       className={cn(
-        "relative min-h-[48px] border-b border-r border-border/50 transition-colors",
-        isOver && "bg-primary/10 ring-1 ring-inset ring-primary/30"
+        "relative min-h-[56px] border-b border-r border-border/30 transition-all duration-200",
+        isEven ? "bg-muted/20" : "bg-transparent",
+        isOver && "bg-primary/8 ring-1 ring-inset ring-primary/25 shadow-inner"
       )}
     >
       {children}
@@ -104,25 +110,50 @@ function LessonBlock({ lesson, onClick }: { lesson: Lesson; onClick: () => void 
   const endParts = lesson.end_time.split(":").map(Number);
   const startMinFromBase = (startParts[0] - 7) * 60 + startParts[1];
   const durationMin = (endParts[0] * 60 + endParts[1]) - (startParts[0] * 60 + startParts[1]);
-  const topPx = (startMinFromBase / 60) * 48;
-  const heightPx = Math.max((durationMin / 60) * 48, 20);
+  const topPx = (startMinFromBase / 60) * 56;
+  const heightPx = Math.max((durationMin / 60) * 56, 24);
+
+  const statusStyles = {
+    effectue: "bg-success/12 border-success/40 hover:bg-success/18",
+    annule: "bg-destructive/12 border-destructive/40 hover:bg-destructive/18",
+    absent: "bg-warning/12 border-warning/40 hover:bg-warning/18",
+    prevu: "bg-primary/12 border-primary/40 hover:bg-primary/18",
+  };
+
+  const statusTextColors = {
+    effectue: "text-success",
+    annule: "text-destructive",
+    absent: "text-warning",
+    prevu: "text-primary",
+  };
+
+  const style = statusStyles[lesson.status as keyof typeof statusStyles] || statusStyles.prevu;
+  const textColor = statusTextColors[lesson.status as keyof typeof statusTextColors] || statusTextColors.prevu;
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       className={cn(
-        "absolute left-0.5 right-0.5 rounded-md px-1.5 py-0.5 text-[10px] leading-tight cursor-pointer overflow-hidden border transition-shadow hover:shadow-md z-10",
-        lesson.status === "effectue" ? "bg-success/15 border-success/30 text-success" :
-        lesson.status === "annule" ? "bg-destructive/15 border-destructive/30 text-destructive" :
-        lesson.status === "absent" ? "bg-warning/15 border-warning/30 text-warning" :
-        "bg-primary/15 border-primary/30 text-primary"
+        "absolute left-1 right-1 rounded-lg px-2 py-1 text-[10px] leading-tight cursor-pointer overflow-hidden border-l-[3px] border transition-all duration-200 z-10 shadow-sm hover:shadow-md",
+        style
       )}
       style={{ top: `${topPx}px`, height: `${heightPx}px` }}
     >
-      <p className="font-semibold truncate">{lesson.students?.first_name} {lesson.students?.last_name?.[0]}.</p>
-      <p className="truncate opacity-80">{lesson.start_time?.slice(0, 5)}-{lesson.end_time?.slice(0, 5)}</p>
-      {heightPx > 35 && <p className="truncate opacity-70">👤 {lesson.instructors?.first_name}</p>}
-    </div>
+      <p className={cn("font-bold truncate", textColor)}>
+        {lesson.students?.first_name} {lesson.students?.last_name?.[0]}.
+      </p>
+      <p className="truncate text-muted-foreground">
+        {lesson.start_time?.slice(0, 5)} – {lesson.end_time?.slice(0, 5)}
+      </p>
+      {heightPx > 40 && lesson.instructors?.first_name && (
+        <p className="truncate text-muted-foreground/70 mt-0.5">
+          <UserCheck className="w-2.5 h-2.5 inline mr-0.5" />
+          {lesson.instructors.first_name}
+        </p>
+      )}
+    </motion.div>
   );
 }
 
@@ -157,7 +188,6 @@ export default function WeeklyCalendarView({
     [students, searchStudent]
   );
 
-  // Group lessons by day
   const lessonsByDay = useMemo(() => {
     const map: Record<string, Lesson[]> = {};
     weekDays.forEach((d) => { map[format(d, "yyyy-MM-dd")] = []; });
@@ -168,6 +198,16 @@ export default function WeeklyCalendarView({
     return map;
   }, [lessons, weekDays]);
 
+  // Count lessons per day for header badges
+  const lessonCountByDay = useMemo(() => {
+    const counts: Record<string, number> = {};
+    weekDays.forEach((d) => {
+      const key = format(d, "yyyy-MM-dd");
+      counts[key] = (lessonsByDay[key] || []).length;
+    });
+    return counts;
+  }, [lessonsByDay, weekDays]);
+
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current;
     if (data?.type === "student") setDraggedStudent(data.student);
@@ -177,7 +217,6 @@ export default function WeeklyCalendarView({
     setDraggedStudent(null);
     const { over, active } = event;
     if (!over || !active.data.current) return;
-
     const student = active.data.current.student as Student;
     const { date, hour } = over.data.current as { date: Date; hour: number };
     setPendingDrop({ student, date, hour });
@@ -245,97 +284,169 @@ export default function WeeklyCalendarView({
   }, [pendingDrop, instructors, vehicles, checkConflicts, onCreateLesson]);
 
   const today = new Date();
+  const totalWeekLessons = lessons.length;
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Student sidebar */}
-        <div className="glass-card rounded-xl p-3 lg:w-56 flex-shrink-0 space-y-3">
-          <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider">Élèves</h3>
-          <input
-            type="text"
-            placeholder="Rechercher..."
-            value={searchStudent}
-            onChange={(e) => setSearchStudent(e.target.value)}
-            className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-          <p className="text-[10px] text-muted-foreground">Glissez un élève sur un créneau</p>
-          <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-            {filteredStudents.map((s) => (
-              <DraggableStudent key={s.id} student={s} />
-            ))}
-            {filteredStudents.length === 0 && (
-              <p className="text-xs text-muted-foreground italic py-2 text-center">Aucun élève</p>
-            )}
-          </div>
-          {creating && (
-            <div className="flex items-center gap-2 text-xs text-primary font-medium">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Création...
+        <div className="lg:w-60 flex-shrink-0 space-y-3">
+          <div className="glass-card rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Élèves</h3>
+              <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                {filteredStudents.length}
+              </span>
             </div>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+              <input
+                type="text"
+                placeholder="Rechercher un élève..."
+                value={searchStudent}
+                onChange={(e) => setSearchStudent(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all"
+              />
+            </div>
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <p className="text-[10px] text-muted-foreground">Glissez un élève sur la grille</p>
+            </div>
+            <div className="space-y-1.5 max-h-[420px] overflow-y-auto pr-0.5 scrollbar-thin">
+              {filteredStudents.map((s) => (
+                <DraggableStudent key={s.id} student={s} />
+              ))}
+              {filteredStudents.length === 0 && (
+                <div className="flex flex-col items-center py-6 text-center">
+                  <User className="w-8 h-8 text-muted-foreground/20 mb-2" />
+                  <p className="text-xs text-muted-foreground italic">Aucun élève trouvé</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Week stats */}
+          <div className="glass-card rounded-xl p-4 space-y-2">
+            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">Cette semaine</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg bg-primary/5 p-2.5 text-center">
+                <p className="text-lg font-bold text-primary">{totalWeekLessons}</p>
+                <p className="text-[10px] text-muted-foreground">Séances</p>
+              </div>
+              <div className="rounded-lg bg-success/5 p-2.5 text-center">
+                <p className="text-lg font-bold text-success">
+                  {lessons.filter(l => l.status === "effectue").length}
+                </p>
+                <p className="text-[10px] text-muted-foreground">Effectuées</p>
+              </div>
+            </div>
+          </div>
+
+          {creating && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card rounded-xl p-3 flex items-center gap-2.5 text-xs text-primary font-semibold border-primary/20"
+            >
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Création en cours...</span>
+            </motion.div>
           )}
         </div>
 
         {/* Weekly grid */}
-        <div className="flex-1 min-w-0 glass-card rounded-xl overflow-hidden">
+        <div className="flex-1 min-w-0 glass-card rounded-xl overflow-hidden border border-border/40">
           {/* Week navigation */}
-          <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
-            <button onClick={() => onWeekChange(addDays(weekStart, -7))} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border/40 bg-muted/30">
+            <button
+              onClick={() => onWeekChange(addDays(weekStart, -7))}
+              className="p-2 rounded-lg hover:bg-card text-muted-foreground hover:text-foreground transition-all duration-200 hover:shadow-sm"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <div className="text-center">
-              <p className="text-sm font-semibold text-foreground">
+            <div className="text-center space-y-0.5">
+              <p className="text-sm font-bold text-foreground tracking-tight">
                 {format(weekDays[0], "d MMM", { locale: fr })} — {format(weekDays[6], "d MMM yyyy", { locale: fr })}
               </p>
-              <button onClick={() => onWeekChange(startOfWeek(new Date(), { weekStartsOn: 1 }))} className="text-[10px] text-primary hover:underline">
-                Semaine actuelle
+              <button
+                onClick={() => onWeekChange(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+                className="text-[10px] text-primary hover:text-primary/80 font-semibold transition-colors"
+              >
+                Revenir à cette semaine
               </button>
             </div>
-            <button onClick={() => onWeekChange(addDays(weekStart, 7))} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors">
+            <button
+              onClick={() => onWeekChange(addDays(weekStart, 7))}
+              className="p-2 rounded-lg hover:bg-card text-muted-foreground hover:text-foreground transition-all duration-200 hover:shadow-sm"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           {/* Grid */}
           <div className="overflow-x-auto">
-            <div className="min-w-[700px]">
+            <div className="min-w-[750px]">
               {/* Day headers */}
-              <div className="grid grid-cols-[50px_repeat(7,1fr)] border-b border-border">
-                <div className="p-1" />
-                {weekDays.map((day) => (
-                  <div
-                    key={day.toISOString()}
-                    className={cn(
-                      "p-2 text-center border-r border-border/50 last:border-r-0",
-                      isSameDay(day, today) && "bg-primary/5"
-                    )}
-                  >
-                    <p className="text-[10px] uppercase text-muted-foreground">{format(day, "EEE", { locale: fr })}</p>
-                    <p className={cn(
-                      "text-sm font-bold",
-                      isSameDay(day, today) ? "text-primary" : "text-foreground"
-                    )}>
-                      {format(day, "d")}
-                    </p>
-                  </div>
-                ))}
+              <div className="grid grid-cols-[56px_repeat(7,1fr)] border-b border-border/40 bg-muted/20">
+                <div className="p-2 flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5 text-muted-foreground/40" />
+                </div>
+                {weekDays.map((day) => {
+                  const dateKey = format(day, "yyyy-MM-dd");
+                  const count = lessonCountByDay[dateKey] || 0;
+                  const isCurrentDay = isToday(day);
+
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={cn(
+                        "py-3 px-2 text-center border-l border-border/30 transition-colors",
+                        isCurrentDay && "bg-primary/[0.04]"
+                      )}
+                    >
+                      <p className={cn(
+                        "text-[10px] uppercase font-semibold tracking-wider",
+                        isCurrentDay ? "text-primary" : "text-muted-foreground"
+                      )}>
+                        {format(day, "EEE", { locale: fr })}
+                      </p>
+                      <div className="flex items-center justify-center gap-1.5 mt-0.5">
+                        <span className={cn(
+                          "text-lg font-bold leading-none",
+                          isCurrentDay
+                            ? "w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm"
+                            : "text-foreground"
+                        )}>
+                          {format(day, "d")}
+                        </span>
+                        {count > 0 && (
+                          <span className={cn(
+                            "text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none",
+                            isCurrentDay ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                          )}>
+                            {count}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Time slots */}
-              {HOURS.map((hour) => (
-                <div key={hour} className="grid grid-cols-[50px_repeat(7,1fr)]">
-                  <div className="p-1 text-[10px] text-muted-foreground text-right pr-2 border-r border-border/50 flex items-start justify-end pt-1">
-                    {hour}:00
+              {HOURS.map((hour, hourIdx) => (
+                <div key={hour} className="grid grid-cols-[56px_repeat(7,1fr)]">
+                  <div className={cn(
+                    "px-2 text-[10px] font-semibold text-muted-foreground/60 border-r border-border/30 flex items-start justify-end pt-1.5 pr-3 tabular-nums",
+                    hourIdx % 2 === 0 ? "bg-muted/20" : ""
+                  )}>
+                    {String(hour).padStart(2, "0")}:00
                   </div>
                   {weekDays.map((day) => {
                     const dateKey = format(day, "yyyy-MM-dd");
-                    const dayLessons = (lessonsByDay[dateKey] || []).filter((l) => {
-                      const startH = parseInt(l.start_time.split(":")[0]);
-                      return startH === hour;
-                    });
 
                     return (
-                      <TimeSlotCell key={`${dateKey}-${hour}`} date={day} hour={hour}>
-                        {/* Only render lessons that START at this hour — positioning is absolute */}
+                      <TimeSlotCell key={`${dateKey}-${hour}`} date={day} hour={hour} isEven={hourIdx % 2 === 0}>
                         {hour === HOURS[0] && (lessonsByDay[dateKey] || []).map((l) => (
                           <LessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} />
                         ))}
@@ -349,40 +460,79 @@ export default function WeeklyCalendarView({
         </div>
       </div>
 
-      {/* Duration picker popover */}
-      {pendingDrop && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20" onClick={() => setPendingDrop(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="bg-card border border-border rounded-xl shadow-xl p-4 space-y-3 w-64 animate-in fade-in zoom-in-95">
-            <div>
-              <p className="text-sm font-semibold text-foreground">Durée de la séance</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {pendingDrop.student.first_name} {pendingDrop.student.last_name} — {format(pendingDrop.date, "EEE d MMM", { locale: fr })} à {pendingDrop.hour}h
-              </p>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {[{ label: "1h", value: 1 }, { label: "1h30", value: 1.5 }, { label: "2h", value: 2 }].map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => confirmDrop(opt.value)}
-                  disabled={creating}
-                  className="px-3 py-2.5 rounded-lg border border-border bg-background text-sm font-semibold text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            <button onClick={() => setPendingDrop(null)} className="w-full text-xs text-muted-foreground hover:text-foreground text-center py-1">
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Duration picker modal */}
+      <AnimatePresence>
+        {pendingDrop && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
+            onClick={() => setPendingDrop(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 10 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-card border border-border/60 rounded-2xl shadow-2xl p-5 w-72 space-y-4"
+            >
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">Durée de la séance</p>
+                  </div>
+                </div>
+                <div className="ml-10">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold text-foreground">{pendingDrop.student.first_name} {pendingDrop.student.last_name}</span>
+                  </p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {format(pendingDrop.date, "EEEE d MMMM", { locale: fr })} à {pendingDrop.hour}h00
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[{ label: "1h", value: 1 }, { label: "1h30", value: 1.5 }, { label: "2h", value: 2 }].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => confirmDrop(opt.value)}
+                    disabled={creating}
+                    className={cn(
+                      "relative px-3 py-3 rounded-xl border-2 border-border/60 bg-background text-sm font-bold text-foreground transition-all duration-200",
+                      "hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md hover:scale-[1.02]",
+                      "active:scale-[0.98]",
+                      "disabled:opacity-50 disabled:cursor-not-allowed"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setPendingDrop(null)}
+                className="w-full text-xs text-muted-foreground hover:text-foreground text-center py-1.5 transition-colors rounded-lg hover:bg-muted"
+              >
+                Annuler
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Drag overlay */}
       <DragOverlay>
         {draggedStudent && (
-          <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold shadow-lg">
-            <User className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold shadow-2xl ring-2 ring-primary/30">
+            <div className="w-5 h-5 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+              <User className="w-3 h-3" />
+            </div>
             {draggedStudent.first_name} {draggedStudent.last_name}
           </div>
         )}
