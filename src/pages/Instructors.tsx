@@ -130,7 +130,7 @@ export default function Instructors() {
                           <DropdownMenuItem onClick={() => setEditInstructor(inst)}><Pencil className="w-3.5 h-3.5 mr-2" /> Modifier</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setAvailabilityInstructor(inst)}><CalendarClock className="w-3.5 h-3.5 mr-2" /> Disponibilités</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setArchiveTarget(inst)} className={inst.status === "archive" ? "text-success" : "text-destructive"}>
-                            <Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Supprimer"}
+                            <Archive className="w-3.5 h-3.5 mr-2" /> {inst.status === "archive" ? "Réactiver" : "Archiver"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -158,7 +158,7 @@ export default function Instructors() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {archiveTarget?.status === "archive" ? "Réactiver ce formateur ?" : "Supprimer ce formateur ?"}
+              {archiveTarget?.status === "archive" ? "Réactiver ce formateur ?" : "Archiver ce formateur ?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {archiveTarget?.status === "archive"
@@ -170,7 +170,7 @@ export default function Instructors() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleArchive}>
-              {archiveTarget?.status === "archive" ? "Réactiver" : "Supprimer"}
+              {archiveTarget?.status === "archive" ? "Réactiver" : "Archiver"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

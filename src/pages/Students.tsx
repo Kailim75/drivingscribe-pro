@@ -225,7 +225,7 @@ export default function Students() {
                                 <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setArchiveTarget(student); }} className={student.status === "archive" ? "text-success" : "text-warning"}>
-                                <Archive className="w-3.5 h-3.5 mr-2" /> {student.status === "archive" ? "Réactiver" : "Supprimer"}
+                                <Archive className="w-3.5 h-3.5 mr-2" /> {student.status === "archive" ? "Réactiver" : "Archiver"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -249,7 +249,7 @@ export default function Students() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {archiveTarget?.status === "archive" ? "Réactiver cet élève ?" : "Supprimer cet élève ?"}
+              {archiveTarget?.status === "archive" ? "Réactiver cet élève ?" : "Archiver cet élève ?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {archiveTarget?.status === "archive"
@@ -261,7 +261,7 @@ export default function Students() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleArchive}>
-              {archiveTarget?.status === "archive" ? "Réactiver" : "Supprimer"}
+              {archiveTarget?.status === "archive" ? "Réactiver" : "Archiver"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

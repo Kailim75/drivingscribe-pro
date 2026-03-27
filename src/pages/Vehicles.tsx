@@ -159,7 +159,7 @@ export default function Vehicles() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setArchiveTarget(v)} className={v.status === "archive" ? "text-success" : "text-destructive"}>
                             <Archive className="w-3.5 h-3.5 mr-2" />
-                            {v.status === "archive" ? "Réactiver" : "Supprimer"}
+                            {v.status === "archive" ? "Réactiver" : "Archiver"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -226,7 +226,7 @@ export default function Vehicles() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {archiveTarget?.status === "archive" ? "Réactiver ce véhicule ?" : "Supprimer ce véhicule ?"}
+              {archiveTarget?.status === "archive" ? "Réactiver ce véhicule ?" : "Archiver ce véhicule ?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {archiveTarget?.status === "archive"
@@ -238,7 +238,7 @@ export default function Vehicles() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={handleArchive}>
-              {archiveTarget?.status === "archive" ? "Réactiver" : "Supprimer"}
+              {archiveTarget?.status === "archive" ? "Réactiver" : "Archiver"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
