@@ -594,6 +594,13 @@ export default function WeeklyCalendarView({
             {draggedStudent.first_name} {draggedStudent.last_name}
           </div>
         )}
+        {draggedLesson && (
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold shadow-2xl ring-2 ring-primary/30">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{draggedLesson.students?.first_name} {draggedLesson.students?.last_name?.[0]}.</span>
+            <span className="text-primary-foreground/70">{draggedLesson.start_time?.slice(0, 5)}</span>
+          </div>
+        )}
       </DragOverlay>
     </DndContext>
   );
