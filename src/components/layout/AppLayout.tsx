@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AppSidebar, { MobileMenuButton } from "./AppSidebar";
 import { useOrg } from "@/contexts/OrgContext";
+import GlobalSearch from "@/components/GlobalSearch";
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -34,6 +35,7 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+      <GlobalSearch />
     </div>
   );
 }

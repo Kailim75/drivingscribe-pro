@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Plus, Search, Loader2, Receipt } from "lucide-react";
+import { Plus, Search, Loader2, Receipt, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
 import { useState } from "react";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useVehicles } from "@/hooks/useVehicles";
@@ -9,17 +9,22 @@ import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { exportToCsv } from "@/lib/exportCsv";
 
 const CATEGORIES = ["Carburant", "Entretien", "Assurance", "Loyer", "Rémunération", "Logiciel", "Administratif", "Autre"];
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 
 export default function Expenses() {
-  const { expenses, isLoading, create } = useExpenses();
+  const { expenses, isLoading, create, update, remove } = useExpenses();
   const { vehicles } = useVehicles();
   const { instructors } = useInstructors();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("tous");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [form, setForm] = useState({ category: "Autre", description: "", amount: 0, type: "directe" as "directe" | "fixe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" });
 
   const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
@@ -38,19 +43,76 @@ export default function Expenses() {
     total: expenses.filter((e) => e.category === cat).reduce((s, e) => s + e.amount, 0),
   })).sort((a, b) => b.total - a.total);
 
+  const openCreate = () => {
+    setEditingExpense(null);
+    setForm({ category: "Autre", description: "", amount: 0, type: "directe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" });
+    setDialogOpen(true);
+  };
+
+  const openEdit = (exp: any) => {
+    setEditingExpense(exp);
+    setForm({
+      category: exp.category,
+      description: exp.description,
+      amount: exp.amount,
+      type: exp.type,
+      date: exp.date,
+      recurring: exp.recurring,
+      recurring_period: exp.recurring_period || "",
+      vehicle_id: exp.vehicle_id || "",
+      instructor_id: exp.instructor_id || "",
+    });
+    setDialogOpen(true);
+  };
+
   const handleSubmit = () => {
     if (!form.description || !form.amount) return;
-    create.mutate({
-      category: form.category,
-      description: form.description,
-      amount: form.amount,
-      type: form.type,
-      date: form.date,
-      recurring: form.recurring,
-      recurring_period: form.recurring_period || undefined,
-      vehicle_id: form.vehicle_id || undefined,
-      instructor_id: form.instructor_id || undefined,
-    }, { onSuccess: () => setDialogOpen(false) });
+    if (editingExpense) {
+      update.mutate({
+        id: editingExpense.id,
+        category: form.category,
+        description: form.description,
+        amount: form.amount,
+        type: form.type,
+        date: form.date,
+        recurring: form.recurring,
+        recurring_period: form.recurring_period || null,
+        vehicle_id: form.vehicle_id || null,
+        instructor_id: form.instructor_id || null,
+      }, { onSuccess: () => setDialogOpen(false) });
+    } else {
+      create.mutate({
+        category: form.category,
+        description: form.description,
+        amount: form.amount,
+        type: form.type,
+        date: form.date,
+        recurring: form.recurring,
+        recurring_period: form.recurring_period || undefined,
+        vehicle_id: form.vehicle_id || undefined,
+        instructor_id: form.instructor_id || undefined,
+      }, { onSuccess: () => setDialogOpen(false) });
+    }
+  };
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+  };
+
+  const handleExport = () => {
+    exportToCsv("depenses.csv",
+      ["Date", "Description", "Catégorie", "Type", "Montant", "Récurrent", "Période"],
+      filtered.map((e) => [
+        e.date,
+        e.description,
+        e.category,
+        e.type === "fixe" ? "Fixe" : "Directe",
+        e.amount,
+        e.recurring ? "Oui" : "Non",
+        e.recurring_period || "",
+      ])
+    );
   };
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
@@ -62,9 +124,14 @@ export default function Expenses() {
           <h1 className="page-title">Dépenses</h1>
           <p className="page-subtitle">{expenses.length} dépenses · {formatEur(totalFixed + totalDirect)} total</p>
         </div>
-        <button onClick={() => { setForm({ category: "Autre", description: "", amount: 0, type: "directe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" }); setDialogOpen(true); }} className="btn-primary">
-          <Plus className="w-4 h-4" /> Nouvelle dépense
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleExport} className="btn-secondary" title="Exporter CSV">
+            <Download className="w-4 h-4" /> Export
+          </button>
+          <button onClick={openCreate} className="btn-primary">
+            <Plus className="w-4 h-4" /> Nouvelle dépense
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -127,6 +194,7 @@ export default function Expenses() {
                 <th className="hidden md:table-cell">Type</th>
                 <th className="hidden lg:table-cell">Rattachement</th>
                 <th className="text-right">Montant</th>
+                <th className="w-10"></th>
               </tr>
             </thead>
             <tbody>
@@ -147,6 +215,21 @@ export default function Expenses() {
                     </td>
                     <td className="text-xs text-muted-foreground hidden lg:table-cell">{attachment}</td>
                     <td className="text-right font-semibold text-foreground">{formatEur(exp.amount)}</td>
+                    <td>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="p-1 rounded hover:bg-muted">
+                          <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(exp)}>
+                            <Pencil className="w-3.5 h-3.5 mr-2" /> Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeleteTarget(exp)} className="text-destructive">
+                            <Trash2 className="w-3.5 h-3.5 mr-2" /> Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
                   </tr>
                 );
               })}
@@ -161,9 +244,10 @@ export default function Expenses() {
         )}
       </motion.div>
 
+      {/* Create/Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Nouvelle dépense</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingExpense ? "Modifier la dépense" : "Nouvelle dépense"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -221,12 +305,28 @@ export default function Expenses() {
                 </select>
               )}
             </div>
-            <button onClick={handleSubmit} disabled={create.isPending || !form.description || !form.amount} className="w-full btn-primary justify-center">
-              {create.isPending ? "Enregistrement..." : "Enregistrer"}
+            <button onClick={handleSubmit} disabled={create.isPending || update.isPending || !form.description || !form.amount} className="w-full btn-primary justify-center">
+              {(create.isPending || update.isPending) ? "Enregistrement..." : editingExpense ? "Modifier" : "Enregistrer"}
             </button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette dépense ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La dépense « {deleteTarget?.description} » de {deleteTarget ? formatEur(deleteTarget.amount) : ""} sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Supprimer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
