@@ -264,14 +264,32 @@ export default function GroupedBilling() {
     }
   };
 
-  const handleCreatePayer = () => {
+  const handleOpenEditPayer = (payerId: string) => {
+    const payer = payers.find((p) => p.id === payerId);
+    if (!payer) return;
+    setEditingPayer(payerId);
+    setPayerForm({ name: payer.name, email: payer.email || "", phone: payer.phone || "", siret: payer.siret || "", address: payer.address || "" });
+    setPayerDialogOpen(true);
+  };
+
+  const handleSavePayer = () => {
     if (!payerForm.name.trim()) return;
-    createPayer.mutate(payerForm, {
-      onSuccess: () => {
-        setPayerDialogOpen(false);
-        setPayerForm({ name: "", email: "", phone: "", siret: "", address: "" });
-      },
-    });
+    if (editingPayer) {
+      update.mutate({ id: editingPayer, ...payerForm }, {
+        onSuccess: () => {
+          setPayerDialogOpen(false);
+          setEditingPayer(null);
+          setPayerForm({ name: "", email: "", phone: "", siret: "", address: "" });
+        },
+      });
+    } else {
+      createPayer.mutate(payerForm, {
+        onSuccess: () => {
+          setPayerDialogOpen(false);
+          setPayerForm({ name: "", email: "", phone: "", siret: "", address: "" });
+        },
+      });
+    }
   };
 
   return (
