@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useCallback, useMemo } from "react";
-import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles } from "lucide-react";
+import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles, LayoutGrid } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { fr } from "date-fns/locale";
 import { startOfMonth, endOfMonth, startOfWeek, addDays, format } from "date-fns";
