@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { useState, useCallback, useMemo } from "react";
-import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles } from "lucide-react";
+import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles, LayoutGrid } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { fr } from "date-fns/locale";
-import { startOfMonth, endOfMonth, format } from "date-fns";
+import { startOfMonth, endOfMonth, startOfWeek, addDays, format } from "date-fns";
+import WeeklyCalendarView from "@/components/planning/WeeklyCalendarView";
 import BulkLessonActions from "@/components/planning/BulkLessonActions";
 import { cn } from "@/lib/utils";
 import { useLessons } from "@/hooks/useLessons";
@@ -23,11 +24,12 @@ const statusIcons: Record<string, React.ElementType> = {
   prevu: Clock, effectue: CheckCircle2, annule: XCircle, absent: UserX,
 };
 
-type View = "jour" | "liste";
+type View = "jour" | "semaine" | "liste";
 
 export default function Planning() {
-  const [view, setView] = useState<View>("jour");
+  const [view, setView] = useState<View>("semaine");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [weekStartDate, setWeekStartDate] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [showForm, setShowForm] = useState(false);
   const [editLesson, setEditLesson] = useState<any>(null);
   const [statusConfirm, setStatusConfirm] = useState<{ lessonId: string; status: string; label: string } | null>(null);
@@ -43,7 +45,12 @@ export default function Planning() {
   const dateStr = selectedDate.toISOString().split("T")[0];
   const monthStart = format(startOfMonth(selectedDate), "yyyy-MM-dd");
   const monthEnd = format(endOfMonth(selectedDate), "yyyy-MM-dd");
-  const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(view === "jour" ? { date: dateStr } : undefined);
+  const weekEndDate = addDays(weekStartDate, 6);
+  const weekFrom = format(weekStartDate, "yyyy-MM-dd");
+  const weekTo = format(weekEndDate, "yyyy-MM-dd");
+  const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(
+    view === "jour" ? { date: dateStr } : view === "semaine" ? { dateFrom: weekFrom, dateTo: weekTo } : undefined
+  );
   const { lessons: monthLessons } = useLessons({ dateFrom: monthStart, dateTo: monthEnd });
   const { students } = useStudents();
   const { instructors } = useInstructors();
@@ -182,6 +189,9 @@ export default function Planning() {
             <button onClick={() => setView("jour")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "jour" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
               <CalendarDays className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Jour</span>
             </button>
+            <button onClick={() => setView("semaine")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "semaine" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
+              <LayoutGrid className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Semaine</span>
+            </button>
             <button onClick={() => setView("liste")} className={cn("px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors", view === "liste" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
               <List className="w-3.5 h-3.5 sm:mr-1 inline" /><span className="hidden sm:inline">Liste</span>
             </button>
@@ -194,6 +204,21 @@ export default function Planning() {
           </button>
         </div>
       </div>
+
+      {view === "semaine" && (
+        <WeeklyCalendarView
+          weekStart={weekStartDate}
+          onWeekChange={setWeekStartDate}
+          lessons={lessons}
+          students={students}
+          instructors={instructors}
+          vehicles={vehicles}
+          onCreateLesson={handleCreate}
+          onEditLesson={setEditLesson}
+          creating={create.isPending}
+          checkConflicts={checkConflicts}
+        />
+      )}
 
       {view === "jour" && (
         <div className="flex flex-col lg:flex-row gap-4">
