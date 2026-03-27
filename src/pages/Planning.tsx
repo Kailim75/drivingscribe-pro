@@ -216,6 +216,7 @@ export default function Planning() {
           onCreateLesson={handleCreate}
           onEditLesson={setEditLesson}
           onUpdateLesson={(data) => update.mutate(data)}
+          onUpdateStatus={(data) => updateStatus.mutate(data)}
           creating={create.isPending}
           checkConflicts={checkConflicts}
         />
