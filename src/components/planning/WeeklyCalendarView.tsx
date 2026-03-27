@@ -235,6 +235,7 @@ export default function WeeklyCalendarView({
   onEditLesson,
   onUpdateLesson,
   onUpdateStatus,
+  onDeleteLesson,
   creating,
   checkConflicts,
 }: Props) {
