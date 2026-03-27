@@ -118,7 +118,7 @@ function TimeSlotCell({ date, hour, isEven, children }: { date: Date; hour: numb
 }
 
 // Draggable lesson block rendered on the grid
-function DraggableLessonBlock({ lesson, onClick }: { lesson: Lesson; onClick: () => void }) {
+function DraggableLessonBlock({ lesson, onClick, onUpdateStatus }: { lesson: Lesson; onClick: () => void; onUpdateStatus?: (data: { id: string; status: string }) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `lesson-${lesson.id}`,
     data: { type: "lesson", lesson },
@@ -148,34 +148,67 @@ function DraggableLessonBlock({ lesson, onClick }: { lesson: Lesson; onClick: ()
   const style = statusStyles[lesson.status as keyof typeof statusStyles] || statusStyles.prevu;
   const textColor = statusTextColors[lesson.status as keyof typeof statusTextColors] || statusTextColors.prevu;
 
+  const statusOptions = [
+    { value: "prevu", label: lessonStatusLabels.prevu || "Prévu", icon: Clock, color: "text-primary" },
+    { value: "effectue", label: lessonStatusLabels.effectue || "Effectué", icon: CheckCircle2, color: "text-success" },
+    { value: "annule", label: lessonStatusLabels.annule || "Annulé", icon: XCircle, color: "text-destructive" },
+    { value: "absent", label: lessonStatusLabels.absent || "Absent", icon: AlertTriangle, color: "text-warning" },
+  ];
+
   return (
-    <motion.div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: isDragging ? 0.3 : 1, scale: 1 }}
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={cn(
-        "absolute left-1 right-1 rounded-lg px-2 py-1 text-[10px] leading-tight cursor-grab active:cursor-grabbing overflow-hidden border-l-[3px] border transition-all duration-200 z-10 shadow-sm hover:shadow-md",
-        style,
-        isDragging && "ring-2 ring-primary/40"
-      )}
-      style={{ top: `${topPx}px`, height: `${heightPx}px` }}
-    >
-      <p className={cn("font-bold truncate", textColor)}>
-        {lesson.students?.first_name} {lesson.students?.last_name?.[0]}.
-      </p>
-      <p className="truncate text-muted-foreground">
-        {lesson.start_time?.slice(0, 5)} – {lesson.end_time?.slice(0, 5)}
-      </p>
-      {heightPx > 40 && lesson.instructors?.first_name && (
-        <p className="truncate text-muted-foreground/70 mt-0.5">
-          <UserCheck className="w-2.5 h-2.5 inline mr-0.5" />
-          {lesson.instructors.first_name}
-        </p>
-      )}
-    </motion.div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <motion.div
+          ref={setNodeRef}
+          {...listeners}
+          {...attributes}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: isDragging ? 0.3 : 1, scale: 1 }}
+          onClick={(e) => { e.stopPropagation(); onClick(); }}
+          onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          className={cn(
+            "absolute left-1 right-1 rounded-lg px-2 py-1 text-[10px] leading-tight cursor-grab active:cursor-grabbing overflow-hidden border-l-[3px] border transition-all duration-200 z-10 shadow-sm hover:shadow-md",
+            style,
+            isDragging && "ring-2 ring-primary/40"
+          )}
+          style={{ top: `${topPx}px`, height: `${heightPx}px` }}
+        >
+          <p className={cn("font-bold truncate", textColor)}>
+            {lesson.students?.first_name} {lesson.students?.last_name?.[0]}.
+          </p>
+          <p className="truncate text-muted-foreground">
+            {lesson.start_time?.slice(0, 5)} – {lesson.end_time?.slice(0, 5)}
+          </p>
+          {heightPx > 40 && lesson.instructors?.first_name && (
+            <p className="truncate text-muted-foreground/70 mt-0.5">
+              <UserCheck className="w-2.5 h-2.5 inline mr-0.5" />
+              {lesson.instructors.first_name}
+            </p>
+          )}
+        </motion.div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-44">
+        <DropdownMenuLabel className="text-xs">Changer le statut</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {statusOptions.map((opt) => (
+          <DropdownMenuItem
+            key={opt.value}
+            disabled={lesson.status === opt.value}
+            onClick={(e) => {
+              e.stopPropagation();
+              onUpdateStatus?.({ id: lesson.id, status: opt.value });
+            }}
+            className="gap-2 text-xs"
+          >
+            <opt.icon className={cn("w-3.5 h-3.5", opt.color)} />
+            <span className={lesson.status === opt.value ? "font-bold" : ""}>{opt.label}</span>
+            {lesson.status === opt.value && (
+              <span className="ml-auto text-[9px] text-muted-foreground">actuel</span>
+            )}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
