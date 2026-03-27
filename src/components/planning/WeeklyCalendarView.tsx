@@ -38,6 +38,8 @@ interface Lesson {
   end_time: string;
   duration_hours: number;
   status: string;
+  instructor_id: string;
+  vehicle_id: string;
   students?: { first_name: string; last_name: string };
   instructors?: { first_name: string; last_name: string };
   vehicles?: { brand: string; model: string; plate: string };
