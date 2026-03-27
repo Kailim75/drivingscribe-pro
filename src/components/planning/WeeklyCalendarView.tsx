@@ -119,7 +119,7 @@ function TimeSlotCell({ date, hour, isEven, children }: { date: Date; hour: numb
 }
 
 // Draggable lesson block rendered on the grid
-function DraggableLessonBlock({ lesson, onClick, onUpdateStatus }: { lesson: Lesson; onClick: () => void; onUpdateStatus?: (data: { id: string; status: string }) => void }) {
+function DraggableLessonBlock({ lesson, onClick, onUpdateStatus, onDeleteLesson }: { lesson: Lesson; onClick: () => void; onUpdateStatus?: (data: { id: string; status: string }) => void; onDeleteLesson?: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `lesson-${lesson.id}`,
     data: { type: "lesson", lesson },
