@@ -60,8 +60,9 @@ export default function GroupedBilling() {
   const [expandedPayer, setExpandedPayer] = useState<string | null>(null);
   const [generated, setGenerated] = useState<Set<string>>(new Set());
 
-  // New payer dialog
+  // New/Edit payer dialog
   const [payerDialogOpen, setPayerDialogOpen] = useState(false);
+  const [editingPayer, setEditingPayer] = useState<string | null>(null);
   const [payerForm, setPayerForm] = useState({ name: "", email: "", phone: "", siret: "", address: "" });
 
   const studentsWithPayer = useMemo(
