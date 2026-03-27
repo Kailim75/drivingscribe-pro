@@ -10,6 +10,7 @@ import { useSkillCategories, useSkillEvaluations } from "@/hooks/useSkills";
 import { computeHealthScore } from "@/hooks/useStudentHealthScore";
 import StudentHealthBadge from "@/components/students/StudentHealthBadge";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import { usePayers } from "@/hooks/usePayers";
 import { studentStatusLabels, studentStatusColors, activityTypeLabels, activityTypeColors } from "@/lib/labels";
 import StudentFormDialog from "@/components/students/StudentFormDialog";
 import { PaginationControls, usePagination } from "@/components/PaginationControls";
@@ -30,6 +31,7 @@ export default function Students() {
   const { formulas } = useStudentFormulas();
   const { categories } = useSkillCategories();
   const { log } = useAuditLog();
+  const { payers } = usePayers();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
@@ -152,6 +154,7 @@ export default function Students() {
                    <tr className="border-b border-border text-left">
                      <th>Élève</th>
                      <th className="hidden lg:table-cell">Santé</th>
+                     <th className="hidden lg:table-cell">Payeur</th>
                      <th className="hidden md:table-cell">Activité</th>
                      <th className="hidden sm:table-cell">Statut</th>
                      <th className="w-10"></th>
@@ -162,6 +165,7 @@ export default function Students() {
                      const sLessons = lessons.filter((l: any) => l.student_id === student.id);
                      const sFormulas = formulas.filter((f: any) => f.student_id === student.id);
                      const score = computeHealthScore(sLessons, sFormulas, [], categories.length);
+                     const studentPayer = student.payer_id ? payers.find((p) => p.id === student.payer_id) : null;
                      return (
                      <tr key={student.id} onClick={() => navigate(`/eleves/${student.id}`)}
                        className="cursor-pointer">
@@ -174,6 +178,15 @@ export default function Students() {
                        </td>
                        <td className="hidden lg:table-cell">
                          <StudentHealthBadge score={score} compact />
+                       </td>
+                       <td className="hidden lg:table-cell">
+                         {studentPayer ? (
+                           <span className="status-badge bg-primary/10 text-primary flex items-center gap-1 w-fit">
+                             <Building2 className="w-3 h-3" /> {studentPayer.name}
+                           </span>
+                         ) : (
+                           <span className="text-xs text-muted-foreground">—</span>
+                         )}
                        </td>
                        <td className="hidden md:table-cell">
                          <span className={cn("status-badge", activityTypeColors[student.activity_type] || "bg-muted text-muted-foreground")}>
