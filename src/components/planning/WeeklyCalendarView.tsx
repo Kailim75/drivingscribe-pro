@@ -182,11 +182,6 @@ export default function WeeklyCalendarView({
   creating,
   checkConflicts,
 }: Props) {
-  // Activation constraint: require 8px drag distance before starting drag
-  // This allows simple clicks to open the edit dialog
-  const activationConstraint = useMemo(() => ({
-    distance: 8,
-  }), []);
   const [draggedStudent, setDraggedStudent] = useState<Student | null>(null);
   const [draggedLesson, setDraggedLesson] = useState<Lesson | null>(null);
   const [searchStudent, setSearchStudent] = useState("");
