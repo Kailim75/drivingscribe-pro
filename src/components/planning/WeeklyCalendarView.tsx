@@ -38,6 +38,8 @@ interface Lesson {
   end_time: string;
   duration_hours: number;
   status: string;
+  instructor_id: string;
+  vehicle_id: string;
   students?: { first_name: string; last_name: string };
   instructors?: { first_name: string; last_name: string };
   vehicles?: { brand: string; model: string; plate: string };
@@ -52,6 +54,7 @@ interface Props {
   vehicles: Vehicle[];
   onCreateLesson: (data: any) => void;
   onEditLesson: (lesson: any) => void;
+  onUpdateLesson: (data: any) => void;
   creating: boolean;
   checkConflicts: (params: any) => Promise<any[]>;
 }
@@ -104,8 +107,13 @@ function TimeSlotCell({ date, hour, isEven, children }: { date: Date; hour: numb
   );
 }
 
-// Lesson block rendered on the grid
-function LessonBlock({ lesson, onClick }: { lesson: Lesson; onClick: () => void }) {
+// Draggable lesson block rendered on the grid
+function DraggableLessonBlock({ lesson, onClick }: { lesson: Lesson; onClick: () => void }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `lesson-${lesson.id}`,
+    data: { type: "lesson", lesson },
+  });
+
   const startParts = lesson.start_time.split(":").map(Number);
   const endParts = lesson.end_time.split(":").map(Number);
   const startMinFromBase = (startParts[0] - 7) * 60 + startParts[1];
@@ -132,12 +140,16 @@ function LessonBlock({ lesson, onClick }: { lesson: Lesson; onClick: () => void 
 
   return (
     <motion.div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
       initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      animate={{ opacity: isDragging ? 0.3 : 1, scale: 1 }}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       className={cn(
-        "absolute left-1 right-1 rounded-lg px-2 py-1 text-[10px] leading-tight cursor-pointer overflow-hidden border-l-[3px] border transition-all duration-200 z-10 shadow-sm hover:shadow-md",
-        style
+        "absolute left-1 right-1 rounded-lg px-2 py-1 text-[10px] leading-tight cursor-grab active:cursor-grabbing overflow-hidden border-l-[3px] border transition-all duration-200 z-10 shadow-sm hover:shadow-md",
+        style,
+        isDragging && "ring-2 ring-primary/40"
       )}
       style={{ top: `${topPx}px`, height: `${heightPx}px` }}
     >
@@ -166,10 +178,12 @@ export default function WeeklyCalendarView({
   vehicles,
   onCreateLesson,
   onEditLesson,
+  onUpdateLesson,
   creating,
   checkConflicts,
 }: Props) {
   const [draggedStudent, setDraggedStudent] = useState<Student | null>(null);
+  const [draggedLesson, setDraggedLesson] = useState<Lesson | null>(null);
   const [searchStudent, setSearchStudent] = useState("");
   const [pendingDrop, setPendingDrop] = useState<{ student: Student; date: Date; hour: number } | null>(null);
 
@@ -211,16 +225,60 @@ export default function WeeklyCalendarView({
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current;
     if (data?.type === "student") setDraggedStudent(data.student);
+    if (data?.type === "lesson") setDraggedLesson(data.lesson);
   };
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     setDraggedStudent(null);
+    setDraggedLesson(null);
     const { over, active } = event;
     if (!over || !active.data.current) return;
-    const student = active.data.current.student as Student;
+    const data = active.data.current;
     const { date, hour } = over.data.current as { date: Date; hour: number };
-    setPendingDrop({ student, date, hour });
-  }, []);
+
+    if (data.type === "student") {
+      setPendingDrop({ student: data.student as Student, date, hour });
+      return;
+    }
+
+    if (data.type === "lesson") {
+      const lesson = data.lesson as Lesson;
+      const dateStr = format(date, "yyyy-MM-dd");
+      const startParts = lesson.start_time.split(":").map(Number);
+      const endParts = lesson.end_time.split(":").map(Number);
+      const durationMin = (endParts[0] * 60 + endParts[1]) - (startParts[0] * 60 + startParts[1]);
+
+      const newStart = `${String(hour).padStart(2, "0")}:00`;
+      const endTotal = hour * 60 + durationMin;
+      const newEnd = `${String(Math.floor(endTotal / 60)).padStart(2, "0")}:${String(endTotal % 60).padStart(2, "0")}`;
+
+      // Skip if same slot
+      if (dateStr === lesson.date && newStart === lesson.start_time.slice(0, 5)) return;
+
+      try {
+        const conflicts = await checkConflicts({
+          instructor_id: lesson.instructor_id || (lesson as any).instructors?.id,
+          vehicle_id: lesson.vehicle_id || (lesson as any).vehicles?.id,
+          date: dateStr,
+          start_time: newStart,
+          end_time: newEnd,
+          exclude_lesson_id: lesson.id,
+        });
+        if (conflicts.length > 0) {
+          toast.error("Conflit détecté : ce créneau est déjà occupé");
+          return;
+        }
+        onUpdateLesson({
+          id: lesson.id,
+          date: dateStr,
+          start_time: newStart,
+          end_time: newEnd,
+        });
+      } catch {
+        toast.error("Erreur lors du déplacement de la séance");
+      }
+    }
+  }, [checkConflicts, onUpdateLesson]);
 
   const confirmDrop = useCallback(async (durationHours: number) => {
     if (!pendingDrop) return;
@@ -448,7 +506,7 @@ export default function WeeklyCalendarView({
                     return (
                       <TimeSlotCell key={`${dateKey}-${hour}`} date={day} hour={hour} isEven={hourIdx % 2 === 0}>
                         {hour === HOURS[0] && (lessonsByDay[dateKey] || []).map((l) => (
-                          <LessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} />
+                          <DraggableLessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} />
                         ))}
                       </TimeSlotCell>
                     );
@@ -534,6 +592,13 @@ export default function WeeklyCalendarView({
               <User className="w-3 h-3" />
             </div>
             {draggedStudent.first_name} {draggedStudent.last_name}
+          </div>
+        )}
+        {draggedLesson && (
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold shadow-2xl ring-2 ring-primary/30">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{draggedLesson.students?.first_name} {draggedLesson.students?.last_name?.[0]}.</span>
+            <span className="text-primary-foreground/70">{draggedLesson.start_time?.slice(0, 5)}</span>
           </div>
         )}
       </DragOverlay>
