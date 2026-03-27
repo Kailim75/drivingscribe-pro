@@ -43,7 +43,7 @@ interface PayerPreview {
 }
 
 export default function GroupedBilling() {
-  const { payers, create: createPayer } = usePayers();
+  const { payers, create: createPayer, update: updatePayer } = usePayers();
   const { students } = useStudents();
   const { create: createInvoice } = useInvoices();
   const { organization } = useOrg();
