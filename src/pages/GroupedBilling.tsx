@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Users, FileText, Calendar, ChevronRight, Check, Loader2, AlertCircle, Plus, Building2 } from "lucide-react";
+import { Users, FileText, Calendar, ChevronRight, Check, Loader2, AlertCircle, Plus, Building2, Pencil } from "lucide-react";
 import { usePayers } from "@/hooks/usePayers";
 import { useStudents } from "@/hooks/useStudents";
 import { useInvoices } from "@/hooks/useInvoices";
