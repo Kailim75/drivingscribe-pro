@@ -48,7 +48,7 @@ export default function Planning() {
   const weekEndDate = addDays(weekStartDate, 6);
   const weekFrom = format(weekStartDate, "yyyy-MM-dd");
   const weekTo = format(weekEndDate, "yyyy-MM-dd");
-  const { lessons, isLoading, checkConflicts, create, update, updateStatus } = useLessons(
+  const { lessons, isLoading, checkConflicts, create, update, updateStatus, archive } = useLessons(
     view === "jour" ? { date: dateStr } : view === "semaine" ? { dateFrom: weekFrom, dateTo: weekTo } : undefined
   );
   const { lessons: monthLessons } = useLessons({ dateFrom: monthStart, dateTo: monthEnd });
