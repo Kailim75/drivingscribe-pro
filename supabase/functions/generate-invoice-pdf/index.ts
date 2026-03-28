@@ -158,7 +158,7 @@ Deno.serve(async (req) => {
     }
 
     // Table header
-    doc.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
+    doc.setFillColor(tableHeaderColor.r, tableHeaderColor.g, tableHeaderColor.b);
     doc.rect(margin, y, contentW, 8, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
     y += 6;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
+    doc.setFillColor(tableHeaderColor.r, tableHeaderColor.g, tableHeaderColor.b);
     doc.rect(margin + 98, y - 4.5, contentW - 98, 9, "F");
     doc.setTextColor(255, 255, 255);
     doc.text("Total TTC", margin + 105, y + 1.5);
