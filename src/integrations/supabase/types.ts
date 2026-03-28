@@ -702,6 +702,7 @@ export type Database = {
           accent_color: string | null
           address: string | null
           cancellation_policy: string | null
+          cgv_text: string | null
           created_at: string
           currency: string
           document_header: string | null
@@ -739,6 +740,7 @@ export type Database = {
           accent_color?: string | null
           address?: string | null
           cancellation_policy?: string | null
+          cgv_text?: string | null
           created_at?: string
           currency?: string
           document_header?: string | null
@@ -776,6 +778,7 @@ export type Database = {
           accent_color?: string | null
           address?: string | null
           cancellation_policy?: string | null
+          cgv_text?: string | null
           created_at?: string
           currency?: string
           document_header?: string | null

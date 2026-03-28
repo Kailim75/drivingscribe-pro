@@ -23,6 +23,7 @@ interface BrandingForm {
   signature_enabled: boolean;
   signature_text: string;
   document_template: DocumentTemplate;
+  cgv_text: string;
 }
 
 const DEFAULTS: BrandingForm = {
@@ -37,6 +38,7 @@ const DEFAULTS: BrandingForm = {
   signature_enabled: false,
   signature_text: "",
   document_template: "moderne",
+  cgv_text: "",
 };
 
 const TEMPLATES: { key: DocumentTemplate; label: string; desc: string }[] = [
