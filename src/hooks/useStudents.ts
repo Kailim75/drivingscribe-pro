@@ -23,9 +23,29 @@ export function useStudents() {
     enabled: !!orgId,
   });
 
+  const checkDuplicate = async (firstName: string, lastName: string, excludeId?: string): Promise<boolean> => {
+    if (!orgId) return false;
+    const { data } = await supabase
+      .from("students")
+      .select("id, first_name, last_name, status")
+      .eq("organization_id", orgId)
+      .ilike("first_name", firstName.trim())
+      .ilike("last_name", lastName.trim())
+      .neq("status", "archive");
+    const matches = (data || []).filter((s) => !excludeId || s.id !== excludeId);
+    return matches.length > 0;
+  };
+
   const create = useMutation({
-    mutationFn: async (input: Omit<TablesInsert<"students">, "organization_id">) => {
-      const { data, error } = await supabase.from("students").insert({ ...input, organization_id: orgId! }).select().single();
+    mutationFn: async (input: Omit<TablesInsert<"students">, "organization_id"> & { _skipDuplicateCheck?: boolean }) => {
+      const { _skipDuplicateCheck, ...studentInput } = input;
+      if (!_skipDuplicateCheck) {
+        const isDup = await checkDuplicate(studentInput.first_name, studentInput.last_name);
+        if (isDup) {
+          throw new Error("DUPLICATE_STUDENT");
+        }
+      }
+      const { data, error } = await supabase.from("students").insert({ ...studentInput, organization_id: orgId! }).select().single();
       if (error) throw error;
       return data;
     },
@@ -33,7 +53,6 @@ export function useStudents() {
       qc.invalidateQueries({ queryKey: ["students"] });
       toast.success("Élève créé");
 
-      // Fire webhook only for driving students
       if ((organization as any)?.webhook_url && student.activity_type === "auto_ecole") {
         try {
           await fetch((organization as any).webhook_url, {
@@ -53,13 +72,16 @@ export function useStudents() {
               },
             }),
           });
-          console.log("Webhook sent to", (organization as any).webhook_url);
         } catch (err) {
           console.warn("Webhook failed:", err);
         }
       }
     },
-    onError: () => toast.error("Erreur lors de la création"),
+    onError: (err: Error) => {
+      if (err.message !== "DUPLICATE_STUDENT") {
+        toast.error("Erreur lors de la création");
+      }
+    },
   });
 
   const update = useMutation({
