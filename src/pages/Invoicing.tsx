@@ -158,7 +158,7 @@ export default function Invoicing() {
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Facturation</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {invoices.length} document{invoices.length > 1 ? "s" : ""}
+            {stats.factureCount} facture{stats.factureCount > 1 ? "s" : ""} · {stats.devisCount} devis{stats.enRetard > 0 ? ` · ${stats.enRetard} en retard` : ""}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
