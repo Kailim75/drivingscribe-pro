@@ -699,21 +699,29 @@ export type Database = {
       }
       organizations: {
         Row: {
+          accent_color: string | null
           address: string | null
           cancellation_policy: string | null
           created_at: string
           currency: string
+          document_header: string | null
+          document_logo_url: string | null
           email: string | null
+          footer_text: string | null
           id: string
           invoice_next_number: number
           invoice_prefix: string
+          legal_mentions: string | null
           locale: string
           logo_url: string | null
           mode: Database["public"]["Enums"]["org_mode"]
           name: string
           phone: string | null
+          primary_color: string | null
           quote_next_number: number
           quote_prefix: string
+          signature_enabled: boolean | null
+          signature_text: string | null
           siret: string | null
           suspended: boolean
           timezone: string
@@ -723,23 +731,32 @@ export type Database = {
           webhook_api_key: string | null
           webhook_calls_count: number
           webhook_url: string | null
+          website: string | null
         }
         Insert: {
+          accent_color?: string | null
           address?: string | null
           cancellation_policy?: string | null
           created_at?: string
           currency?: string
+          document_header?: string | null
+          document_logo_url?: string | null
           email?: string | null
+          footer_text?: string | null
           id?: string
           invoice_next_number?: number
           invoice_prefix?: string
+          legal_mentions?: string | null
           locale?: string
           logo_url?: string | null
           mode?: Database["public"]["Enums"]["org_mode"]
           name: string
           phone?: string | null
+          primary_color?: string | null
           quote_next_number?: number
           quote_prefix?: string
+          signature_enabled?: boolean | null
+          signature_text?: string | null
           siret?: string | null
           suspended?: boolean
           timezone?: string
@@ -749,23 +766,32 @@ export type Database = {
           webhook_api_key?: string | null
           webhook_calls_count?: number
           webhook_url?: string | null
+          website?: string | null
         }
         Update: {
+          accent_color?: string | null
           address?: string | null
           cancellation_policy?: string | null
           created_at?: string
           currency?: string
+          document_header?: string | null
+          document_logo_url?: string | null
           email?: string | null
+          footer_text?: string | null
           id?: string
           invoice_next_number?: number
           invoice_prefix?: string
+          legal_mentions?: string | null
           locale?: string
           logo_url?: string | null
           mode?: Database["public"]["Enums"]["org_mode"]
           name?: string
           phone?: string | null
+          primary_color?: string | null
           quote_next_number?: number
           quote_prefix?: string
+          signature_enabled?: boolean | null
+          signature_text?: string | null
           siret?: string | null
           suspended?: boolean
           timezone?: string
@@ -775,6 +801,7 @@ export type Database = {
           webhook_api_key?: string | null
           webhook_calls_count?: number
           webhook_url?: string | null
+          website?: string | null
         }
         Relationships: []
       }
