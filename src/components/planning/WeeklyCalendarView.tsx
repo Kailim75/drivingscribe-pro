@@ -350,6 +350,12 @@ export default function WeeklyCalendarView({
         toast.success("Séance déplacée", {
           description: `${lesson.students?.first_name} ${lesson.students?.last_name?.[0]}. → ${format(date, "EEE d MMM", { locale: fr })} à ${newStart.slice(0, 5)}`,
           action: {
+            label: "Modifier",
+            onClick: () => {
+              onEditLesson({ ...lesson, date: dateStr, start_time: newStart, end_time: newEnd });
+            },
+          },
+          cancel: {
             label: "Annuler",
             onClick: () => {
               onUpdateLesson({
