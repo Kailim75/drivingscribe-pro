@@ -34,10 +34,27 @@ interface Props {
 
 export default function InvoiceCreateDialog({ open, onOpenChange, docType, students, onCreate, isPending, editInvoice, onEdit, isEditPending }: Props) {
   const { organization } = useOrg();
+  const { offers } = useOffers();
+  const activeOffers = offers.filter((o) => o.active);
   const [studentId, setStudentId] = useState("");
+  const [selectedOfferId, setSelectedOfferId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<Line[]>([{ description: "", quantity: 1, unit_price: 0 }]);
+
+  const applyOffer = (offerId: string) => {
+    const offer = activeOffers.find((o) => o.id === offerId);
+    if (!offer) return;
+    setSelectedOfferId(offerId);
+    const desc = offer.type === "heure"
+      ? `${offer.name} — 1h`
+      : offer.type === "pack"
+      ? `${offer.name} — Pack ${offer.hours || ""}h`
+      : `${offer.name} — Forfait`;
+    const qty = offer.type === "heure" ? 1 : 1;
+    const price = Number(offer.price) || 0;
+    setLines([{ description: desc, quantity: qty, unit_price: price }]);
+  };
 
   const isEditing = !!editInvoice;
 
