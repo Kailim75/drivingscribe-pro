@@ -218,7 +218,41 @@ export default function BrandingTab() {
         </div>
       </motion.div>
 
-      {/* Block 3: Documents */}
+      {/* Block 2.5: Template selector */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }} className="glass-card rounded-xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <LayoutTemplate className="w-4 h-4 text-primary" />
+          <h2 className="font-semibold text-foreground">Style de document</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">Choisissez le modèle de mise en page pour vos factures, devis et autres documents PDF.</p>
+        <div className="grid grid-cols-3 gap-3">
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => isOwnerOrAdmin && setForm((f) => ({ ...f, document_template: t.key }))}
+              className={cn(
+                "relative p-4 rounded-xl border-2 text-left transition-all duration-200",
+                form.document_template === t.key
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-border hover:border-primary/30",
+                !isOwnerOrAdmin && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {/* Mini preview */}
+              <TemplateMiniPreview template={t.key} color={form.primary_color} />
+              <p className="text-sm font-semibold text-foreground mt-3">{t.label}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{t.desc}</p>
+              {form.document_template === t.key && (
+                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                  <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-xl p-6 space-y-5">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-primary" />
