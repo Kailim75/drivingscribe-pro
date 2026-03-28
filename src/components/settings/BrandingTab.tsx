@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Upload, RotateCcw, Eye, Palette, FileText, Building2, Save, Loader2, X } from "lucide-react";
+import { Upload, RotateCcw, Eye, Palette, FileText, Building2, Save, Loader2, X, LayoutTemplate } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { toast } from "sonner";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+
+type DocumentTemplate = "moderne" | "classique" | "minimaliste";
 
 interface BrandingForm {
   logo_url: string;
@@ -20,6 +22,7 @@ interface BrandingForm {
   legal_mentions: string;
   signature_enabled: boolean;
   signature_text: string;
+  document_template: DocumentTemplate;
 }
 
 const DEFAULTS: BrandingForm = {
@@ -33,7 +36,14 @@ const DEFAULTS: BrandingForm = {
   legal_mentions: "",
   signature_enabled: false,
   signature_text: "",
+  document_template: "moderne",
 };
+
+const TEMPLATES: { key: DocumentTemplate; label: string; desc: string }[] = [
+  { key: "moderne", label: "Moderne", desc: "Couleurs vives, en-têtes colorés, style contemporain" },
+  { key: "classique", label: "Classique", desc: "Mise en page traditionnelle, sobre et professionnelle" },
+  { key: "minimaliste", label: "Minimaliste", desc: "Épuré, peu de couleurs, focus sur le contenu" },
+];
 
 export default function BrandingTab() {
   const { organization, refreshOrg, isOwnerOrAdmin } = useOrg();
