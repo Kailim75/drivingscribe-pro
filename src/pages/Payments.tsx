@@ -151,9 +151,10 @@ export default function Payments() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Paiements</h1>
-          <p className="page-subtitle">{payments.length} paiements · {formatEur(totalReceived)} encaissés</p>
+          <p className="page-subtitle">{periodPayments.length} paiements · {formatEur(totalReceived)} encaissés</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
+          <DatePeriodFilter value={period} onChange={setPeriod} />
           <button onClick={handleExport} className="btn-secondary" title="Exporter CSV">
             <Download className="w-4 h-4" /> Export
           </button>

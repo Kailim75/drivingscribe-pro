@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Plus, Search, Loader2, Receipt, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import DatePeriodFilter, { type Period, getDateRange } from "@/components/DatePeriodFilter";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useVehicles } from "@/hooks/useVehicles";
 import { useInstructors } from "@/hooks/useInstructors";
@@ -25,22 +26,25 @@ export default function ExpensesTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [period, setPeriod] = useState<Period>("month");
+  const range = useMemo(() => getDateRange(period), [period]);
   const [form, setForm] = useState({ category: "Autre", description: "", amount: 0, type: "directe" as "directe" | "fixe", date: new Date().toISOString().split("T")[0], recurring: false, recurring_period: "", vehicle_id: "", instructor_id: "" });
 
-  const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date));
+  const periodExpenses = useMemo(() => expenses.filter((e) => e.date >= range.start && e.date <= range.end), [expenses, range]);
+  const sorted = [...periodExpenses].sort((a, b) => b.date.localeCompare(a.date));
   const filtered = sorted.filter((e) => {
     const matchSearch = e.description.toLowerCase().includes(search.toLowerCase()) || e.category.toLowerCase().includes(search.toLowerCase());
     const matchType = typeFilter === "tous" || e.type === typeFilter;
     return matchSearch && matchType;
   });
 
-  const totalFixed = expenses.filter((e) => e.type === "fixe").reduce((s, e) => s + e.amount, 0);
-  const totalDirect = expenses.filter((e) => e.type === "directe").reduce((s, e) => s + e.amount, 0);
+  const totalFixed = periodExpenses.filter((e) => e.type === "fixe").reduce((s, e) => s + e.amount, 0);
+  const totalDirect = periodExpenses.filter((e) => e.type === "directe").reduce((s, e) => s + e.amount, 0);
 
-  const categories = [...new Set(expenses.map((e) => e.category))].filter(Boolean);
+  const categories = [...new Set(periodExpenses.map((e) => e.category))].filter(Boolean);
   const byCategory = categories.map((cat) => ({
     category: cat,
-    total: expenses.filter((e) => e.category === cat).reduce((s, e) => s + e.amount, 0),
+    total: periodExpenses.filter((e) => e.category === cat).reduce((s, e) => s + e.amount, 0),
   })).sort((a, b) => b.total - a.total);
 
   const openCreate = () => {
