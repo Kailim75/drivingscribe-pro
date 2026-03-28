@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Phone, Mail, MapPin, Edit2, Loader2, Clock, CalendarDays, MessageCircle, AlertTriangle, Star, Target, FileText, FolderOpen, Download } from "lucide-react";
+import { ArrowLeft, Phone, Mail, MapPin, Edit2, Loader2, Clock, CalendarDays, MessageCircle, AlertTriangle, Star, Target, FileText, FolderOpen, Download, Plus, Upload } from "lucide-react";
 import { useState } from "react";
 import { useStudents } from "@/hooks/useStudents";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
@@ -201,7 +201,12 @@ export default function StudentDetail() {
           )}
         </TabsContent>
 
-        <TabsContent value="invoices" className="mt-4">
+        <TabsContent value="invoices" className="mt-4 space-y-3">
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => navigate(`/facturation?student_id=${student.id}&action=create`)}>
+              <Plus className="w-4 h-4 mr-1" /> Créer une facture
+            </Button>
+          </div>
           <div className="glass-card rounded-xl overflow-hidden">
             {studentInvoices.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -233,7 +238,12 @@ export default function StudentDetail() {
           </div>
         </TabsContent>
 
-        <TabsContent value="documents" className="mt-4">
+        <TabsContent value="documents" className="mt-4 space-y-3">
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => navigate(`/documents?student_id=${student.id}&action=upload`)}>
+              <Upload className="w-4 h-4 mr-1" /> Ajouter un document
+            </Button>
+          </div>
           <div className="glass-card rounded-xl overflow-hidden">
             {studentDocuments.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
