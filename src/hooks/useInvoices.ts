@@ -42,8 +42,9 @@ export function useInvoices() {
       notes?: string;
       converted_from_id?: string;
       lines: { description: string; quantity: number; unit_price: number; total_ht: number }[];
+      offer_formula?: { offer_id: string; offer_name: string; offer_type: string; hours_bought: number; total_price: number };
     }) => {
-      const { lines, ...invoiceData } = input;
+      const { lines, offer_formula, ...invoiceData } = input;
       const { data, error } = await supabase
         .from("invoices")
         .insert({
@@ -61,12 +62,28 @@ export function useInvoices() {
           .insert(lines.map((l) => ({ ...l, invoice_id: data.id })));
         if (linesError) throw linesError;
       }
+
+      // Auto-create student formula for pack/forfait
+      if (offer_formula) {
+        const { error: formulaError } = await supabase.from("student_formulas").insert({
+          organization_id: orgId!,
+          student_id: input.student_id,
+          offer_id: offer_formula.offer_id,
+          offer_name: offer_formula.offer_name,
+          offer_type: offer_formula.offer_type as any,
+          hours_bought: offer_formula.hours_bought,
+          total_price: offer_formula.total_price,
+        });
+        if (formulaError) console.error("Erreur création formule:", formulaError);
+      }
+
       return data;
     },
     onSuccess: (data, input) => {
       qc.invalidateQueries({ queryKey: ["invoices"] });
+      qc.invalidateQueries({ queryKey: ["student_formulas"] });
       log({ action: input.type === "devis" ? "Devis créé" : "Facture créée", entity: "invoice", entity_id: data.id, details: `${input.number} — ${input.total_ttc} € TTC` });
-      toast({ title: input.type === "devis" ? "Devis créé" : "Facture créée" });
+      toast({ title: input.type === "devis" ? "Devis créé" : "Facture créée", description: input.offer_formula ? "Formule élève créée automatiquement" : undefined });
     },
     onError: () => toast({ title: "Erreur", description: "Impossible de créer le document", variant: "destructive" }),
   });
