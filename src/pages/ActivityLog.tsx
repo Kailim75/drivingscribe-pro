@@ -46,7 +46,7 @@ export default function ActivityLog() {
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1000px] mx-auto space-y-5">
       <div>
-        <h1 className="page-title">Journal d'activité</h1>
+        <h1 className="page-title">Journal</h1>
         <p className="page-subtitle">Historique des actions importantes</p>
       </div>
 

@@ -156,7 +156,7 @@ export default function Invoicing() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Facturation</h1>
+          <h1 className="page-title">Facturation</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {stats.factureCount} facture{stats.factureCount > 1 ? "s" : ""} · {stats.devisCount} devis{stats.enRetard > 0 ? ` · ${stats.enRetard} en retard` : ""}
           </p>

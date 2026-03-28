@@ -27,7 +27,7 @@ const navGroups: NavGroup[] = [
   { title: "FINANCE", items: [
     { label: "Facturation", path: "/facturation", icon: FileText, roles: ["owner", "admin", "accountant"] },
     { label: "Paiements", path: "/paiements", icon: CreditCard, roles: ["owner", "admin", "accountant"] },
-    { label: "Rentabilité", path: "/rentabilite", icon: TrendingUp, roles: ["owner", "admin", "accountant"] },
+    { label: "Finances", path: "/rentabilite", icon: TrendingUp, roles: ["owner", "admin", "accountant"] },
   ]},
   { title: "OUTILS", items: [
     { label: "Offres", path: "/offres", icon: Package, roles: ["owner", "admin"] },
