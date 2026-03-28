@@ -18,7 +18,7 @@ import type { StudentFormData } from "@/lib/validations";
 import BulkArchiveStudentsDialog from "@/components/students/BulkArchiveStudentsDialog";
 import BulkAssignPayerDialog from "@/components/students/BulkAssignPayerDialog";
 import { exportToCsv } from "@/lib/exportCsv";
-import { studentStatusLabels as statusLabels } from "@/lib/labels";
+
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";

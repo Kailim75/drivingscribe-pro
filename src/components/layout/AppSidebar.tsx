@@ -22,7 +22,7 @@ const navGroups: NavGroup[] = [
     { label: "Planning", path: "/planning", icon: CalendarDays },
     { label: "Formateurs", path: "/formateurs", icon: UserCog, roles: ["owner", "admin"] },
     { label: "Véhicules", path: "/vehicules", icon: Car, roles: ["owner", "admin"] },
-    { label: "Mon portail", path: "/portail-formateur", icon: GraduationCap, roles: ["instructor"] },
+    { label: "Mon Planning", path: "/portail-formateur", icon: GraduationCap, roles: ["instructor"] },
   ]},
   { title: "FINANCE", items: [
     { label: "Facturation", path: "/facturation", icon: FileText, roles: ["owner", "admin", "accountant"] },

@@ -8,18 +8,20 @@ import type { Database, TablesUpdate } from "@/integrations/supabase/types";
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
 type InvoiceStatus = Database["public"]["Enums"]["invoice_status"];
 
-async function recalcInvoice(invoiceId: string) {
+async function recalcInvoice(invoiceId: string, orgId: string) {
   // Get all payments for this invoice
   const { data: payments } = await supabase
     .from("payments")
     .select("amount")
-    .eq("invoice_id", invoiceId);
+    .eq("invoice_id", invoiceId)
+    .eq("organization_id", orgId);
   const totalPaid = (payments || []).reduce((s, p) => s + p.amount, 0);
 
   const { data: inv } = await supabase
     .from("invoices")
     .select("total_ttc")
     .eq("id", invoiceId)
+    .eq("organization_id", orgId)
     .single();
   if (!inv) return;
 
@@ -32,7 +34,7 @@ async function recalcInvoice(invoiceId: string) {
     remaining_amount: Math.max(0, remaining),
     ...(newStatus ? { status: newStatus } : {}),
   };
-  await supabase.from("invoices").update(updateData).eq("id", invoiceId);
+  await supabase.from("invoices").update(updateData).eq("id", invoiceId).eq("organization_id", orgId);
 }
 
 export function usePayments() {

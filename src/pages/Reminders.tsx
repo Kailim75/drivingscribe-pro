@@ -178,8 +178,8 @@ function ReminderCard({ reminder, onSend }: { reminder: any; onSend?: () => void
           </button>
         )}
         {reminder.status === "planifié" && onSend && (
-          <button onClick={onSend} className="flex-shrink-0 btn-primary text-xs !px-3 !py-1.5">
-            <Send className="w-3 h-3" /> Envoyer
+          <button onClick={onSend} className="flex-shrink-0 btn-secondary text-xs !px-3 !py-1.5" title="Marquer ce rappel comme envoyé manuellement">
+            <CheckCircle2 className="w-3 h-3" /> Marquer envoyé
           </button>
         )}
       </div>

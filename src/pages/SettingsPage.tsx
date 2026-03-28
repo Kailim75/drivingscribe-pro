@@ -101,7 +101,7 @@ export default function SettingsPage() {
   const tabs = [
     { key: "organisation" as Tab, label: "Organisation", icon: Building2 },
     { key: "facturation" as Tab, label: "Facturation", icon: Receipt },
-    { key: "payeurs" as Tab, label: "Tiers payeurs", icon: Receipt },
+    { key: "payeurs" as Tab, label: "Tiers payeurs", icon: Building2 },
     { key: "equipe" as Tab, label: "Équipe", icon: Users },
     { key: "competences" as Tab, label: "Compétences", icon: Target },
     { key: "notifications" as Tab, label: "Notifications", icon: Bell },
