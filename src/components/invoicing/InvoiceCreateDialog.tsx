@@ -193,6 +193,25 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
             </Select>
           </div>
 
+          {/* Active formulas recap */}
+          {studentId && activeFormulas.length > 0 && (
+            <Alert className="border-amber-300/50 bg-amber-50/50 dark:bg-amber-950/20">
+              <PackageCheck className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-xs space-y-1">
+                <span className="font-semibold text-amber-800 dark:text-amber-300">
+                  Formules actives ({activeFormulas.length}) :
+                </span>
+                <ul className="list-disc list-inside text-amber-700 dark:text-amber-400">
+                  {activeFormulas.map((f) => (
+                    <li key={f.id}>
+                      {f.offer_name} — {f.offer_type === "forfait" ? "Forfait" : `${f.hours_bought}h`} ({formatEur(Number(f.total_price))})
+                    </li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Offer/Pack selector */}
           {!isEditing && activeOffers.length > 0 && (
             <div className="space-y-1.5">
