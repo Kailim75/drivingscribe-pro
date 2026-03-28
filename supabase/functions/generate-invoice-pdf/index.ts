@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     // Header - Organization info
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
+    doc.setTextColor(headerColor.r, headerColor.g, headerColor.b);
     doc.text(org.name, textStartX, y + (logoAdded ? 5 : 0));
 
     doc.setFontSize(9);
