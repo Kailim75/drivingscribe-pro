@@ -505,11 +505,22 @@ function DocumentPreview({ form, org }: { form: BrandingForm; org: any }) {
         ))}
         <div className="flex justify-end mt-2 text-[9px]">
           <div className="space-y-0.5 text-right">
-            <p>Total HT : <b>525,00 €</b></p>
-            <p>TVA (20%) : <b>105,00 €</b></p>
-            <div className="px-3 py-1 rounded text-white font-bold mt-1" style={{ backgroundColor: totalBg }}>
-              Total TTC : 630,00 €
-            </div>
+            {isFranchisePreview ? (
+              <>
+                <div className="px-3 py-1 rounded text-white font-bold mt-1" style={{ backgroundColor: totalBg }}>
+                  Total : 525,00 €
+                </div>
+                <p className="text-[7px] text-gray-500 mt-1 italic">TVA non applicable, art. 293 B du CGI</p>
+              </>
+            ) : (
+              <>
+                <p>Total HT : <b>525,00 €</b></p>
+                <p>TVA (20%) : <b>105,00 €</b></p>
+                <div className="px-3 py-1 rounded text-white font-bold mt-1" style={{ backgroundColor: totalBg }}>
+                  Total TTC : 630,00 €
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
