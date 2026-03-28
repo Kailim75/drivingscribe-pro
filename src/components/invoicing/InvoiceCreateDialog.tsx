@@ -125,6 +125,11 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
       return;
     }
 
+    const selectedOffer = activeOffers.find((o) => o.id === selectedOfferId);
+    const offerMeta = selectedOffer && (selectedOffer.type === "pack" || selectedOffer.type === "forfait")
+      ? { offer_id: selectedOffer.id, offer_name: selectedOffer.name, offer_type: selectedOffer.type, hours_bought: Number(selectedOffer.hours) || 0, total_price: Number(selectedOffer.price) || 0 }
+      : undefined;
+
     onCreate(
       {
         number: numberResult as string,
@@ -137,6 +142,7 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
         due_date: dueDate || new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
         notes,
         lines: validLines,
+        offer_formula: offerMeta,
       },
       {
         onSuccess: () => {
