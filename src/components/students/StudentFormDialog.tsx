@@ -40,9 +40,6 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
   const set = (k: keyof StudentFormData, v: string) => {
     setForm((p) => ({ ...p, [k]: v }));
     setErrors((e) => ({ ...e, [k]: "" }));
-    if (k === "first_name" || k === "last_name") {
-      setDuplicateWarning(false);
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,20 +55,8 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
       toast.error(result.error.errors[0].message);
       return;
     }
-    onSubmit({ ...result.data, payer_id: payerId || null, _skipDuplicateCheck: duplicateWarning });
+    onSubmit({ ...result.data, payer_id: payerId || null, _skipDuplicateCheck: !!duplicateDetected });
   };
-
-  // Called from parent when duplicate is detected
-  const handleDuplicateDetected = () => {
-    setDuplicateWarning(true);
-  };
-
-  // Expose duplicate handler via prop callback pattern
-  useEffect(() => {
-    if (loading === false && duplicateWarning === false) {
-      // Check if the mutation error was a duplicate — parent will call onSubmit again
-    }
-  }, [loading]);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -80,7 +65,7 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
           <DialogTitle>{initial ? "Modifier l'élève" : "Nouvel élève"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          {duplicateWarning && (
+          {duplicateDetected && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/30">
               <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
               <div className="text-xs">
@@ -136,9 +121,9 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
           <div><Label>Notes</Label><Input value={form.notes} onChange={(e) => set("notes", e.target.value)} maxLength={1000} /></div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
-            <Button type="submit" disabled={loading} variant={duplicateWarning ? "destructive" : "default"}>
+            <Button type="submit" disabled={loading} variant={duplicateDetected ? "destructive" : "default"}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {duplicateWarning ? "Créer quand même" : (initial ? "Enregistrer" : "Créer")}
+              {duplicateDetected ? "Créer quand même" : (initial ? "Enregistrer" : "Créer")}
             </Button>
           </DialogFooter>
         </form>
