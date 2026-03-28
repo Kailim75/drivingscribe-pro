@@ -84,7 +84,7 @@ export function usePayments() {
       if (error) throw error;
 
       if (input.invoice_id) {
-        await recalcInvoice(input.invoice_id);
+        await recalcInvoice(input.invoice_id, orgId!);
       }
       return data;
     },
@@ -123,8 +123,8 @@ export function usePayments() {
       if (error) throw error;
 
       // Recalc old and new invoices
-      if (_old_invoice_id) await recalcInvoice(_old_invoice_id);
-      if (data.invoice_id && data.invoice_id !== _old_invoice_id) await recalcInvoice(data.invoice_id);
+      if (_old_invoice_id) await recalcInvoice(_old_invoice_id, orgId!);
+      if (data.invoice_id && data.invoice_id !== _old_invoice_id) await recalcInvoice(data.invoice_id, orgId!);
 
       return data;
     },
@@ -147,7 +147,7 @@ export function usePayments() {
       if (error) throw error;
 
       if (payment.invoice_id) {
-        await recalcInvoice(payment.invoice_id);
+        await recalcInvoice(payment.invoice_id, orgId!);
       }
     },
     onSuccess: (_, input) => {
