@@ -59,12 +59,20 @@ export default function Students() {
   const handleStatusFilter = (v: string) => { setStatusFilter(v); setPage(1); };
   const handleActivityFilter = (v: string) => { setActivityFilter(v); setPage(1); };
 
-  const handleCreate = (data: StudentFormData & { payer_id?: string | null }) => {
-    const { payer_id, ...studentData } = data;
-    create.mutate({ ...studentData, payer_id: payer_id || null } as any, {
+  const [duplicateWarning, setDuplicateWarning] = useState(false);
+
+  const handleCreate = (data: StudentFormData & { payer_id?: string | null; _skipDuplicateCheck?: boolean }) => {
+    const { payer_id, _skipDuplicateCheck, ...studentData } = data;
+    create.mutate({ ...studentData, payer_id: payer_id || null, _skipDuplicateCheck } as any, {
       onSuccess: () => {
         setShowForm(false);
+        setDuplicateWarning(false);
         log({ action: "create", entity: "student", details: `${data.first_name} ${data.last_name}` });
+      },
+      onError: (err: Error) => {
+        if (err.message === "DUPLICATE_STUDENT") {
+          setDuplicateWarning(true);
+        }
       },
     });
   };
