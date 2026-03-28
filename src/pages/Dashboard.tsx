@@ -138,11 +138,7 @@ export default function Dashboard() {
     };
   }, [futureLessons, periodLessons, payments, periodRevenue, period, activeInstructors, totalHoursDone]);
 
-  const alerts: { message: string; type: "warning" | "error" }[] = [];
-  if (overdueCount > 0) alerts.push({ message: `${overdueCount} facture${overdueCount > 1 ? "s" : ""} en retard`, type: "error" });
-  if (totalUnpaid > 500) alerts.push({ message: `${formatEur(totalUnpaid)} d'impayés en cours`, type: "warning" });
-  if (studentsLowHours.length > 0) alerts.push({ message: `${studentsLowHours.length} élève${studentsLowHours.length > 1 ? "s" : ""} avec ≤ 3h restantes`, type: "warning" });
-  if (forecast.occupancyRate < 30 && period !== "today") alerts.push({ message: `Taux d'occupation bas : ${forecast.occupancyRate}%`, type: "warning" });
+  // Micro-summary data is passed directly to the component below
 
   const sorted = [...todayLessons].sort((a: any, b: any) => (a.start_time || "").localeCompare(b.start_time || ""));
 

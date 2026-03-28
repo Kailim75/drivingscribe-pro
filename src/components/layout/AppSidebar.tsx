@@ -89,7 +89,7 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
           if (visibleItems.length === 0) return null;
           return (
             <div key={group.title}>
-              {!collapsed && (
+              {!collapsed && group.title && (
                 <span className="px-3 text-[10px] font-semibold tracking-widest text-sidebar-foreground/40 uppercase mb-1.5 block">
                   {group.title}
                 </span>
