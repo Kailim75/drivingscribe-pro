@@ -728,6 +728,7 @@ export type Database = {
           timezone: string
           tva_number: string | null
           tva_rate: number
+          tva_regime: string
           updated_at: string
           webhook_api_key: string | null
           webhook_calls_count: number
@@ -764,6 +765,7 @@ export type Database = {
           timezone?: string
           tva_number?: string | null
           tva_rate?: number
+          tva_regime?: string
           updated_at?: string
           webhook_api_key?: string | null
           webhook_calls_count?: number
@@ -800,6 +802,7 @@ export type Database = {
           timezone?: string
           tva_number?: string | null
           tva_rate?: number
+          tva_regime?: string
           updated_at?: string
           webhook_api_key?: string | null
           webhook_calls_count?: number

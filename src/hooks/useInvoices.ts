@@ -93,8 +93,9 @@ export function useInvoices() {
     }) => {
       const totalHt = lines.reduce((s, l) => s + l.total_ht, 0);
       const inv = invoicesQuery.data?.find((i) => i.id === id);
-      const rate = inv && inv.total_ht > 0 ? (inv.tva_amount / inv.total_ht) * 100 : 20;
-      const tvaAmount = totalHt * (rate / 100);
+      const isFranchise = (organization as any)?.tva_regime === "franchise_en_base";
+      const rate = isFranchise ? 0 : (inv && inv.total_ht > 0 ? (inv.tva_amount / inv.total_ht) * 100 : (organization?.tva_rate || 20));
+      const tvaAmount = isFranchise ? 0 : totalHt * (rate / 100);
       const totalTtc = totalHt + tvaAmount;
 
       const { error } = await supabase

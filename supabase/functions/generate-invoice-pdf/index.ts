@@ -52,6 +52,11 @@ Deno.serve(async (req) => {
     const isDevis = invoice.type === "devis";
     const docLabel = isDevis ? "DEVIS" : "FACTURE";
 
+    // Fiscal regime
+    const tvaRegime = org.tva_regime || "assujetti";
+    const isFranchise = tvaRegime === "franchise_en_base";
+    const franchiseMention = "TVA non applicable, art. 293 B du CGI";
+
     // Branding config
     const primaryColor = hexToRgb(org.primary_color || "#1e40af");
     const docLogoUrl = org.document_logo_url || org.logo_url || null;
@@ -194,19 +199,37 @@ Deno.serve(async (req) => {
     doc.line(margin + 100, y, margin + contentW, y);
     y += 6;
     doc.setFontSize(9);
-    doc.text("Total HT", margin + 105, y);
-    doc.text(formatEur(invoice.total_ht), margin + 148, y, { align: "right" } as any);
-    y += 5;
-    doc.text(`TVA (${org.tva_rate}%)`, margin + 105, y);
-    doc.text(formatEur(invoice.tva_amount), margin + 148, y, { align: "right" } as any);
-    y += 6;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setFillColor(tableHeaderColor.r, tableHeaderColor.g, tableHeaderColor.b);
-    doc.rect(margin + 98, y - 4.5, contentW - 98, 9, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.text("Total TTC", margin + 105, y + 1.5);
-    doc.text(formatEur(invoice.total_ttc), margin + 148, y + 1.5, { align: "right" } as any);
+
+    if (isFranchise) {
+      // Franchise en base: only show total, no TVA
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setFillColor(tableHeaderColor.r, tableHeaderColor.g, tableHeaderColor.b);
+      doc.rect(margin + 98, y - 4.5, contentW - 98, 9, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.text("Total", margin + 105, y + 1.5);
+      doc.text(formatEur(invoice.total_ht), margin + 148, y + 1.5, { align: "right" } as any);
+      y += 12;
+      doc.setTextColor(80, 80, 80);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(franchiseMention, margin, y);
+    } else {
+      // Assujetti: show HT + TVA + TTC
+      doc.text("Total HT", margin + 105, y);
+      doc.text(formatEur(invoice.total_ht), margin + 148, y, { align: "right" } as any);
+      y += 5;
+      doc.text(`TVA (${org.tva_rate}%)`, margin + 105, y);
+      doc.text(formatEur(invoice.tva_amount), margin + 148, y, { align: "right" } as any);
+      y += 6;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setFillColor(tableHeaderColor.r, tableHeaderColor.g, tableHeaderColor.b);
+      doc.rect(margin + 98, y - 4.5, contentW - 98, 9, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.text("Total TTC", margin + 105, y + 1.5);
+      doc.text(formatEur(invoice.total_ttc), margin + 148, y + 1.5, { align: "right" } as any);
+    }
 
     // Payment info
     if (!isDevis && invoice.paid_amount > 0) {
