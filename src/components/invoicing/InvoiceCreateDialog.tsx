@@ -183,7 +183,30 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
             </Select>
           </div>
 
-          {/* Due date */}
+          {/* Offer/Pack selector */}
+          {!isEditing && activeOffers.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <PackageCheck className="w-4 h-4 text-primary" />
+                Appliquer une offre / un pack
+              </Label>
+              <Select value={selectedOfferId} onValueChange={applyOffer}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une offre (optionnel)..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeOffers.map((o) => (
+                    <SelectItem key={o.id} value={o.id}>
+                      {o.name} — {formatEur(Number(o.price))}
+                      {o.type === "pack" && o.hours ? ` (${o.hours}h)` : ""}
+                      {o.type === "forfait" ? " (forfait)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <Label>Date d'échéance</Label>
             <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
