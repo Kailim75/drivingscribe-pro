@@ -1,0 +1,2 @@
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS cgv_text text DEFAULT '';
+COMMENT ON COLUMN public.organizations.cgv_text IS 'Conditions générales de vente affichées en dernière page des factures et devis';
