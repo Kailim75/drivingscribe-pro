@@ -60,14 +60,24 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
     return item.roles.some((r) => (userRoles as string[]).includes(r));
   };
 
+  const orgAny = organization as any;
+  const primaryColor = orgAny?.primary_color || undefined;
+  const logoUrl = orgAny?.logo_url || undefined;
+
   const sidebarContent = (
     <div className="flex flex-col h-full bg-sidebar">
       {/* Brand */}
       <div className="flex items-center justify-between h-14 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary/20 flex items-center justify-center flex-shrink-0">
-            <span className="text-sidebar-primary font-bold text-sm">DF</span>
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-sidebar-primary/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-sidebar-primary font-bold text-sm">
+                {(organization?.name || "D").slice(0, 2).toUpperCase()}
+              </span>
+            </div>
+          )}
           {!collapsed && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden">
               <span className="font-semibold text-sidebar-accent-foreground text-sm block truncate">

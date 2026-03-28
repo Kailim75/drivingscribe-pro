@@ -13,7 +13,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
@@ -53,6 +52,16 @@ Deno.serve(async (req) => {
     const isDevis = invoice.type === "devis";
     const docLabel = isDevis ? "DEVIS" : "FACTURE";
 
+    // Branding config
+    const primaryColor = hexToRgb(org.primary_color || "#1e40af");
+    const docLogoUrl = org.document_logo_url || org.logo_url || null;
+    const website = org.website || null;
+    const documentHeader = org.document_header || null;
+    const footerText = org.footer_text || "";
+    const legalMentions = org.legal_mentions || "";
+    const signatureEnabled = org.signature_enabled || false;
+    const signatureText = org.signature_text || "";
+
     // Create PDF
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const pageW = 210;
@@ -60,24 +69,46 @@ Deno.serve(async (req) => {
     const contentW = pageW - margin * 2;
     let y = 20;
 
+    // Try to add logo
+    let logoAdded = false;
+    if (docLogoUrl) {
+      try {
+        const logoRes = await fetch(docLogoUrl);
+        if (logoRes.ok) {
+          const buf = await logoRes.arrayBuffer();
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          const ext = docLogoUrl.toLowerCase().includes(".png") ? "PNG" : "JPEG";
+          doc.addImage(`data:image/${ext.toLowerCase()};base64,${base64}`, ext, margin, y, 25, 25);
+          logoAdded = true;
+        }
+      } catch { /* skip logo */ }
+    }
+
+    const textStartX = logoAdded ? margin + 30 : margin;
+
     // Header - Organization info
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text(org.name, margin, y);
-    y += 7;
+    doc.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
+    doc.text(org.name, textStartX, y + (logoAdded ? 5 : 0));
 
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 100, 100);
-    if (org.address) { doc.text(org.address, margin, y); y += 4; }
-    if (org.phone) { doc.text(`Tél: ${org.phone}`, margin, y); y += 4; }
-    if (org.email) { doc.text(org.email, margin, y); y += 4; }
-    if (org.siret) { doc.text(`SIRET: ${org.siret}`, margin, y); y += 4; }
-    if (org.tva_number) { doc.text(`TVA: ${org.tva_number}`, margin, y); y += 4; }
+    let hy = y + (logoAdded ? 10 : 7);
+    if (documentHeader) { doc.text(documentHeader, textStartX, hy); hy += 4; }
+    if (org.address) { doc.text(org.address, textStartX, hy); hy += 4; }
+    if (org.phone) { doc.text(`Tél: ${org.phone}`, textStartX, hy); hy += 4; }
+    if (org.email) { doc.text(org.email, textStartX, hy); hy += 4; }
+    if (website) { doc.text(website, textStartX, hy); hy += 4; }
+    if (org.siret) { doc.text(`SIRET: ${org.siret}`, textStartX, hy); hy += 4; }
+    if (org.tva_number) { doc.text(`TVA: ${org.tva_number}`, textStartX, hy); hy += 4; }
+
+    y = Math.max(hy, logoAdded ? y + 28 : hy);
 
     // Document title
     y += 6;
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.text(`${docLabel} ${invoice.number}`, margin, y);
@@ -95,7 +126,7 @@ Deno.serve(async (req) => {
     doc.text(`Statut : ${invoice.status}`, margin, y);
     y += 8;
 
-    // Client info - show payer if grouped, otherwise student
+    // Client info
     const payer = invoice.payer_id ? invoice.payers : null;
     const student = invoice.students;
     const recipientName = payer ? payer.name : (student ? `${student.first_name} ${student.last_name}` : "");
@@ -122,7 +153,7 @@ Deno.serve(async (req) => {
     }
 
     // Table header
-    doc.setFillColor(30, 30, 30);
+    doc.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
     doc.rect(margin, y, contentW, 8, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(8);
@@ -166,13 +197,13 @@ Deno.serve(async (req) => {
     y += 6;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
-    doc.setFillColor(30, 30, 30);
+    doc.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
     doc.rect(margin + 98, y - 4.5, contentW - 98, 9, "F");
     doc.setTextColor(255, 255, 255);
     doc.text("Total TTC", margin + 105, y + 1.5);
     doc.text(formatEur(invoice.total_ttc), margin + 148, y + 1.5, { align: "right" } as any);
 
-    // Payment info for invoices
+    // Payment info
     if (!isDevis && invoice.paid_amount > 0) {
       y += 12;
       doc.setTextColor(0, 0, 0);
@@ -195,10 +226,36 @@ Deno.serve(async (req) => {
       doc.text(invoice.notes, margin, y, { maxWidth: contentW });
     }
 
+    // Signature block
+    if (signatureEnabled) {
+      y += 20;
+      doc.setTextColor(80, 80, 80);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(signatureText || "Signature", margin + 110, y);
+      y += 15;
+      doc.setDrawColor(180, 180, 180);
+      doc.line(margin + 110, y, margin + contentW, y);
+    }
+
+    // Legal mentions
+    if (legalMentions) {
+      y += 12;
+      doc.setTextColor(130, 130, 130);
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "normal");
+      doc.text(legalMentions, margin, y, { maxWidth: contentW });
+    }
+
     // Footer
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(7);
-    doc.text(`${org.name} — ${org.siret || ""} — ${org.tva_number || ""}`, pageW / 2, 285, { align: "center" });
+    const footerParts = [org.name, org.siret, org.tva_number, website].filter(Boolean).join(" — ");
+    const footerY = 285;
+    if (footerText) {
+      doc.text(footerText, pageW / 2, footerY - 4, { align: "center" });
+    }
+    doc.text(footerParts, pageW / 2, footerY, { align: "center" });
 
     // Convert to base64
     const pdfBase64 = doc.output("datauristring").split(",")[1];
@@ -215,3 +272,10 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
+    : { r: 30, g: 30, b: 30 };
+}

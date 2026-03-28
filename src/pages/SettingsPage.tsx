@@ -130,6 +130,8 @@ export default function SettingsPage() {
         ))}
       </div>
 
+      {tab === "personnalisation" && <BrandingTab />}
+
       {tab === "organisation" && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-6 space-y-5">
           <h2 className="font-semibold text-foreground">Identité</h2>
