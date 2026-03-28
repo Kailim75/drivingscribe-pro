@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, UserCog, Car, CalendarDays, Package,
-  FileText, CreditCard, Receipt, TrendingUp, FolderOpen, Bell,
+  FileText, CreditCard, TrendingUp, FolderOpen, Bell,
   Settings, Upload, ClipboardList, ChevronLeft, Menu, LogOut, ShieldCheck,
   GraduationCap,
 } from "lucide-react";
@@ -26,12 +26,10 @@ const navGroups: NavGroup[] = [
   ]},
   { title: "COMMERCIAL", items: [
     { label: "Offres", path: "/offres", icon: Package, roles: ["owner", "admin"] },
-    { label: "Devis & Factures", path: "/facturation", icon: FileText, roles: ["owner", "admin", "accountant"] },
-    { label: "Factu. groupée", path: "/facturation-groupee", icon: Receipt, roles: ["owner", "admin", "accountant"] },
+    { label: "Facturation", path: "/facturation", icon: FileText, roles: ["owner", "admin", "accountant"] },
     { label: "Paiements", path: "/paiements", icon: CreditCard, roles: ["owner", "admin", "accountant"] },
   ]},
   { title: "ANALYSE", items: [
-    { label: "Dépenses", path: "/depenses", icon: Receipt, roles: ["owner", "admin", "accountant"] },
     { label: "Rentabilité", path: "/rentabilite", icon: TrendingUp, roles: ["owner", "admin", "accountant"] },
   ]},
   { title: "OUTILS", items: [
