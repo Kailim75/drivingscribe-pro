@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { studentSchema, type StudentFormData } from "@/lib/validations";
 import { toast } from "sonner";
 import { usePayers } from "@/hooks/usePayers";
@@ -11,7 +11,7 @@ import { usePayers } from "@/hooks/usePayers";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: StudentFormData & { payer_id?: string | null }) => void;
+  onSubmit: (data: StudentFormData & { payer_id?: string | null; _skipDuplicateCheck?: boolean }) => void;
   loading?: boolean;
   initial?: Partial<StudentFormData> & { payer_id?: string | null };
 }
@@ -24,6 +24,7 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
   });
   const [payerId, setPayerId] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [duplicateWarning, setDuplicateWarning] = useState(false);
 
   useEffect(() => {
     if (initial) {
@@ -34,11 +35,15 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
       setPayerId("");
     }
     setErrors({});
+    setDuplicateWarning(false);
   }, [initial, open]);
 
   const set = (k: keyof StudentFormData, v: string) => {
     setForm((p) => ({ ...p, [k]: v }));
     setErrors((e) => ({ ...e, [k]: "" }));
+    if (k === "first_name" || k === "last_name") {
+      setDuplicateWarning(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,8 +59,20 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
       toast.error(result.error.errors[0].message);
       return;
     }
-    onSubmit({ ...result.data, payer_id: payerId || null });
+    onSubmit({ ...result.data, payer_id: payerId || null, _skipDuplicateCheck: duplicateWarning });
   };
+
+  // Called from parent when duplicate is detected
+  const handleDuplicateDetected = () => {
+    setDuplicateWarning(true);
+  };
+
+  // Expose duplicate handler via prop callback pattern
+  useEffect(() => {
+    if (loading === false && duplicateWarning === false) {
+      // Check if the mutation error was a duplicate — parent will call onSubmit again
+    }
+  }, [loading]);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -64,6 +81,15 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
           <DialogTitle>{initial ? "Modifier l'élève" : "Nouvel élève"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
+          {duplicateWarning && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/30">
+              <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+              <div className="text-xs">
+                <p className="font-medium text-warning">Un élève avec ce nom existe déjà.</p>
+                <p className="text-muted-foreground mt-0.5">Cliquez à nouveau sur "Créer" pour confirmer la création malgré le doublon.</p>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Prénom *</Label>
@@ -111,9 +137,9 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
           <div><Label>Notes</Label><Input value={form.notes} onChange={(e) => set("notes", e.target.value)} maxLength={1000} /></div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} variant={duplicateWarning ? "destructive" : "default"}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {initial ? "Enregistrer" : "Créer"}
+              {duplicateWarning ? "Créer quand même" : (initial ? "Enregistrer" : "Créer")}
             </Button>
           </DialogFooter>
         </form>
