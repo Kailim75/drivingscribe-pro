@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import AtRiskStudentsAlert from "@/components/dashboard/AtRiskStudentsAlert";
 import QuickActions from "@/components/dashboard/QuickActions";
-import MicroSummary, { useDashboardSummaries } from "@/components/dashboard/MicroSummary";
+import MicroSummary, { getDashboardSummaries } from "@/components/dashboard/MicroSummary";
 import { useSkillCategories } from "@/hooks/useSkills";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Progress } from "@/components/ui/progress";
