@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
 
     // Try to add logo
     let logoAdded = false;
-    if (docLogoUrl) {
+    if (docLogoUrl && !isMinimal) {
       try {
         const logoRes = await fetch(docLogoUrl);
         if (logoRes.ok) {
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
     const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 
     lines.forEach((line: any, i: number) => {
-      if (i % 2 === 0) {
+      if (!isMinimal && i % 2 === 0) {
         doc.setFillColor(250, 250, 250);
         doc.rect(margin, y, contentW, 7, "F");
       }
