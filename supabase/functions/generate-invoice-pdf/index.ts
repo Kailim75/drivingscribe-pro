@@ -275,15 +275,62 @@ Deno.serve(async (req) => {
       doc.text(legalMentions, margin, y, { maxWidth: contentW });
     }
 
-    // Footer
+    // Footer on page 1
     doc.setTextColor(150, 150, 150);
     doc.setFontSize(7);
-    const footerParts = [org.name, org.siret, org.tva_number, website].filter(Boolean).join(" — ");
+    const footerParts = [org.name, org.siret, isFranchise ? null : org.tva_number, website].filter(Boolean).join(" — ");
     const footerY = 285;
     if (footerText) {
       doc.text(footerText, pageW / 2, footerY - 4, { align: "center" });
     }
     doc.text(footerParts, pageW / 2, footerY, { align: "center" });
+
+    // CGV page (if configured)
+    const cgvText = org.cgv_text || "";
+    if (cgvText.trim()) {
+      doc.addPage();
+      let cy = 25;
+
+      // CGV title
+      doc.setTextColor(headerColor.r, headerColor.g, headerColor.b);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("CONDITIONS GÉNÉRALES DE VENTE", margin, cy);
+      cy += 10;
+
+      // Separator
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, cy, margin + contentW, cy);
+      cy += 8;
+
+      // CGV body
+      doc.setTextColor(60, 60, 60);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      const cgvLines = doc.splitTextToSize(cgvText, contentW);
+      const lineHeight = 3.5;
+
+      for (let i = 0; i < cgvLines.length; i++) {
+        if (cy + lineHeight > 280) {
+          // Footer on CGV page before page break
+          doc.setTextColor(150, 150, 150);
+          doc.setFontSize(7);
+          doc.text(footerParts, pageW / 2, footerY, { align: "center" });
+          doc.addPage();
+          cy = 25;
+          doc.setTextColor(60, 60, 60);
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "normal");
+        }
+        doc.text(cgvLines[i], margin, cy);
+        cy += lineHeight;
+      }
+
+      // Footer on last CGV page
+      doc.setTextColor(150, 150, 150);
+      doc.setFontSize(7);
+      doc.text(footerParts, pageW / 2, footerY, { align: "center" });
+    }
 
     // Convert to base64
     const pdfBase64 = doc.output("datauristring").split(",")[1];
