@@ -72,6 +72,7 @@ export default function BrandingTab() {
         signature_enabled: org.signature_enabled || false,
         signature_text: org.signature_text || "",
         document_template: org.document_template || "moderne",
+        cgv_text: org.cgv_text || "",
       });
     }
   }, [organization]);
@@ -105,6 +106,7 @@ export default function BrandingTab() {
       signature_enabled: form.signature_enabled,
       signature_text: form.signature_text,
       document_template: form.document_template,
+      cgv_text: form.cgv_text,
     } as any).eq("id", organization.id);
     if (error) { toast.error("Erreur lors de la sauvegarde"); }
     else { toast.success("Personnalisation enregistrée"); await refreshOrg(); }
@@ -294,6 +296,26 @@ export default function BrandingTab() {
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Texte de signature</label>
                 <Input value={form.signature_text} onChange={(e) => setForm((f) => ({ ...f, signature_text: e.target.value }))} placeholder="Ex: Le directeur, M. Jean Dupont" disabled={!isOwnerOrAdmin} />
               </div>
+            )}
+          </div>
+
+          {/* CGV */}
+          <div className="border-t border-border pt-4 space-y-2">
+            <div>
+              <p className="text-sm font-medium text-foreground">Conditions générales de vente (CGV)</p>
+              <p className="text-xs text-muted-foreground">Affichées automatiquement en dernière page de chaque facture et devis.</p>
+            </div>
+            <textarea
+              value={form.cgv_text}
+              onChange={(e) => setForm((f) => ({ ...f, cgv_text: e.target.value }))}
+              placeholder="Saisissez vos CGV ici. Elles seront ajoutées en page supplémentaire sur tous vos documents PDF."
+              disabled={!isOwnerOrAdmin}
+              className="w-full bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-32 resize-none disabled:opacity-50"
+            />
+            {form.cgv_text && (
+              <p className="text-[10px] text-muted-foreground">
+                ✓ Les CGV seront ajoutées comme page supplémentaire à la fin de chaque document généré.
+              </p>
             )}
           </div>
         </div>
