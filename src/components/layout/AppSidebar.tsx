@@ -14,31 +14,29 @@ interface NavItem { label: string; path: string; icon: React.ElementType; roles?
 interface NavGroup { title: string; items: NavItem[] }
 
 const navGroups: NavGroup[] = [
-  { title: "PRINCIPAL", items: [
+  { title: "", items: [
     { label: "Tableau de bord", path: "/tableau-de-bord", icon: LayoutDashboard },
   ]},
   { title: "GESTION", items: [
     { label: "Élèves", path: "/eleves", icon: Users },
+    { label: "Planning", path: "/planning", icon: CalendarDays },
     { label: "Formateurs", path: "/formateurs", icon: UserCog, roles: ["owner", "admin"] },
     { label: "Véhicules", path: "/vehicules", icon: Car, roles: ["owner", "admin"] },
-    { label: "Planning", path: "/planning", icon: CalendarDays },
     { label: "Mon portail", path: "/portail-formateur", icon: GraduationCap, roles: ["instructor"] },
   ]},
-  { title: "COMMERCIAL", items: [
-    { label: "Offres", path: "/offres", icon: Package, roles: ["owner", "admin"] },
+  { title: "FINANCE", items: [
     { label: "Facturation", path: "/facturation", icon: FileText, roles: ["owner", "admin", "accountant"] },
     { label: "Paiements", path: "/paiements", icon: CreditCard, roles: ["owner", "admin", "accountant"] },
-  ]},
-  { title: "ANALYSE", items: [
     { label: "Rentabilité", path: "/rentabilite", icon: TrendingUp, roles: ["owner", "admin", "accountant"] },
   ]},
   { title: "OUTILS", items: [
+    { label: "Offres", path: "/offres", icon: Package, roles: ["owner", "admin"] },
     { label: "Documents", path: "/documents", icon: FolderOpen },
     { label: "Rappels", path: "/rappels", icon: Bell, roles: ["owner", "admin"] },
     { label: "Import", path: "/import", icon: Upload, roles: ["owner", "admin"] },
     { label: "Journal", path: "/journal", icon: ClipboardList, roles: ["owner", "admin"] },
   ]},
-  { title: "ADMINISTRATION", items: [
+  { title: "ADMIN", items: [
     { label: "Super Admin", path: "/admin", icon: ShieldCheck, roles: ["owner"] },
   ]},
 ];

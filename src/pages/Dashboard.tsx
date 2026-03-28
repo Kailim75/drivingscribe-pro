@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import AtRiskStudentsAlert from "@/components/dashboard/AtRiskStudentsAlert";
 import QuickActions from "@/components/dashboard/QuickActions";
+import MicroSummary, { useDashboardSummaries } from "@/components/dashboard/MicroSummary";
 import { useSkillCategories } from "@/hooks/useSkills";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Progress } from "@/components/ui/progress";
@@ -207,25 +208,19 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2">
-          {alerts.map((a, i) => (
-            <div
-              key={i}
-              className={cn(
-                "inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-semibold transition-colors",
-                a.type === "error"
-                  ? "bg-destructive/10 text-destructive border border-destructive/20"
-                  : "bg-warning/10 text-warning border border-warning/20"
-              )}
-            >
-              <AlertTriangle className="w-3.5 h-3.5" />
-              {a.message}
-            </div>
-          ))}
-        </motion.div>
-      )}
+      {/* Micro-synthèses contextuelles */}
+      <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="space-y-1.5">
+        {useDashboardSummaries({
+          overdueCount,
+          totalUnpaid,
+          studentsLowHoursCount: studentsLowHours.length,
+          occupancyRate: forecast.occupancyRate,
+          todayLessonsCount: todayLessons.length,
+          period,
+        }).map((s, i) => (
+          <MicroSummary key={i} {...s} />
+        ))}
+      </motion.div>
 
       {/* Quick Actions */}
       <QuickActions />
