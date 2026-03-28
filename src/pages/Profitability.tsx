@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { TrendingUp, Users, UserCog, Car, Clock, Percent, BarChart3, Loader2, XCircle } from "lucide-react";
+import { TrendingUp, Users, UserCog, Car, Clock, Percent, BarChart3, Loader2, XCircle, Receipt } from "lucide-react";
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useStudents } from "@/hooks/useStudents";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { useInstructors } from "@/hooks/useInstructors";
@@ -11,10 +12,12 @@ import { useInvoices } from "@/hooks/useInvoices";
 import { usePayments } from "@/hooks/usePayments";
 import { formatEur } from "@/lib/labels";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CashFlowForecast from "@/components/finance/CashFlowForecast";
 import PaymentDelayAnalysis from "@/components/finance/PaymentDelayAnalysis";
 import RevenueByActivity from "@/components/finance/RevenueByActivity";
 import SeasonalityChart from "@/components/finance/SeasonalityChart";
+import ExpensesTab from "@/components/finance/ExpensesTab";
 
 type Period = "month" | "quarter" | "year" | "all";
 
@@ -31,6 +34,8 @@ function getRange(period: Period): { start: string; end: string } {
 }
 
 export default function Profitability() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const mainTab = searchParams.get("tab") === "depenses" ? "depenses" : "analyse";
   const [period, setPeriod] = useState<Period>("month");
   const range = useMemo(() => getRange(period), [period]);
 
@@ -105,179 +110,138 @@ export default function Profitability() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Rentabilité</h1>
-          <p className="page-subtitle">Analyse de performance</p>
+          <p className="page-subtitle">Analyse de performance et gestion des charges</p>
         </div>
-        <div className="flex items-center bg-card rounded-lg p-0.5 border border-border">
-          {(["month", "quarter", "year", "all"] as Period[]).map((p) => (
-            <button key={p} onClick={() => setPeriod(p)} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", period === p ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-              {periodLabels[p]}
-            </button>
-          ))}
-        </div>
+        {mainTab === "analyse" && (
+          <div className="flex items-center bg-card rounded-lg p-0.5 border border-border">
+            {(["month", "quarter", "year", "all"] as Period[]).map((p) => (
+              <button key={p} onClick={() => setPeriod(p)} className={cn("px-3 py-1.5 text-xs font-medium rounded-md transition-colors", period === p ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
+                {periodLabels[p]}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Top KPIs */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        {[
-          { label: "Revenu / heure", value: formatEur(avgRevenuePerHour), icon: TrendingUp },
-          { label: "Marge brute", value: `${grossMarginPct.toFixed(0)}%`, sub: formatEur(grossMargin), icon: BarChart3, color: grossMarginPct >= 50 ? "text-success" : "text-warning" },
-          { label: "Marge nette", value: `${netMarginPct.toFixed(0)}%`, sub: formatEur(netMargin), icon: Percent, color: netMarginPct >= 20 ? "text-success" : netMarginPct >= 0 ? "text-warning" : "text-destructive" },
-          { label: "Occupation", value: `${occupancyRate.toFixed(0)}%`, sub: `${totalHoursDone}h / ${maxHours}h`, icon: Clock },
-          { label: "Heures perdues", value: `${lostHours}h`, sub: `${cancelledLessons.length} séances`, icon: XCircle, color: lostHours > 0 ? "text-warning" : "text-muted-foreground" },
-        ].map((kpi) => (
-          <div key={kpi.label} className="glass-card rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <kpi.icon className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">{kpi.label}</span>
-            </div>
-            <p className={cn("text-xl font-bold", (kpi as any).color || "text-foreground")}>{kpi.value}</p>
-            {(kpi as any).sub && <p className="text-xs text-muted-foreground mt-0.5">{(kpi as any).sub}</p>}
-          </div>
-        ))}
-      </motion.div>
+      <Tabs value={mainTab} onValueChange={(v) => setSearchParams(v === "depenses" ? { tab: "depenses" } : {})}>
+        <TabsList>
+          <TabsTrigger value="analyse"><TrendingUp className="w-3.5 h-3.5 mr-1.5" /> Analyse</TabsTrigger>
+          <TabsTrigger value="depenses"><Receipt className="w-3.5 h-3.5 mr-1.5" /> Dépenses</TabsTrigger>
+        </TabsList>
 
-      {/* Revenue vs expenses */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="glass-card rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-primary" /> Revenus vs Charges</h2>
-          <div className="space-y-3">
+        <TabsContent value="analyse" className="space-y-5 mt-4">
+          {/* Top KPIs */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             {[
-              { label: "Revenus encaissés", value: totalRevenue, color: "bg-success", pct: 100 },
-              { label: "Charges fixes", value: fixedExpenses, color: "bg-info", pct: totalRevenue > 0 ? (fixedExpenses / totalRevenue) * 100 : 0 },
-              { label: "Charges directes", value: directExpenses, color: "bg-warning", pct: totalRevenue > 0 ? (directExpenses / totalRevenue) * 100 : 0 },
-            ].map((item) => (
-              <div key={item.label}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">{item.label}</span>
-                  <span className="font-semibold">{formatEur(item.value)}</span>
-                </div>
-                <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
-                  <div className={cn("h-full rounded-full transition-all", item.color)} style={{ width: `${Math.min(100, item.pct)}%` }} />
-                </div>
+              { label: "Revenu / heure", value: formatEur(avgRevenuePerHour), icon: TrendingUp },
+              { label: "Marge brute", value: `${grossMarginPct.toFixed(0)}%`, sub: formatEur(grossMargin), icon: BarChart3, color: grossMarginPct >= 50 ? "text-success" : "text-warning" },
+              { label: "Marge nette", value: `${netMarginPct.toFixed(0)}%`, sub: formatEur(netMargin), icon: Percent, color: netMarginPct >= 20 ? "text-success" : netMarginPct >= 0 ? "text-warning" : "text-destructive" },
+              { label: "Occupation", value: `${occupancyRate.toFixed(0)}%`, sub: `${totalHoursDone}h / ${maxHours}h`, icon: Clock },
+              { label: "Heures perdues", value: `${lostHours}h`, sub: `${cancelledLessons.length} séances`, icon: XCircle, color: lostHours > 0 ? "text-warning" : "text-muted-foreground" },
+            ].map((kpi) => (
+              <div key={kpi.label} className="glass-card rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2"><kpi.icon className="w-4 h-4 text-muted-foreground" /><span className="text-xs text-muted-foreground">{kpi.label}</span></div>
+                <p className={cn("text-xl font-bold", (kpi as any).color || "text-foreground")}>{kpi.value}</p>
+                {(kpi as any).sub && <p className="text-xs text-muted-foreground mt-0.5">{(kpi as any).sub}</p>}
               </div>
             ))}
-            <div className="border-t border-border pt-2 flex justify-between text-xs">
-              <span className="text-muted-foreground">Résultat net</span>
-              <span className={cn("font-bold", netMargin >= 0 ? "text-success" : "text-destructive")}>{formatEur(netMargin)}</span>
-            </div>
-          </div>
-        </div>
+          </motion.div>
 
-        <div className="glass-card rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> Temps productif</h2>
-          <div className="flex items-center gap-6 mb-4">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-success">{totalHoursDone}h</p>
-              <p className="text-xs text-muted-foreground">Productif</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-muted-foreground">{nonProductiveHours}h</p>
-              <p className="text-xs text-muted-foreground">Non productif</p>
-            </div>
-            {lostHours > 0 && (
-              <div className="text-center">
-                <p className="text-3xl font-bold text-warning">{lostHours}h</p>
-                <p className="text-xs text-muted-foreground">Perdues</p>
+          {/* Revenue vs expenses */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="glass-card rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><BarChart3 className="w-4 h-4 text-primary" /> Revenus vs Charges</h2>
+              <div className="space-y-3">
+                {[
+                  { label: "Revenus encaissés", value: totalRevenue, color: "bg-success", pct: 100 },
+                  { label: "Charges fixes", value: fixedExpenses, color: "bg-info", pct: totalRevenue > 0 ? (fixedExpenses / totalRevenue) * 100 : 0 },
+                  { label: "Charges directes", value: directExpenses, color: "bg-warning", pct: totalRevenue > 0 ? (directExpenses / totalRevenue) * 100 : 0 },
+                ].map((item) => (
+                  <div key={item.label}>
+                    <div className="flex justify-between text-xs mb-1"><span className="text-muted-foreground">{item.label}</span><span className="font-semibold">{formatEur(item.value)}</span></div>
+                    <div className="h-2.5 bg-secondary rounded-full overflow-hidden"><div className={cn("h-full rounded-full transition-all", item.color)} style={{ width: `${Math.min(100, item.pct)}%` }} /></div>
+                  </div>
+                ))}
+                <div className="border-t border-border pt-2 flex justify-between text-xs">
+                  <span className="text-muted-foreground">Résultat net</span>
+                  <span className={cn("font-bold", netMargin >= 0 ? "text-success" : "text-destructive")}>{formatEur(netMargin)}</span>
+                </div>
               </div>
-            )}
-          </div>
-          <div className="h-3 bg-secondary rounded-full overflow-hidden">
-            <div className="h-full bg-success transition-all rounded-full" style={{ width: `${occupancyRate}%` }} />
-          </div>
-          <p className="text-[10px] text-muted-foreground mt-2 italic">
-            ⚠ Estimation basée sur {activeInstructors.length} formateur{activeInstructors.length > 1 ? "s" : ""} × 8h/jour × {workingDays}j ouvrés.
-          </p>
-        </div>
-      </div>
-
-      {/* Per instructor */}
-      <div className="glass-card rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><UserCog className="w-4 h-4 text-primary" /> Par formateur</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full data-table">
-            <thead>
-              <tr>
-                <th>Formateur</th>
-                <th className="text-right">Heures</th>
-                <th className="text-right">Revenus</th>
-                <th className="text-right hidden sm:table-cell">Coûts</th>
-                <th className="text-right">Marge</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perInstructor.map((inst) => (
-                <tr key={inst.name}>
-                  <td className="font-medium text-foreground">{inst.name}</td>
-                  <td className="text-right text-muted-foreground">{inst.hours}h</td>
-                  <td className="text-right text-foreground">{formatEur(inst.revenue)}</td>
-                  <td className="text-right text-muted-foreground hidden sm:table-cell">{formatEur(inst.cost)}</td>
-                  <td className={cn("text-right font-semibold", inst.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(inst.margin)}</td>
-                </tr>
-              ))}
-              {perInstructor.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Aucune donnée</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Per vehicle */}
-      <div className="glass-card rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Car className="w-4 h-4 text-primary" /> Par véhicule</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full data-table">
-            <thead>
-              <tr>
-                <th>Véhicule</th>
-                <th className="text-right">Heures</th>
-                <th className="text-right">Revenus</th>
-                <th className="text-right hidden sm:table-cell">Coûts</th>
-                <th className="text-right">Marge</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perVehicle.map((v) => (
-                <tr key={v.plate}>
-                  <td><p className="font-medium text-foreground">{v.name}</p><p className="text-[10px] text-muted-foreground font-mono">{v.plate}</p></td>
-                  <td className="text-right text-muted-foreground">{v.hours}h</td>
-                  <td className="text-right text-foreground">{formatEur(v.revenue)}</td>
-                  <td className="text-right text-muted-foreground hidden sm:table-cell">{formatEur(v.cost)}</td>
-                  <td className={cn("text-right font-semibold", v.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(v.margin)}</td>
-                </tr>
-              ))}
-              {perVehicle.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Aucune donnée</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Top students */}
-      <div className="glass-card rounded-xl p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Top 5 élèves</h2>
-        <div className="space-y-2.5">
-          {perStudent.map((s, i) => (
-            <div key={s.name} className="flex items-center gap-3">
-              <span className="w-5 text-xs text-muted-foreground text-right font-medium">{i + 1}.</span>
-              <span className="flex-1 text-sm text-foreground font-medium">{s.name}</span>
-              <span className="text-xs text-muted-foreground">{s.hours}h</span>
-              <span className="text-sm font-semibold text-foreground">{formatEur(s.revenue)}</span>
             </div>
-          ))}
-          {perStudent.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Aucune donnée</p>}
-        </div>
-        <p className="text-[10px] text-muted-foreground mt-3 italic">
-          ⚠ Revenus estimés au prorata des heures réalisées par rapport aux heures achetées dans les formules.
-        </p>
-      </div>
 
-      {/* Financial Intelligence */}
-      <CashFlowForecast invoices={invoices} expenses={expenses} payments={payments} />
+            <div className="glass-card rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> Temps productif</h2>
+              <div className="flex items-center gap-6 mb-4">
+                <div className="text-center"><p className="text-3xl font-bold text-success">{totalHoursDone}h</p><p className="text-xs text-muted-foreground">Productif</p></div>
+                <div className="text-center"><p className="text-3xl font-bold text-muted-foreground">{nonProductiveHours}h</p><p className="text-xs text-muted-foreground">Non productif</p></div>
+                {lostHours > 0 && <div className="text-center"><p className="text-3xl font-bold text-warning">{lostHours}h</p><p className="text-xs text-muted-foreground">Perdues</p></div>}
+              </div>
+              <div className="h-3 bg-secondary rounded-full overflow-hidden"><div className="h-full bg-success transition-all rounded-full" style={{ width: `${occupancyRate}%` }} /></div>
+              <p className="text-[10px] text-muted-foreground mt-2 italic">⚠ Estimation basée sur {activeInstructors.length} formateur{activeInstructors.length > 1 ? "s" : ""} × 8h/jour × {workingDays}j ouvrés.</p>
+            </div>
+          </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <PaymentDelayAnalysis invoices={invoices} payments={payments} />
-        <RevenueByActivity lessons={lessons} students={students} />
-      </div>
+          {/* Per instructor */}
+          <div className="glass-card rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><UserCog className="w-4 h-4 text-primary" /> Par formateur</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full data-table">
+                <thead><tr><th>Formateur</th><th className="text-right">Heures</th><th className="text-right">Revenus</th><th className="text-right hidden sm:table-cell">Coûts</th><th className="text-right">Marge</th></tr></thead>
+                <tbody>
+                  {perInstructor.map((inst) => (
+                    <tr key={inst.name}><td className="font-medium text-foreground">{inst.name}</td><td className="text-right text-muted-foreground">{inst.hours}h</td><td className="text-right text-foreground">{formatEur(inst.revenue)}</td><td className="text-right text-muted-foreground hidden sm:table-cell">{formatEur(inst.cost)}</td><td className={cn("text-right font-semibold", inst.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(inst.margin)}</td></tr>
+                  ))}
+                  {perInstructor.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Aucune donnée</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-      <SeasonalityChart invoices={invoices} lessons={lessons} />
+          {/* Per vehicle */}
+          <div className="glass-card rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Car className="w-4 h-4 text-primary" /> Par véhicule</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full data-table">
+                <thead><tr><th>Véhicule</th><th className="text-right">Heures</th><th className="text-right">Revenus</th><th className="text-right hidden sm:table-cell">Coûts</th><th className="text-right">Marge</th></tr></thead>
+                <tbody>
+                  {perVehicle.map((v) => (
+                    <tr key={v.plate}><td><p className="font-medium text-foreground">{v.name}</p><p className="text-[10px] text-muted-foreground font-mono">{v.plate}</p></td><td className="text-right text-muted-foreground">{v.hours}h</td><td className="text-right text-foreground">{formatEur(v.revenue)}</td><td className="text-right text-muted-foreground hidden sm:table-cell">{formatEur(v.cost)}</td><td className={cn("text-right font-semibold", v.margin >= 0 ? "text-success" : "text-destructive")}>{formatEur(v.margin)}</td></tr>
+                  ))}
+                  {perVehicle.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">Aucune donnée</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Top students */}
+          <div className="glass-card rounded-xl p-5">
+            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-primary" /> Top 5 élèves</h2>
+            <div className="space-y-2.5">
+              {perStudent.map((s, i) => (
+                <div key={s.name} className="flex items-center gap-3">
+                  <span className="w-5 text-xs text-muted-foreground text-right font-medium">{i + 1}.</span>
+                  <span className="flex-1 text-sm text-foreground font-medium">{s.name}</span>
+                  <span className="text-xs text-muted-foreground">{s.hours}h</span>
+                  <span className="text-sm font-semibold text-foreground">{formatEur(s.revenue)}</span>
+                </div>
+              ))}
+              {perStudent.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Aucune donnée</p>}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-3 italic">⚠ Revenus estimés au prorata des heures réalisées par rapport aux heures achetées dans les formules.</p>
+          </div>
+
+          <CashFlowForecast invoices={invoices} expenses={expenses} payments={payments} />
+          <div className="grid md:grid-cols-2 gap-4">
+            <PaymentDelayAnalysis invoices={invoices} payments={payments} />
+            <RevenueByActivity lessons={lessons} students={students} />
+          </div>
+          <SeasonalityChart invoices={invoices} lessons={lessons} />
+        </TabsContent>
+
+        <TabsContent value="depenses" className="mt-4">
+          <ExpensesTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
