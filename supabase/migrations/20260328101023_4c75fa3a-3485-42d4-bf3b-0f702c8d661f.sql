@@ -1,0 +1,2 @@
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS tva_regime text NOT NULL DEFAULT 'assujetti';
+COMMENT ON COLUMN public.organizations.tva_regime IS 'Régime fiscal TVA: assujetti ou franchise_en_base';
