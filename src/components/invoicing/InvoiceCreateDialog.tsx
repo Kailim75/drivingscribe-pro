@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -26,14 +26,33 @@ interface Props {
   students: { id: string; first_name: string; last_name: string }[];
   onCreate: (data: any, opts: { onSuccess: () => void }) => void;
   isPending: boolean;
+  editInvoice?: any;
+  onEdit?: (data: any, opts: { onSuccess: () => void }) => void;
+  isEditPending?: boolean;
 }
 
-export default function InvoiceCreateDialog({ open, onOpenChange, docType, students, onCreate, isPending }: Props) {
+export default function InvoiceCreateDialog({ open, onOpenChange, docType, students, onCreate, isPending, editInvoice, onEdit, isEditPending }: Props) {
   const { organization } = useOrg();
   const [studentId, setStudentId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<Line[]>([{ description: "", quantity: 1, unit_price: 0 }]);
+
+  const isEditing = !!editInvoice;
+
+  useEffect(() => {
+    if (editInvoice && open) {
+      setStudentId(editInvoice.student_id);
+      setDueDate(editInvoice.due_date || "");
+      setNotes(editInvoice.notes || "");
+      const existingLines = editInvoice.invoice_lines?.map((l: any) => ({
+        description: l.description,
+        quantity: Number(l.quantity),
+        unit_price: Number(l.unit_price),
+      })) || [{ description: "", quantity: 1, unit_price: 0 }];
+      setLines(existingLines.length > 0 ? existingLines : [{ description: "", quantity: 1, unit_price: 0 }]);
+    }
+  }, [editInvoice, open]);
 
   const resetForm = () => {
     setStudentId("");
@@ -56,6 +75,24 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
   const handleSubmit = async () => {
     if (!studentId || lines.every((l) => !l.description)) return;
     const validLines = lines.filter((l) => l.description).map((l) => ({ ...l, total_ht: l.quantity * l.unit_price }));
+
+    if (isEditing && onEdit) {
+      onEdit(
+        {
+          id: editInvoice.id,
+          due_date: dueDate || editInvoice.due_date,
+          notes,
+          lines: validLines,
+        },
+        {
+          onSuccess: () => {
+            resetForm();
+            onOpenChange(false);
+          },
+        }
+      );
+      return;
+    }
 
     const { data: numberResult, error: numberError } = await supabase.rpc("next_document_number", {
       _org_id: organization!.id,
@@ -88,6 +125,8 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
     );
   };
 
+  const pending = isEditing ? isEditPending : isPending;
+
   return (
     <Dialog
       open={open}
@@ -98,13 +137,17 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
     >
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{docType === "devis" ? "Nouveau devis" : "Nouvelle facture"}</DialogTitle>
+          <DialogTitle>
+            {isEditing
+              ? `Modifier ${editInvoice.type === "devis" ? "le devis" : "la facture"} ${editInvoice.number}`
+              : docType === "devis" ? "Nouveau devis" : "Nouvelle facture"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-5">
           {/* Student */}
           <div className="space-y-1.5">
             <Label>Élève *</Label>
-            <Select value={studentId} onValueChange={setStudentId}>
+            <Select value={studentId} onValueChange={setStudentId} disabled={isEditing}>
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner un élève..." />
               </SelectTrigger>
@@ -199,8 +242,8 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
             </div>
           </div>
 
-          <Button onClick={handleSubmit} disabled={isPending || !studentId} className="w-full">
-            {isPending ? "Création..." : `Créer le ${docType}`}
+          <Button onClick={handleSubmit} disabled={pending || !studentId} className="w-full">
+            {pending ? "Enregistrement..." : isEditing ? "Enregistrer les modifications" : `Créer le ${docType}`}
           </Button>
         </div>
       </DialogContent>

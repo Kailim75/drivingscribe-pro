@@ -84,6 +84,48 @@ export function useInvoices() {
     },
   });
 
+  const updateWithLines = useMutation({
+    mutationFn: async ({ id, due_date, notes, lines }: {
+      id: string;
+      due_date: string;
+      notes: string;
+      lines: { description: string; quantity: number; unit_price: number; total_ht: number }[];
+    }) => {
+      const totalHt = lines.reduce((s, l) => s + l.total_ht, 0);
+      const inv = invoicesQuery.data?.find((i) => i.id === id);
+      const rate = inv && inv.total_ht > 0 ? (inv.tva_amount / inv.total_ht) * 100 : 20;
+      const tvaAmount = totalHt * (rate / 100);
+      const totalTtc = totalHt + tvaAmount;
+
+      const { error } = await supabase
+        .from("invoices")
+        .update({
+          due_date,
+          notes,
+          total_ht: totalHt,
+          tva_amount: tvaAmount,
+          total_ttc: totalTtc,
+          remaining_amount: totalTtc - (inv?.paid_amount || 0),
+        })
+        .eq("id", id);
+      if (error) throw error;
+
+      await supabase.from("invoice_lines").delete().eq("invoice_id", id);
+      if (lines.length > 0) {
+        const { error: linesError } = await supabase
+          .from("invoice_lines")
+          .insert(lines.map((l) => ({ ...l, invoice_id: id })));
+        if (linesError) throw linesError;
+      }
+    },
+    onSuccess: (_, input) => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      log({ action: "Facture brouillon modifiée", entity: "invoice", entity_id: input.id, details: `${input.lines.length} lignes` });
+      toast({ title: "Facture modifiée" });
+    },
+    onError: () => toast({ title: "Erreur", description: "Impossible de modifier la facture", variant: "destructive" }),
+  });
+
   const convertToInvoice = useMutation({
     mutationFn: async (devisId: string) => {
       const devis = invoicesQuery.data?.find((i) => i.id === devisId);
@@ -150,5 +192,5 @@ export function useInvoices() {
     },
   });
 
-  return { invoices: invoicesQuery.data || [], isLoading: invoicesQuery.isLoading, create, update, convertToInvoice, archive };
+  return { invoices: invoicesQuery.data || [], isLoading: invoicesQuery.isLoading, create, update, updateWithLines, convertToInvoice, archive };
 }
