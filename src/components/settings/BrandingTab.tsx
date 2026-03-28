@@ -69,6 +69,7 @@ export default function BrandingTab() {
         legal_mentions: org.legal_mentions || "",
         signature_enabled: org.signature_enabled || false,
         signature_text: org.signature_text || "",
+        document_template: org.document_template || "moderne",
       });
     }
   }, [organization]);
@@ -101,6 +102,7 @@ export default function BrandingTab() {
       legal_mentions: form.legal_mentions,
       signature_enabled: form.signature_enabled,
       signature_text: form.signature_text,
+      document_template: form.document_template,
     } as any).eq("id", organization.id);
     if (error) { toast.error("Erreur lors de la sauvegarde"); }
     else { toast.success("Personnalisation enregistrée"); await refreshOrg(); }
