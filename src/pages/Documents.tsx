@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Search, FolderOpen, Download, FileText, File, Upload, Plus, Loader2 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
+import DatePeriodFilter, { type Period, getDateRange } from "@/components/DatePeriodFilter";
 import { useDocuments } from "@/hooks/useDocuments";
 import { useStudents } from "@/hooks/useStudents";
 import { cn } from "@/lib/utils";
@@ -25,9 +26,12 @@ export default function Documents() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ name: "", type: "Autre", student_id: "", notes: "" });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [period, setPeriod] = useState<Period>("all");
+  const range = useMemo(() => getDateRange(period), [period]);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const filtered = documents.filter((d) =>
+  const periodDocs = useMemo(() => documents.filter((d) => d.created_at.split("T")[0] >= range.start && d.created_at.split("T")[0] <= range.end), [documents, range]);
+  const filtered = periodDocs.filter((d) =>
     d.name.toLowerCase().includes(search.toLowerCase()) || d.type.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -59,11 +63,14 @@ export default function Documents() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Documents</h1>
-          <p className="page-subtitle">{documents.length} documents</p>
+          <p className="page-subtitle">{periodDocs.length} documents</p>
         </div>
-        <button onClick={() => { setForm({ name: "", type: "Autre", student_id: "", notes: "" }); setSelectedFile(null); setDialogOpen(true); }} className="btn-primary">
-          <Plus className="w-4 h-4" /> Ajouter un document
-        </button>
+        <div className="flex gap-2 flex-wrap items-center">
+          <DatePeriodFilter value={period} onChange={setPeriod} />
+          <button onClick={() => { setForm({ name: "", type: "Autre", student_id: "", notes: "" }); setSelectedFile(null); setDialogOpen(true); }} className="btn-primary">
+            <Plus className="w-4 h-4" /> Ajouter un document
+          </button>
+        </div>
       </div>
 
       <div className="relative">

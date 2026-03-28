@@ -84,9 +84,10 @@ export default function ExpensesTab() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{expenses.length} dépenses · {formatEur(totalFixed + totalDirect)} total</p>
-        <div className="flex gap-2">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <p className="text-sm text-muted-foreground">{periodExpenses.length} dépenses · {formatEur(totalFixed + totalDirect)} total</p>
+        <div className="flex gap-2 flex-wrap items-center">
+          <DatePeriodFilter value={period} onChange={setPeriod} />
           <button onClick={handleExport} className="btn-secondary" title="Exporter CSV"><Download className="w-4 h-4" /> Export</button>
           <button onClick={openCreate} className="btn-primary"><Plus className="w-4 h-4" /> Nouvelle dépense</button>
         </div>
