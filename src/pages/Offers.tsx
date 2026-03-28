@@ -76,7 +76,7 @@ export default function Offers() {
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Catalogue d'offres</h1>
+          <h1 className="page-title">Offres</h1>
           <p className="page-subtitle">{offers.filter((o) => o.active).length} offre{offers.filter((o) => o.active).length > 1 ? "s" : ""} active{offers.filter((o) => o.active).length > 1 ? "s" : ""}</p>
         </div>
         <div className="flex items-center gap-2">
