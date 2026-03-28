@@ -74,6 +74,8 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
 
   const resetForm = () => {
     setStudentId("");
+    setSelectedOfferId("");
+    setDueDate("");
     setDueDate("");
     setNotes("");
     setLines([{ description: "", quantity: 1, unit_price: 0 }]);
