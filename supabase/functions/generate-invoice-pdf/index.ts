@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
 
     // Document title
     y += 6;
-    doc.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
+    doc.setTextColor(headerColor.r, headerColor.g, headerColor.b);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.text(`${docLabel} ${invoice.number}`, margin, y);
