@@ -598,7 +598,7 @@ export default function WeeklyCalendarView({
                     return (
                       <TimeSlotCell key={`${dateKey}-${hour}`} date={day} hour={hour} isEven={hourIdx % 2 === 0}>
                         {hour === HOURS[0] && (lessonsByDay[dateKey] || []).map((l) => (
-                          <DraggableLessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} onUpdateStatus={onUpdateStatus} onDeleteLesson={onDeleteLesson} />
+                          <DraggableLessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} onUpdateStatus={onUpdateStatus} onDeleteLesson={onDeleteLesson} onEditLesson={onEditLesson} />
                         ))}
                       </TimeSlotCell>
                     );
