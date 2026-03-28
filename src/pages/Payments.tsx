@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Plus, Search, CreditCard, Banknote, Building2, FileText, Loader2, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import DatePeriodFilter, { type Period, getDateRange } from "@/components/DatePeriodFilter";
 import { usePayments } from "@/hooks/usePayments";
 import { useInvoices } from "@/hooks/useInvoices";
 import { useStudents } from "@/hooks/useStudents";
@@ -31,6 +32,8 @@ export default function Payments() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [period, setPeriod] = useState<Period>("month");
+  const range = useMemo(() => getDateRange(period), [period]);
   const [form, setForm] = useState({ student_id: "", invoice_id: "", amount: 0, method: "carte" as PaymentMethod, date: new Date().toISOString().split("T")[0], reference: "", notes: "" });
 
   // Smart payment: auto-select invoice & pre-fill amount when student changes
@@ -55,17 +58,19 @@ export default function Payments() {
     }
   };
 
-  const filtered = payments.filter((p) => {
+  const periodPayments = useMemo(() => payments.filter((p) => p.date >= range.start && p.date <= range.end), [payments, range]);
+
+  const filtered = periodPayments.filter((p) => {
     const name = p.students ? `${p.students.first_name} ${p.students.last_name}` : "";
     return name.toLowerCase().includes(search.toLowerCase()) || p.reference.toLowerCase().includes(search.toLowerCase());
   });
 
-  const totalReceived = payments.reduce((s, p) => s + p.amount, 0);
+  const totalReceived = periodPayments.reduce((s, p) => s + p.amount, 0);
   const methods = (Object.keys(methodConfig) as PaymentMethod[]);
   const totalByMethod = methods.map((m) => ({
     method: m,
-    total: payments.filter((p) => p.method === m).reduce((s, p) => s + p.amount, 0),
-    count: payments.filter((p) => p.method === m).length,
+    total: periodPayments.filter((p) => p.method === m).reduce((s, p) => s + p.amount, 0),
+    count: periodPayments.filter((p) => p.method === m).length,
   }));
 
   const studentInvoices = invoices.filter((i) => i.student_id === form.student_id && i.type === "facture" && i.remaining_amount > 0);
