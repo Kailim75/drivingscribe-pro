@@ -440,6 +440,7 @@ function TemplateMiniPreview({ template, color }: { template: DocumentTemplate; 
 }
 
 function DocumentPreview({ form, org }: { form: BrandingForm; org: any }) {
+  const isFranchisePreview = (org.tva_regime || "assujetti") === "franchise_en_base";
   const logoUrl = form.document_logo_url || form.logo_url;
   const t = form.document_template;
   const isMinimal = t === "minimaliste";
