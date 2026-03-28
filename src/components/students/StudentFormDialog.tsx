@@ -14,6 +14,7 @@ interface Props {
   onSubmit: (data: StudentFormData & { payer_id?: string | null; _skipDuplicateCheck?: boolean }) => void;
   loading?: boolean;
   initial?: Partial<StudentFormData> & { payer_id?: string | null };
+  duplicateDetected?: boolean;
 }
 
 export default function StudentFormDialog({ open, onClose, onSubmit, loading, initial }: Props) {
