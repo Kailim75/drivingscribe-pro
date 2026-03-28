@@ -52,6 +52,11 @@ Deno.serve(async (req) => {
     const isDevis = invoice.type === "devis";
     const docLabel = isDevis ? "DEVIS" : "FACTURE";
 
+    // Fiscal regime
+    const tvaRegime = org.tva_regime || "assujetti";
+    const isFranchise = tvaRegime === "franchise_en_base";
+    const franchiseMention = "TVA non applicable, art. 293 B du CGI";
+
     // Branding config
     const primaryColor = hexToRgb(org.primary_color || "#1e40af");
     const docLogoUrl = org.document_logo_url || org.logo_url || null;
