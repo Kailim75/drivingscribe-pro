@@ -17,7 +17,7 @@ interface Props {
   duplicateDetected?: boolean;
 }
 
-export default function StudentFormDialog({ open, onClose, onSubmit, loading, initial }: Props) {
+export default function StudentFormDialog({ open, onClose, onSubmit, loading, initial, duplicateDetected }: Props) {
   const { payers } = usePayers();
   const [form, setForm] = useState<StudentFormData>({
     first_name: "", last_name: "", phone: "", email: "", address: "",
@@ -25,7 +25,6 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
   });
   const [payerId, setPayerId] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [duplicateWarning, setDuplicateWarning] = useState(false);
 
   useEffect(() => {
     if (initial) {
@@ -36,7 +35,6 @@ export default function StudentFormDialog({ open, onClose, onSubmit, loading, in
       setPayerId("");
     }
     setErrors({});
-    setDuplicateWarning(false);
   }, [initial, open]);
 
   const set = (k: keyof StudentFormData, v: string) => {
