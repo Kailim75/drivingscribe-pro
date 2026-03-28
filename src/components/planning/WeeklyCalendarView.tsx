@@ -3,7 +3,7 @@ import { DndContext, DragOverlay, useDraggable, useDroppable, DragEndEvent, Drag
 import { format, startOfWeek, addDays, isSameDay, isToday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, GripVertical, User, Loader2, Search, Clock, Car, UserCheck, CheckCircle2, XCircle, AlertTriangle, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, GripVertical, User, Loader2, Search, Clock, Car, UserCheck, CheckCircle2, XCircle, AlertTriangle, Trash2, Pencil } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,7 +119,7 @@ function TimeSlotCell({ date, hour, isEven, children }: { date: Date; hour: numb
 }
 
 // Draggable lesson block rendered on the grid
-function DraggableLessonBlock({ lesson, onClick, onUpdateStatus, onDeleteLesson }: { lesson: Lesson; onClick: () => void; onUpdateStatus?: (data: { id: string; status: string }) => void; onDeleteLesson?: (id: string) => void }) {
+function DraggableLessonBlock({ lesson, onClick, onUpdateStatus, onDeleteLesson, onEditLesson }: { lesson: Lesson; onClick: () => void; onUpdateStatus?: (data: { id: string; status: string }) => void; onDeleteLesson?: (id: string) => void; onEditLesson?: (lesson: Lesson) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `lesson-${lesson.id}`,
     data: { type: "lesson", lesson },
@@ -189,6 +189,17 @@ function DraggableLessonBlock({ lesson, onClick, onUpdateStatus, onDeleteLesson 
         </motion.div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-44">
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditLesson?.(lesson);
+          }}
+          className="gap-2 text-xs"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+          Modifier la séance
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs">Changer le statut</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {statusOptions.map((opt) => (
@@ -339,6 +350,12 @@ export default function WeeklyCalendarView({
         toast.success("Séance déplacée", {
           description: `${lesson.students?.first_name} ${lesson.students?.last_name?.[0]}. → ${format(date, "EEE d MMM", { locale: fr })} à ${newStart.slice(0, 5)}`,
           action: {
+            label: "Modifier",
+            onClick: () => {
+              onEditLesson({ ...lesson, date: dateStr, start_time: newStart, end_time: newEnd });
+            },
+          },
+          cancel: {
             label: "Annuler",
             onClick: () => {
               onUpdateLesson({
@@ -587,7 +604,7 @@ export default function WeeklyCalendarView({
                     return (
                       <TimeSlotCell key={`${dateKey}-${hour}`} date={day} hour={hour} isEven={hourIdx % 2 === 0}>
                         {hour === HOURS[0] && (lessonsByDay[dateKey] || []).map((l) => (
-                          <DraggableLessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} onUpdateStatus={onUpdateStatus} onDeleteLesson={onDeleteLesson} />
+                          <DraggableLessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} onUpdateStatus={onUpdateStatus} onDeleteLesson={onDeleteLesson} onEditLesson={onEditLesson} />
                         ))}
                       </TimeSlotCell>
                     );
