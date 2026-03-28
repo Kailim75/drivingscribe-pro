@@ -706,6 +706,7 @@ export type Database = {
           currency: string
           document_header: string | null
           document_logo_url: string | null
+          document_template: string | null
           email: string | null
           footer_text: string | null
           id: string
@@ -741,6 +742,7 @@ export type Database = {
           currency?: string
           document_header?: string | null
           document_logo_url?: string | null
+          document_template?: string | null
           email?: string | null
           footer_text?: string | null
           id?: string
@@ -776,6 +778,7 @@ export type Database = {
           currency?: string
           document_header?: string | null
           document_logo_url?: string | null
+          document_template?: string | null
           email?: string | null
           footer_text?: string | null
           id?: string

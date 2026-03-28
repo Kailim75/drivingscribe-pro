@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Upload, RotateCcw, Eye, Palette, FileText, Building2, Save, Loader2, X } from "lucide-react";
+import { Upload, RotateCcw, Eye, Palette, FileText, Building2, Save, Loader2, X, LayoutTemplate } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { toast } from "sonner";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+
+type DocumentTemplate = "moderne" | "classique" | "minimaliste";
 
 interface BrandingForm {
   logo_url: string;
@@ -20,6 +22,7 @@ interface BrandingForm {
   legal_mentions: string;
   signature_enabled: boolean;
   signature_text: string;
+  document_template: DocumentTemplate;
 }
 
 const DEFAULTS: BrandingForm = {
@@ -33,7 +36,14 @@ const DEFAULTS: BrandingForm = {
   legal_mentions: "",
   signature_enabled: false,
   signature_text: "",
+  document_template: "moderne",
 };
+
+const TEMPLATES: { key: DocumentTemplate; label: string; desc: string }[] = [
+  { key: "moderne", label: "Moderne", desc: "Couleurs vives, en-têtes colorés, style contemporain" },
+  { key: "classique", label: "Classique", desc: "Mise en page traditionnelle, sobre et professionnelle" },
+  { key: "minimaliste", label: "Minimaliste", desc: "Épuré, peu de couleurs, focus sur le contenu" },
+];
 
 export default function BrandingTab() {
   const { organization, refreshOrg, isOwnerOrAdmin } = useOrg();
@@ -59,6 +69,7 @@ export default function BrandingTab() {
         legal_mentions: org.legal_mentions || "",
         signature_enabled: org.signature_enabled || false,
         signature_text: org.signature_text || "",
+        document_template: org.document_template || "moderne",
       });
     }
   }, [organization]);
@@ -91,6 +102,7 @@ export default function BrandingTab() {
       legal_mentions: form.legal_mentions,
       signature_enabled: form.signature_enabled,
       signature_text: form.signature_text,
+      document_template: form.document_template,
     } as any).eq("id", organization.id);
     if (error) { toast.error("Erreur lors de la sauvegarde"); }
     else { toast.success("Personnalisation enregistrée"); await refreshOrg(); }
@@ -206,7 +218,41 @@ export default function BrandingTab() {
         </div>
       </motion.div>
 
-      {/* Block 3: Documents */}
+      {/* Block 2.5: Template selector */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }} className="glass-card rounded-xl p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <LayoutTemplate className="w-4 h-4 text-primary" />
+          <h2 className="font-semibold text-foreground">Style de document</h2>
+        </div>
+        <p className="text-xs text-muted-foreground">Choisissez le modèle de mise en page pour vos factures, devis et autres documents PDF.</p>
+        <div className="grid grid-cols-3 gap-3">
+          {TEMPLATES.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => isOwnerOrAdmin && setForm((f) => ({ ...f, document_template: t.key }))}
+              className={cn(
+                "relative p-4 rounded-xl border-2 text-left transition-all duration-200",
+                form.document_template === t.key
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-border hover:border-primary/30",
+                !isOwnerOrAdmin && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {/* Mini preview */}
+              <TemplateMiniPreview template={t.key} color={form.primary_color} />
+              <p className="text-sm font-semibold text-foreground mt-3">{t.label}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{t.desc}</p>
+              {form.document_template === t.key && (
+                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                  <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </motion.div>
+
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass-card rounded-xl p-6 space-y-5">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-primary" />
@@ -345,22 +391,82 @@ function ColorPicker({ label, value, onChange, disabled }: { label: string; valu
   );
 }
 
+function TemplateMiniPreview({ template, color }: { template: DocumentTemplate; color: string }) {
+  if (template === "classique") {
+    return (
+      <div className="h-16 rounded border border-border bg-white p-1.5 space-y-1">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded-sm border border-gray-300" />
+          <div className="h-1.5 bg-gray-300 rounded flex-1" />
+        </div>
+        <div className="h-px bg-gray-300" />
+        <div className="space-y-0.5">
+          <div className="h-1 bg-gray-200 rounded w-full" />
+          <div className="h-1 bg-gray-200 rounded w-4/5" />
+          <div className="h-1 bg-gray-200 rounded w-3/5" />
+        </div>
+        <div className="flex justify-end"><div className="h-1.5 w-8 rounded" style={{ backgroundColor: color }} /></div>
+      </div>
+    );
+  }
+  if (template === "minimaliste") {
+    return (
+      <div className="h-16 rounded border border-border bg-white p-1.5 space-y-1.5">
+        <div className="h-1.5 bg-gray-200 rounded w-1/3" />
+        <div className="space-y-0.5 mt-2">
+          <div className="h-0.5 bg-gray-100 rounded w-full" />
+          <div className="h-0.5 bg-gray-100 rounded w-full" />
+          <div className="h-0.5 bg-gray-100 rounded w-4/5" />
+        </div>
+        <div className="flex justify-end"><div className="h-1.5 w-8 rounded bg-gray-800" /></div>
+      </div>
+    );
+  }
+  // Moderne (default)
+  return (
+    <div className="h-16 rounded border border-border bg-white p-1.5 space-y-1">
+      <div className="flex items-center gap-1">
+        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: color + "20" }} />
+        <div className="h-1.5 rounded flex-1" style={{ backgroundColor: color }} />
+      </div>
+      <div className="space-y-0.5">
+        <div className="h-1 rounded w-full" style={{ backgroundColor: color + "15" }} />
+        <div className="h-1 bg-gray-100 rounded w-4/5" />
+        <div className="h-1 bg-gray-100 rounded w-3/5" />
+      </div>
+      <div className="flex justify-end"><div className="h-1.5 w-8 rounded" style={{ backgroundColor: color }} /></div>
+    </div>
+  );
+}
+
 function DocumentPreview({ form, org }: { form: BrandingForm; org: any }) {
   const logoUrl = form.document_logo_url || form.logo_url;
+  const t = form.document_template;
+  const isMinimal = t === "minimaliste";
+  const isClassic = t === "classique";
+
+  const headerBorderStyle = isMinimal
+    ? { borderColor: "#e5e7eb" }
+    : { borderColor: form.primary_color + "30" };
+
+  const titleColor = isMinimal ? "#111" : form.primary_color;
+  const tableHeaderBg = isMinimal ? "#333" : isClassic ? "#555" : form.primary_color;
+  const totalBg = isMinimal ? "#333" : form.primary_color;
+
   return (
     <div className="bg-white rounded-lg border border-border shadow-sm p-6 max-w-md mx-auto text-black" style={{ minHeight: 360, fontSize: 10 }}>
       {/* Header */}
-      <div className="flex items-start justify-between mb-4 pb-3 border-b" style={{ borderColor: form.primary_color + "30" }}>
-        <div className="flex items-center gap-3">
-          {logoUrl ? (
+      <div className={cn("flex items-start justify-between mb-4 pb-3 border-b", isMinimal && "border-gray-200")} style={!isMinimal ? headerBorderStyle : undefined}>
+        <div className={cn("flex items-center gap-3", isMinimal && "flex-col items-start gap-1")}>
+          {!isMinimal && logoUrl ? (
             <img src={logoUrl} alt="Logo" className="w-10 h-10 object-contain" />
-          ) : (
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: form.primary_color + "15" }}>
-              <span className="font-bold text-sm" style={{ color: form.primary_color }}>{(org.name || "D").slice(0, 2).toUpperCase()}</span>
+          ) : !isMinimal ? (
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: (isClassic ? "#eee" : form.primary_color + "15") }}>
+              <span className="font-bold text-sm" style={{ color: isClassic ? "#333" : form.primary_color }}>{(org.name || "D").slice(0, 2).toUpperCase()}</span>
             </div>
-          )}
+          ) : null}
           <div>
-            <p className="font-bold text-sm" style={{ color: form.primary_color }}>{org.name}</p>
+            <p className={cn("font-bold", isMinimal ? "text-sm text-gray-800" : "text-sm")} style={!isMinimal ? { color: titleColor } : undefined}>{org.name}</p>
             {form.document_header && <p className="text-[8px] text-gray-500">{form.document_header}</p>}
           </div>
         </div>
@@ -374,13 +480,13 @@ function DocumentPreview({ form, org }: { form: BrandingForm; org: any }) {
 
       {/* Title */}
       <div className="mb-4">
-        <p className="font-bold text-base" style={{ color: form.primary_color }}>FACTURE F-2025-001</p>
+        <p className={cn("font-bold", isMinimal ? "text-sm" : "text-base")} style={{ color: titleColor }}>FACTURE F-2025-001</p>
         <p className="text-[8px] text-gray-500">Date : 28/03/2026 — Échéance : 27/04/2026</p>
       </div>
 
       {/* Table */}
       <div className="mb-4">
-        <div className="flex py-1.5 px-2 rounded text-white text-[8px] font-bold" style={{ backgroundColor: form.primary_color }}>
+        <div className={cn("flex py-1.5 px-2 text-white text-[8px] font-bold", isMinimal ? "rounded-none" : "rounded")} style={{ backgroundColor: tableHeaderBg }}>
           <span className="flex-1">Description</span>
           <span className="w-12 text-right">Qté</span>
           <span className="w-16 text-right">P.U. HT</span>
@@ -390,7 +496,7 @@ function DocumentPreview({ form, org }: { form: BrandingForm; org: any }) {
           { desc: "Leçon de conduite (1h)", qty: 5, pu: 45, total: 225 },
           { desc: "Forfait code", qty: 1, pu: 300, total: 300 },
         ].map((l, i) => (
-          <div key={i} className={cn("flex py-1.5 px-2 text-[8px]", i % 2 === 0 && "bg-gray-50")}>
+          <div key={i} className={cn("flex py-1.5 px-2 text-[8px]", !isMinimal && i % 2 === 0 && "bg-gray-50", isMinimal && "border-b border-gray-100")}>
             <span className="flex-1">{l.desc}</span>
             <span className="w-12 text-right">{l.qty}</span>
             <span className="w-16 text-right">{l.pu.toFixed(2)} €</span>
@@ -401,7 +507,7 @@ function DocumentPreview({ form, org }: { form: BrandingForm; org: any }) {
           <div className="space-y-0.5 text-right">
             <p>Total HT : <b>525,00 €</b></p>
             <p>TVA (20%) : <b>105,00 €</b></p>
-            <div className="px-3 py-1 rounded text-white font-bold mt-1" style={{ backgroundColor: form.primary_color }}>
+            <div className="px-3 py-1 rounded text-white font-bold mt-1" style={{ backgroundColor: totalBg }}>
               Total TTC : 630,00 €
             </div>
           </div>
@@ -417,7 +523,7 @@ function DocumentPreview({ form, org }: { form: BrandingForm; org: any }) {
       )}
 
       {/* Footer */}
-      <div className="mt-4 pt-2 border-t text-center text-[7px] text-gray-400" style={{ borderColor: form.primary_color + "20" }}>
+      <div className="mt-4 pt-2 border-t text-center text-[7px] text-gray-400" style={{ borderColor: isMinimal ? "#e5e7eb" : form.primary_color + "20" }}>
         {form.footer_text && <p className="mb-0.5">{form.footer_text}</p>}
         {form.legal_mentions && <p className="mb-0.5">{form.legal_mentions}</p>}
         <p>{org.name} — {org.siret || ""} — {org.tva_number || ""}</p>
