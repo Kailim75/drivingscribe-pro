@@ -61,6 +61,11 @@ Deno.serve(async (req) => {
     const legalMentions = org.legal_mentions || "";
     const signatureEnabled = org.signature_enabled || false;
     const signatureText = org.signature_text || "";
+    const template = org.document_template || "moderne";
+    const isMinimal = template === "minimaliste";
+    const isClassic = template === "classique";
+    const headerColor = isMinimal ? { r: 51, g: 51, b: 51 } : isClassic ? { r: 85, g: 85, b: 85 } : primaryColor;
+    const tableHeaderColor = isMinimal ? { r: 51, g: 51, b: 51 } : isClassic ? { r: 85, g: 85, b: 85 } : primaryColor;
 
     // Create PDF
     const doc = new jsPDF({ unit: "mm", format: "a4" });
