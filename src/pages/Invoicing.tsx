@@ -158,7 +158,7 @@ export default function Invoicing() {
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Facturation</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {invoices.length} document{invoices.length > 1 ? "s" : ""}
+            {stats.factureCount} facture{stats.factureCount > 1 ? "s" : ""} · {stats.devisCount} devis{stats.enRetard > 0 ? ` · ${stats.enRetard} en retard` : ""}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -190,6 +190,25 @@ export default function Invoicing() {
         </TabsList>
 
         <TabsContent value="standard" className="space-y-6 mt-4">
+          {/* Micro-synthèse facturation */}
+          {stats.enRetard > 0 && (
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border bg-warning/5 text-warning border-warning/10 text-[13px] font-medium">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span className="flex-1">
+                {stats.enRetard} facture{stats.enRetard > 1 ? "s" : ""} en retard pour {formatEur(stats.totalImpaye)} — relance recommandée
+              </span>
+              <button onClick={() => setStatusFilter("en_retard")} className="text-xs font-semibold hover:underline whitespace-nowrap opacity-80 hover:opacity-100">
+                Filtrer →
+              </button>
+            </div>
+          )}
+          {stats.enRetard === 0 && stats.totalImpaye === 0 && invoices.length > 0 && (
+            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl border bg-success/5 text-success border-success/10 text-[13px] font-medium">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <span>Toutes les factures sont à jour — aucune action requise</span>
+            </div>
+          )}
+
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <KpiCard label="Total facturé" value={formatEur(stats.totalFacture)} icon={<TrendingUp className="w-4 h-4" />} variant="default" />

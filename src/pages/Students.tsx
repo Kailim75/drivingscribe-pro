@@ -100,7 +100,9 @@ export default function Students() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Élèves</h1>
-          <p className="page-subtitle">{students.length} élève{students.length > 1 ? "s" : ""} enregistré{students.length > 1 ? "s" : ""}</p>
+          <p className="page-subtitle">
+            {students.filter(s => s.status === "actif").length} actif{students.filter(s => s.status === "actif").length > 1 ? "s" : ""} · {students.filter(s => s.status === "en_pause").length} en pause · {students.filter(s => s.status === "archive").length} archivé{students.filter(s => s.status === "archive").length > 1 ? "s" : ""}
+          </p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => exportToCsv("eleves.csv", ["Prénom", "Nom", "Email", "Téléphone", "Statut", "Activité"], filtered.map((s) => [s.first_name, s.last_name, s.email, s.phone, statusLabels[s.status] || s.status, s.activity_type]))} className="btn-secondary" title="Exporter CSV">

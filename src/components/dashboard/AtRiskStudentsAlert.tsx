@@ -52,15 +52,20 @@ export default function AtRiskStudentsAlert({ students, allLessons, allFormulas,
           <Link
             key={student.id}
             to={`/eleves/${student.id}`}
-            className="flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors"
+            className="flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
           >
             <div className="flex items-center gap-2.5">
               <Activity className={cn("w-4 h-4", score.level === "critique" ? "text-destructive" : "text-warning")} />
               <span className="text-sm font-medium text-foreground">{student.first_name} {student.last_name}</span>
             </div>
-            <span className={cn("status-badge text-xs", healthBgColors[score.level])}>
-              {score.overall}% · {score.label}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={cn("status-badge text-xs", healthBgColors[score.level])}>
+                {score.overall}% · {score.label}
+              </span>
+              <span className="text-[11px] font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                Ouvrir →
+              </span>
+            </div>
           </Link>
         ))}
       </div>
