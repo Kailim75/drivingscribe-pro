@@ -257,7 +257,7 @@ export default function Students() {
         )}
       </motion.div>
 
-      <StudentFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} loading={create.isPending} />
+      <StudentFormDialog open={showForm} onClose={() => { setShowForm(false); setDuplicateWarning(false); }} onSubmit={handleCreate} loading={create.isPending} duplicateDetected={duplicateWarning} />
       <StudentFormDialog open={!!editStudent} onClose={() => setEditStudent(null)} onSubmit={handleEdit} loading={update.isPending} initial={editStudent} />
 
       <AlertDialog open={!!archiveTarget} onOpenChange={(v) => !v && setArchiveTarget(null)}>
