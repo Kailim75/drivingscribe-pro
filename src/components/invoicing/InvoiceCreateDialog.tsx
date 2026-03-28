@@ -214,6 +214,19 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
             </div>
           )}
 
+          {/* Auto-formula indicator */}
+          {!isEditing && selectedOfferId && (() => {
+            const sel = activeOffers.find((o) => o.id === selectedOfferId);
+            return sel && (sel.type === "pack" || sel.type === "forfait") ? (
+              <Alert className="border-primary/30 bg-primary/5">
+                <Info className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-xs text-primary">
+                  Une formule <span className="font-semibold">{sel.name}</span> ({sel.type === "pack" ? `${sel.hours}h` : "forfait"}) sera automatiquement attribuée à l'élève lors de la validation.
+                </AlertDescription>
+              </Alert>
+            ) : null;
+          })()}
+
           <div className="space-y-1.5">
             <Label>Date d'échéance</Label>
             <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
