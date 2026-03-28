@@ -128,7 +128,7 @@ export default function Import() {
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[800px] mx-auto space-y-5">
       <div>
-        <h1 className="page-title">Import initial</h1>
+        <h1 className="page-title">Import</h1>
         <p className="page-subtitle">Importez vos élèves et données existantes par fichier CSV</p>
       </div>
 

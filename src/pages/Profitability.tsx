@@ -109,8 +109,8 @@ export default function Profitability() {
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Rentabilité</h1>
-          <p className="page-subtitle">Analyse de performance et gestion des charges</p>
+          <h1 className="page-title">Finances</h1>
+          <p className="page-subtitle">Rentabilité, charges et analyse de performance</p>
         </div>
         {mainTab === "analyse" && (
           <div className="flex items-center bg-card rounded-lg p-0.5 border border-border">

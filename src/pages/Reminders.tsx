@@ -51,7 +51,7 @@ export default function Reminders() {
     <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto space-y-5">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Rappels & Relances</h1>
+          <h1 className="page-title">Rappels</h1>
           <p className="page-subtitle">{planned.length} planifié{planned.length > 1 ? "s" : ""} · {sent.length} envoyé{sent.length > 1 ? "s" : ""}</p>
         </div>
         <button onClick={() => { setForm({ type: "séance", student_id: "", invoice_id: "", message: "", scheduled_at: new Date().toISOString().split("T")[0] }); setDialogOpen(true); }} className="btn-primary">
