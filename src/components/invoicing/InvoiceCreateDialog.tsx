@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useOffers } from "@/hooks/useOffers";
+import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { toast } from "@/hooks/use-toast";
 
 const formatEur = (n: number) =>
