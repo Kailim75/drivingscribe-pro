@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical,
   Loader2, Users, Zap, TrendingUp, Clock, AlertCircle, CheckCircle2,
-  Filter, X,
+  Filter, X, Pencil,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ export default function Invoicing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const mainTab = searchParams.get("tab") === "groupee" ? "groupee" : "standard";
 
-  const { invoices, isLoading, create, update, convertToInvoice, archive } = useInvoices();
+  const { invoices, isLoading, create, update, updateWithLines, convertToInvoice, archive } = useInvoices();
   const { students } = useStudents();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
@@ -55,6 +55,7 @@ export default function Invoicing() {
   const [docType, setDocType] = useState<"devis" | "facture">("facture");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [sendConfirm, setSendConfirm] = useState<string | null>(null);
+  const [editInvoice, setEditInvoice] = useState<any>(null);
 
   // Computed stats
   const stats = useMemo(() => {
