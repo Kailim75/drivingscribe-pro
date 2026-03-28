@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useOffers } from "@/hooks/useOffers";
+import { useStudentFormulas } from "@/hooks/useStudentFormulas";
 import { toast } from "@/hooks/use-toast";
 
 const formatEur = (n: number) =>
@@ -38,6 +39,8 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
   const { offers } = useOffers();
   const activeOffers = offers.filter((o) => o.active);
   const [studentId, setStudentId] = useState("");
+  const { formulas: studentFormulas } = useStudentFormulas(studentId || undefined);
+  const activeFormulas = studentFormulas.filter((f) => f.active);
   const [selectedOfferId, setSelectedOfferId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
@@ -189,6 +192,25 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
               </SelectContent>
             </Select>
           </div>
+
+          {/* Active formulas recap */}
+          {studentId && activeFormulas.length > 0 && (
+            <Alert className="border-warning/30 bg-warning/5">
+              <PackageCheck className="h-4 w-4 text-warning" />
+              <AlertDescription className="text-xs space-y-1">
+                <span className="font-semibold text-foreground">
+                  Formules actives ({activeFormulas.length}) :
+                </span>
+                <ul className="list-disc list-inside text-muted-foreground">
+                  {activeFormulas.map((f) => (
+                    <li key={f.id}>
+                      {f.offer_name} — {f.offer_type === "forfait" ? "Forfait" : `${f.hours_bought}h`} ({formatEur(Number(f.total_price))})
+                    </li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Offer/Pack selector */}
           {!isEditing && activeOffers.length > 0 && (
