@@ -48,10 +48,7 @@ export default function InstructorPortal() {
   const weekEnd = weekDates[6].toISOString().split("T")[0];
   const { lessons: weekLessons } = useLessons(myInstructor ? { instructorId: myInstructor.id, dateFrom: weekStart, dateTo: weekEnd } : { dateFrom: weekStart, dateTo: weekEnd });
   
-  const weekFilteredLessons = useMemo(() => 
-    weekLessons.filter((l: any) => l.date >= weekStart && l.date <= weekEnd),
-    [weekLessons, weekStart, weekEnd]
-  );
+  const weekFilteredLessons = weekLessons;
 
   const { students } = useStudents();
   const { categories } = useSkillCategories();
