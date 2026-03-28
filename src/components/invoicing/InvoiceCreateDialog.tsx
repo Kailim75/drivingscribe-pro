@@ -38,9 +38,9 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
   const { organization } = useOrg();
   const { offers } = useOffers();
   const activeOffers = offers.filter((o) => o.active);
+  const [studentId, setStudentId] = useState("");
   const { formulas: studentFormulas } = useStudentFormulas(studentId || undefined);
   const activeFormulas = studentFormulas.filter((f) => f.active);
-  const [studentId, setStudentId] = useState("");
   const [selectedOfferId, setSelectedOfferId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
