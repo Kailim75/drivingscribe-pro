@@ -119,7 +119,7 @@ function TimeSlotCell({ date, hour, isEven, children }: { date: Date; hour: numb
 }
 
 // Draggable lesson block rendered on the grid
-function DraggableLessonBlock({ lesson, onClick, onUpdateStatus, onDeleteLesson }: { lesson: Lesson; onClick: () => void; onUpdateStatus?: (data: { id: string; status: string }) => void; onDeleteLesson?: (id: string) => void }) {
+function DraggableLessonBlock({ lesson, onClick, onUpdateStatus, onDeleteLesson, onEditLesson }: { lesson: Lesson; onClick: () => void; onUpdateStatus?: (data: { id: string; status: string }) => void; onDeleteLesson?: (id: string) => void; onEditLesson?: (lesson: Lesson) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `lesson-${lesson.id}`,
     data: { type: "lesson", lesson },
@@ -189,6 +189,17 @@ function DraggableLessonBlock({ lesson, onClick, onUpdateStatus, onDeleteLesson 
         </motion.div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-44">
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditLesson?.(lesson);
+          }}
+          className="gap-2 text-xs"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+          Modifier la séance
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs">Changer le statut</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {statusOptions.map((opt) => (
