@@ -22,9 +22,15 @@ export default function AppLayout() {
         <header className="lg:hidden flex items-center h-14 px-4 border-b border-border bg-card sticky top-0 z-20">
           <MobileMenuButton onClick={() => setMobileOpen(true)} />
           <div className="flex items-center gap-2 ml-3">
-            <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
-              <span className="text-primary font-bold text-[10px]">DF</span>
-            </div>
+            {(organization as any)?.logo_url ? (
+              <img src={(organization as any).logo_url} alt="Logo" className="w-6 h-6 rounded object-contain" />
+            ) : (
+              <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
+                <span className="text-primary font-bold text-[10px]">
+                  {(organization?.name || "D").slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+            )}
             <span className="font-semibold text-foreground text-sm truncate">
               {organization?.name || "Drivflow"}
             </span>
