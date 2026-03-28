@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Plus, Search, CreditCard, Banknote, Building2, FileText, Loader2, MoreHorizontal, Pencil, Trash2, Download } from "lucide-react";
 import { useState, useMemo } from "react";
+import { PaginationControls, usePagination } from "@/components/PaginationControls";
 import DatePeriodFilter, { type Period, getDateRange } from "@/components/DatePeriodFilter";
 import { usePayments } from "@/hooks/usePayments";
 import { useInvoices } from "@/hooks/useInvoices";
@@ -33,6 +34,7 @@ export default function Payments() {
   const [editingPayment, setEditingPayment] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [period, setPeriod] = useState<Period>("month");
+  const [page, setPage] = useState(1);
   const range = useMemo(() => getDateRange(period), [period]);
   const [form, setForm] = useState({ student_id: "", invoice_id: "", amount: 0, method: "carte" as PaymentMethod, date: new Date().toISOString().split("T")[0], reference: "", notes: "" });
 
@@ -202,7 +204,7 @@ export default function Payments() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => {
+              {usePagination(filtered, page).paginated.map((p) => {
                 const cfg = methodConfig[p.method as PaymentMethod] || methodConfig.carte;
                 const studentName = p.students ? `${p.students.first_name} ${p.students.last_name}` : "—";
                 const invNumber = p.invoices?.number || "—";
@@ -243,6 +245,7 @@ export default function Payments() {
             <p className="text-sm">Aucun paiement trouvé</p>
           </div>
         )}
+        <PaginationControls page={page} total={filtered.length} onChange={setPage} />
       </motion.div>
 
       {/* Create/Edit Payment dialog */}

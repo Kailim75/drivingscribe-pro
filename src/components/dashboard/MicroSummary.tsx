@@ -30,7 +30,7 @@ export default function MicroSummary({ message, icon: Icon, variant = "muted", a
   );
 }
 
-export function useDashboardSummaries({
+export function getDashboardSummaries({
   overdueCount,
   totalUnpaid,
   studentsLowHoursCount,
