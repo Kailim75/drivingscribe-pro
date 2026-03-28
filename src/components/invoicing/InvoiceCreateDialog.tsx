@@ -67,9 +67,11 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
     setLines((l) => l.map((line, i) => (i === idx ? { ...line, [field]: value } : line)));
   };
 
-  const tvaRate = organization?.tva_rate || 20;
+  const tvaRegime = (organization as any)?.tva_regime || "assujetti";
+  const isFranchise = tvaRegime === "franchise_en_base";
+  const tvaRate = isFranchise ? 0 : (organization?.tva_rate || 20);
   const totalHt = lines.reduce((s, l) => s + l.quantity * l.unit_price, 0);
-  const tvaAmount = totalHt * (tvaRate / 100);
+  const tvaAmount = isFranchise ? 0 : totalHt * (tvaRate / 100);
   const totalTtc = totalHt + tvaAmount;
 
   const handleSubmit = async () => {
@@ -229,17 +231,26 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
           {/* Totals */}
           <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total HT</span>
+              <span className="text-muted-foreground">{isFranchise ? "Total" : "Total HT"}</span>
               <span className="font-medium">{formatEur(totalHt)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">TVA ({tvaRate}%)</span>
-              <span className="font-medium">{formatEur(tvaAmount)}</span>
-            </div>
-            <div className="flex justify-between text-sm font-bold pt-2 border-t border-border">
-              <span>Total TTC</span>
-              <span className="text-primary">{formatEur(totalTtc)}</span>
-            </div>
+            {!isFranchise && (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">TVA ({tvaRate}%)</span>
+                <span className="font-medium">{formatEur(tvaAmount)}</span>
+              </div>
+            )}
+            {!isFranchise && (
+              <div className="flex justify-between text-sm font-bold pt-2 border-t border-border">
+                <span>Total TTC</span>
+                <span className="text-primary">{formatEur(totalTtc)}</span>
+              </div>
+            )}
+            {isFranchise && (
+              <p className="text-[11px] text-muted-foreground mt-1">
+                TVA non applicable, art. 293 B du CGI
+              </p>
+            )}
           </div>
 
           <Button onClick={handleSubmit} disabled={pending || !studentId} className="w-full">

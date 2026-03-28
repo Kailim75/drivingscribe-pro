@@ -90,7 +90,8 @@ export default function SettingsPage() {
     setSaving(true);
     const { error } = await supabase.from("organizations").update({
       name: form.name, email: form.email, phone: form.phone, address: form.address, siret: form.siret,
-      tva_number: form.tva_number, tva_rate: form.tva_rate, invoice_prefix: form.invoice_prefix, quote_prefix: form.quote_prefix,
+      tva_number: form.tva_number, tva_rate: form.tva_rate, tva_regime: (form as any).tva_regime || 'assujetti',
+      invoice_prefix: form.invoice_prefix, quote_prefix: form.quote_prefix,
       mode: form.mode, cancellation_policy: form.cancellation_policy, webhook_url: form.webhook_url || null,
     } as any).eq("id", organization.id);
     if (error) { toast.error("Erreur lors de la sauvegarde"); } else { toast.success("Paramètres enregistrés"); await refreshOrg(); }
@@ -170,8 +171,41 @@ export default function SettingsPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-6 space-y-5">
           <h2 className="font-semibold text-foreground">Facturation</h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="N° TVA" value={form.tva_number || ""} onChange={(v) => update_field("tva_number", v)} disabled={!isOwnerOrAdmin} />
-            <Field label="Taux TVA (%)" value={String(form.tva_rate || 20)} onChange={(v) => update_field("tva_rate", parseFloat(v) || 20)} disabled={!isOwnerOrAdmin} />
+            <div className="sm:col-span-2 space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Régime fiscal</label>
+              <div className="flex gap-3">
+                {[
+                  { key: "assujetti", label: "Assujetti à la TVA", desc: "TVA appliquée sur les factures" },
+                  { key: "franchise_en_base", label: "Franchise en base de TVA", desc: "Pas de TVA — mention légale obligatoire ajoutée automatiquement" },
+                ].map((regime) => (
+                  <button
+                    key={regime.key}
+                    type="button"
+                    onClick={() => isOwnerOrAdmin && update_field("tva_regime" as any, regime.key)}
+                    className={cn(
+                      "flex-1 p-3 rounded-xl border-2 text-left transition-all duration-200",
+                      (form as any).tva_regime === regime.key ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/30",
+                      !isOwnerOrAdmin && "opacity-50 cursor-not-allowed"
+                    )}
+                  >
+                    <p className="text-sm font-semibold text-foreground">{regime.label}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{regime.desc}</p>
+                  </button>
+                ))}
+              </div>
+              {(form as any).tva_regime === "franchise_en_base" && (
+                <p className="text-[11px] text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 px-3 py-2 rounded-lg">
+                  ⚠️ La mention « TVA non applicable, art. 293 B du CGI » sera ajoutée automatiquement sur tous vos documents.
+                  Les montants de TVA ne seront pas affichés.
+                </p>
+              )}
+            </div>
+            {(form as any).tva_regime !== "franchise_en_base" && (
+              <>
+                <Field label="N° TVA" value={form.tva_number || ""} onChange={(v) => update_field("tva_number", v)} disabled={!isOwnerOrAdmin} />
+                <Field label="Taux TVA (%)" value={String(form.tva_rate || 20)} onChange={(v) => update_field("tva_rate", parseFloat(v) || 20)} disabled={!isOwnerOrAdmin} />
+              </>
+            )}
             <Field label="Préfixe facture" value={form.invoice_prefix || "F"} onChange={(v) => update_field("invoice_prefix", v)} disabled={!isOwnerOrAdmin} />
             <Field label="Préfixe devis" value={form.quote_prefix || "D"} onChange={(v) => update_field("quote_prefix", v)} disabled={!isOwnerOrAdmin} />
             <Field label="Devise" value="EUR (€)" disabled />
