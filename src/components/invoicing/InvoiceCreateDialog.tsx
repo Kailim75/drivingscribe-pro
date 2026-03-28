@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, PackageCheck } from "lucide-react";
+import { Plus, Trash2, PackageCheck, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useOffers } from "@/hooks/useOffers";
@@ -212,6 +213,19 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
               </Select>
             </div>
           )}
+
+          {/* Auto-formula indicator */}
+          {!isEditing && selectedOfferId && (() => {
+            const sel = activeOffers.find((o) => o.id === selectedOfferId);
+            return sel && (sel.type === "pack" || sel.type === "forfait") ? (
+              <Alert className="border-primary/30 bg-primary/5">
+                <Info className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-xs text-primary">
+                  Une formule <span className="font-semibold">{sel.name}</span> ({sel.type === "pack" ? `${sel.hours}h` : "forfait"}) sera automatiquement attribuée à l'élève lors de la validation.
+                </AlertDescription>
+              </Alert>
+            ) : null;
+          })()}
 
           <div className="space-y-1.5">
             <Label>Date d'échéance</Label>
