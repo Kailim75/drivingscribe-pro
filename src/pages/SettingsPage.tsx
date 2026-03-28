@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Building2, Receipt, Shield, Save, Loader2, Bell, Target, Plus, Trash2, GripVertical, Pencil, Archive, Users } from "lucide-react";
+import { Building2, Receipt, Shield, Save, Loader2, Bell, Target, Plus, Trash2, GripVertical, Pencil, Archive, Users, Palette } from "lucide-react";
+import BrandingTab from "@/components/settings/BrandingTab";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
@@ -17,7 +18,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-type Tab = "organisation" | "facturation" | "payeurs" | "equipe" | "notifications" | "competences";
+type Tab = "organisation" | "facturation" | "payeurs" | "equipe" | "notifications" | "competences" | "personnalisation";
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
 
 export default function SettingsPage() {
@@ -105,6 +106,7 @@ export default function SettingsPage() {
     { key: "equipe" as Tab, label: "Équipe", icon: Users },
     { key: "competences" as Tab, label: "Compétences", icon: Target },
     { key: "notifications" as Tab, label: "Notifications", icon: Bell },
+    { key: "personnalisation" as Tab, label: "Personnalisation", icon: Palette },
   ];
 
   if (!organization) return null;
