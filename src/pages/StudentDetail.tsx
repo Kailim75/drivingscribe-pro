@@ -124,9 +124,10 @@ export default function StudentDetail() {
       )}
 
       {/* Hours summary */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold text-foreground">{totalHoursBought}h</p><p className="text-xs text-muted-foreground mt-1">Achetées</p></div>
         <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold text-success">{totalHoursDone}h</p><p className="text-xs text-muted-foreground mt-1">Réalisées</p></div>
+        <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold text-info">{totalHoursPlanned}h</p><p className="text-xs text-muted-foreground mt-1">Planifiées</p></div>
         <div className="glass-card rounded-xl p-4 text-center"><p className={cn("text-2xl font-bold", totalHoursRemaining <= 3 ? "text-warning" : "text-foreground")}>{totalHoursRemaining}h</p><p className="text-xs text-muted-foreground mt-1">Restantes</p></div>
       </div>
 
