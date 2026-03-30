@@ -146,7 +146,7 @@ export default function Planning() {
   };
 
   const handleCreate = (data: any) => {
-    create.mutate(data, { onSuccess: () => { setShowForm(false); log({ action: "create", entity: "lesson", details: `Séance le ${data.date} de ${data.start_time} à ${data.end_time}` }); } });
+    create.mutate(data, { onSuccess: () => { setShowForm(false); setCreateInitial(null); log({ action: "create", entity: "lesson", details: `Séance le ${data.date} de ${data.start_time} à ${data.end_time}` }); } });
   };
 
   const handleEdit = (data: any) => {
