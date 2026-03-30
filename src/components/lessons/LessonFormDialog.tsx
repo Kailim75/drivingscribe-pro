@@ -105,7 +105,7 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
         student_id: "", instructor_id: "", vehicle_id: "",
         date: new Date().toISOString().split("T")[0],
         start_time: "09:00", end_time: "10:00", duration_hours: 1, note: "",
-        formula_id: "",
+        formula_id: "", offer_id: "",
       });
     }
     setConflicts([]);
