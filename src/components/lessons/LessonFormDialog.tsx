@@ -3,8 +3,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, PackageCheck } from "lucide-react";
 import type { LessonConflict } from "@/hooks/useLessons";
+
+interface Offer {
+  id: string;
+  name: string;
+  type: string;
+  price: number;
+  hours: number | null;
+  active: boolean;
+}
 
 interface Props {
   open: boolean;
@@ -16,13 +25,15 @@ interface Props {
   students: { id: string; first_name: string; last_name: string }[];
   instructors: { id: string; first_name: string; last_name: string }[];
   vehicles: { id: string; brand: string; model: string; plate: string; status: string }[];
+  offers?: Offer[];
 }
 
-export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConflicts, loading, initial, students, instructors, vehicles }: Props) {
+export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConflicts, loading, initial, students, instructors, vehicles, offers = [] }: Props) {
   const [form, setForm] = useState({
     student_id: "", instructor_id: "", vehicle_id: "",
     date: new Date().toISOString().split("T")[0],
     start_time: "09:00", end_time: "10:00", duration_hours: 1, note: "",
+    formula_id: "",
   });
   const [conflicts, setConflicts] = useState<LessonConflict[]>([]);
   const [checking, setChecking] = useState(false);
@@ -38,12 +49,14 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
         end_time: initial.end_time?.slice(0, 5) || "10:00",
         duration_hours: initial.duration_hours || 1,
         note: initial.note || "",
+        formula_id: initial.formula_id || "",
       });
     } else {
       setForm({
         student_id: "", instructor_id: "", vehicle_id: "",
         date: new Date().toISOString().split("T")[0],
         start_time: "09:00", end_time: "10:00", duration_hours: 1, note: "",
+        formula_id: "",
       });
     }
     setConflicts([]);
@@ -79,7 +92,6 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.student_id || !form.instructor_id || !form.vehicle_id) return;
-    // Check conflicts before submit
     if (form.instructor_id && form.vehicle_id) {
       setChecking(true);
       try {
@@ -96,10 +108,15 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
       } catch { /* proceed */ }
       setChecking(false);
     }
-    onSubmit(form);
+    const submitData = { ...form };
+    if (!submitData.formula_id) delete (submitData as any).formula_id;
+    onSubmit(submitData);
   };
 
   const availableVehicles = vehicles.filter((v) => v.status === "actif");
+
+  const offerTypeLabels: Record<string, string> = { heure: "Heure", pack: "Pack", forfait: "Forfait" };
+  const selectedOffer = offers.find(o => o.id === form.formula_id);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -134,6 +151,33 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
               </select>
             </div>
           </div>
+
+          {/* Offer selection */}
+          {offers.length > 0 && (
+            <div>
+              <Label className="flex items-center gap-1.5">
+                <PackageCheck className="w-3.5 h-3.5 text-muted-foreground" />
+                Offre associée
+              </Label>
+              <select value={form.formula_id} onChange={(e) => set("formula_id", e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <option value="">Aucune offre</option>
+                {offers.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name} ({offerTypeLabels[o.type] || o.type}{o.hours ? ` — ${o.hours}h` : ""} — {o.price}€)
+                  </option>
+                ))}
+              </select>
+              {selectedOffer && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {offerTypeLabels[selectedOffer.type] || selectedOffer.type}
+                  {selectedOffer.hours ? ` • ${selectedOffer.hours}h incluses` : ""}
+                  {" • "}{selectedOffer.price}€
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-3">
             <div><Label>Date *</Label><Input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} required /></div>
             <div><Label>Début *</Label><Input type="time" value={form.start_time} onChange={(e) => set("start_time", e.target.value)} required /></div>
