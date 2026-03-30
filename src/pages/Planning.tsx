@@ -32,6 +32,7 @@ export default function Planning() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekStartDate, setWeekStartDate] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [showForm, setShowForm] = useState(false);
+  const [createInitial, setCreateInitial] = useState<any>(null);
   const [editLesson, setEditLesson] = useState<any>(null);
   const [statusConfirm, setStatusConfirm] = useState<{ lessonId: string; status: string; label: string } | null>(null);
   const [showAiSuggest, setShowAiSuggest] = useState(false);
@@ -145,7 +146,7 @@ export default function Planning() {
   };
 
   const handleCreate = (data: any) => {
-    create.mutate(data, { onSuccess: () => { setShowForm(false); log({ action: "create", entity: "lesson", details: `Séance le ${data.date} de ${data.start_time} à ${data.end_time}` }); } });
+    create.mutate(data, { onSuccess: () => { setShowForm(false); setCreateInitial(null); log({ action: "create", entity: "lesson", details: `Séance le ${data.date} de ${data.start_time} à ${data.end_time}` }); } });
   };
 
   const handleEdit = (data: any) => {
@@ -220,6 +221,15 @@ export default function Planning() {
           onUpdateLesson={(data) => update.mutate(data)}
           onUpdateStatus={(data) => updateStatus.mutate({ id: data.id, status: data.status as any })}
           onDeleteLesson={(id) => remove.mutate(id)}
+          onSlotClick={(date, hour) => {
+            setCreateInitial({
+              date,
+              start_time: `${String(hour).padStart(2, "0")}:00`,
+              end_time: `${String(hour + 1).padStart(2, "0")}:00`,
+              duration_hours: 1,
+            });
+            setShowForm(true);
+          }}
           creating={create.isPending}
           checkConflicts={checkConflicts}
         />
@@ -498,7 +508,7 @@ export default function Planning() {
       </motion.div>
       )}
 
-      <LessonFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} onCheckConflicts={checkConflicts} loading={create.isPending} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} offers={offers.filter(o => o.active)} />
+      <LessonFormDialog open={showForm} onClose={() => { setShowForm(false); setCreateInitial(null); }} onSubmit={handleCreate} onCheckConflicts={checkConflicts} loading={create.isPending} initial={createInitial} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} offers={offers.filter(o => o.active)} />
       <LessonFormDialog open={!!editLesson} onClose={() => setEditLesson(null)} onSubmit={handleEdit} onCheckConflicts={checkConflicts} loading={update.isPending} initial={editLesson} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} offers={offers.filter(o => o.active)} />
 
       <AlertDialog open={!!statusConfirm} onOpenChange={(v) => !v && setStatusConfirm(null)}>

@@ -66,6 +66,7 @@ interface Props {
   onUpdateLesson: (data: any) => void;
   onUpdateStatus?: (data: { id: string; status: string }) => void;
   onDeleteLesson?: (id: string) => void;
+  onSlotClick?: (date: string, hour: number) => void;
   creating: boolean;
   checkConflicts: (params: any) => Promise<any[]>;
 }
@@ -100,17 +101,19 @@ function DraggableStudent({ student }: { student: Student }) {
 }
 
 // Droppable time slot cell
-function TimeSlotCell({ date, hour, isEven, children }: { date: Date; hour: number; isEven: boolean; children?: React.ReactNode }) {
+function TimeSlotCell({ date, hour, isEven, children, onSlotClick }: { date: Date; hour: number; isEven: boolean; children?: React.ReactNode; onSlotClick?: (date: string, hour: number) => void }) {
   const id = `slot-${format(date, "yyyy-MM-dd")}-${hour}`;
   const { isOver, setNodeRef } = useDroppable({ id, data: { date, hour } });
 
   return (
     <div
       ref={setNodeRef}
+      onClick={() => onSlotClick?.(format(date, "yyyy-MM-dd"), hour)}
       className={cn(
-        "relative min-h-[56px] border-b border-r border-border/30 transition-all duration-200",
+        "relative min-h-[56px] border-b border-r border-border/30 transition-all duration-200 cursor-pointer",
         isEven ? "bg-muted/20" : "bg-transparent",
-        isOver && "bg-primary/8 ring-1 ring-inset ring-primary/25 shadow-inner"
+        isOver && "bg-primary/8 ring-1 ring-inset ring-primary/25 shadow-inner",
+        "hover:bg-primary/[0.04]"
       )}
     >
       {children}
@@ -247,6 +250,7 @@ export default function WeeklyCalendarView({
   onUpdateLesson,
   onUpdateStatus,
   onDeleteLesson,
+  onSlotClick,
   creating,
   checkConflicts,
 }: Props) {
@@ -602,7 +606,7 @@ export default function WeeklyCalendarView({
                     const dateKey = format(day, "yyyy-MM-dd");
 
                     return (
-                      <TimeSlotCell key={`${dateKey}-${hour}`} date={day} hour={hour} isEven={hourIdx % 2 === 0}>
+                      <TimeSlotCell key={`${dateKey}-${hour}`} date={day} hour={hour} isEven={hourIdx % 2 === 0} onSlotClick={onSlotClick}>
                         {hour === HOURS[0] && (lessonsByDay[dateKey] || []).map((l) => (
                           <DraggableLessonBlock key={l.id} lesson={l} onClick={() => onEditLesson(l)} onUpdateStatus={onUpdateStatus} onDeleteLesson={onDeleteLesson} onEditLesson={onEditLesson} />
                         ))}
