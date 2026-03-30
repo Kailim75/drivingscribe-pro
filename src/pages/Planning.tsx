@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useState, useCallback, useMemo } from "react";
-import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles, LayoutGrid } from "lucide-react";
+import { CalendarDays, List, Plus, ChevronLeft, ChevronRight, Clock, CheckCircle2, XCircle, UserX, MessageSquare, Loader2, Pencil, Sparkles, LayoutGrid, Trash2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { fr } from "date-fns/locale";
 import { startOfMonth, endOfMonth, startOfWeek, addDays, format } from "date-fns";
@@ -37,6 +37,7 @@ export default function Planning() {
   const [createInitial, setCreateInitial] = useState<any>(null);
   const [editLesson, setEditLesson] = useState<any>(null);
   const [statusConfirm, setStatusConfirm] = useState<{ lessonId: string; status: string; label: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [showAiSuggest, setShowAiSuggest] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
@@ -396,10 +397,16 @@ export default function Planning() {
                                         </div>
                                       )}
                                     </div>
-                                    <button onClick={() => setEditLesson(lesson)}
-                                      className="flex-shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted opacity-0 group-hover:opacity-100 transition-all">
-                                      <Pencil className="w-3.5 h-3.5" />
-                                    </button>
+                                    <div className="flex flex-col gap-1 flex-shrink-0">
+                                      <button onClick={() => setEditLesson(lesson)}
+                                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted opacity-0 group-hover:opacity-100 transition-all">
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm(lesson.id); }}
+                                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               );
@@ -482,6 +489,9 @@ export default function Planning() {
                       <button onClick={() => setEditLesson(lesson)} className="text-xs px-2.5 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors font-medium ml-auto">
                         <Pencil className="w-3 h-3" />
                       </button>
+                      <button onClick={() => setDeleteConfirm(lesson.id)} className="text-xs px-2.5 py-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/15 transition-colors font-medium">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -511,7 +521,23 @@ export default function Planning() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* AI Suggestion Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(v) => !v && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer la séance</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Voulez-vous vraiment supprimer cette séance ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { if (deleteConfirm) { remove.mutate(deleteConfirm); log({ action: "delete", entity: "lesson", entity_id: deleteConfirm, details: "Séance supprimée" }); setDeleteConfirm(null); } }}>
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={showAiSuggest} onOpenChange={setShowAiSuggest}>
         <DialogContent className="max-w-md">
           <DialogHeader>
