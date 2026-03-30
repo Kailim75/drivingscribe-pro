@@ -37,6 +37,7 @@ export default function Planning() {
   const [createInitial, setCreateInitial] = useState<any>(null);
   const [editLesson, setEditLesson] = useState<any>(null);
   const [statusConfirm, setStatusConfirm] = useState<{ lessonId: string; status: string; label: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [showAiSuggest, setShowAiSuggest] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
