@@ -164,7 +164,7 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
       } catch { /* proceed */ }
       setChecking(false);
     }
-    const submitData = { ...form };
+    const { offer_id, ...submitData } = form;
     if (!submitData.formula_id) delete (submitData as any).formula_id;
     onSubmit(submitData);
   };
