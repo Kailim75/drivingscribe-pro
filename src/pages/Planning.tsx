@@ -489,6 +489,9 @@ export default function Planning() {
                       <button onClick={() => setEditLesson(lesson)} className="text-xs px-2.5 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors font-medium ml-auto">
                         <Pencil className="w-3 h-3" />
                       </button>
+                      <button onClick={() => setDeleteConfirm(lesson.id)} className="text-xs px-2.5 py-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/15 transition-colors font-medium">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
                     </div>
                   </div>
                 </div>
