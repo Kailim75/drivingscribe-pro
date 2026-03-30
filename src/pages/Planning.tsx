@@ -521,7 +521,23 @@ export default function Planning() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* AI Suggestion Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(v) => !v && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer la séance</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Voulez-vous vraiment supprimer cette séance ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => { if (deleteConfirm) { remove.mutate(deleteConfirm); log({ action: "delete", entity: "lesson", entity_id: deleteConfirm, details: "Séance supprimée" }); setDeleteConfirm(null); } }}>
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={showAiSuggest} onOpenChange={setShowAiSuggest}>
         <DialogContent className="max-w-md">
           <DialogHeader>
