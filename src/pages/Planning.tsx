@@ -222,7 +222,7 @@ export default function Planning() {
           onUpdateStatus={(data) => updateStatus.mutate({ id: data.id, status: data.status as any })}
           onDeleteLesson={(id) => remove.mutate(id)}
           onSlotClick={(date, hour) => {
-            setEditLesson({
+            setCreateInitial({
               date,
               start_time: `${String(hour).padStart(2, "0")}:00`,
               end_time: `${String(hour + 1).padStart(2, "0")}:00`,
