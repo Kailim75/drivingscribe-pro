@@ -39,7 +39,7 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
     student_id: "", instructor_id: "", vehicle_id: "",
     date: new Date().toISOString().split("T")[0],
     start_time: "09:00", end_time: "10:00", duration_hours: 1, note: "",
-    formula_id: "",
+    formula_id: "", offer_id: "",
   });
   const [conflicts, setConflicts] = useState<LessonConflict[]>([]);
   const [checking, setChecking] = useState(false);
@@ -98,13 +98,14 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
         duration_hours: initial.duration_hours || 1,
         note: initial.note || "",
         formula_id: initial.formula_id || "",
+        offer_id: "",
       });
     } else {
       setForm({
         student_id: "", instructor_id: "", vehicle_id: "",
         date: new Date().toISOString().split("T")[0],
         start_time: "09:00", end_time: "10:00", duration_hours: 1, note: "",
-        formula_id: "",
+        formula_id: "", offer_id: "",
       });
     }
     setConflicts([]);
@@ -163,7 +164,7 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
       } catch { /* proceed */ }
       setChecking(false);
     }
-    const submitData = { ...form };
+    const { offer_id, ...submitData } = form;
     if (!submitData.formula_id) delete (submitData as any).formula_id;
     onSubmit(submitData);
   };
@@ -212,8 +213,66 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
             </div>
           </div>
 
-          {/* Formula selection — only when student has active formulas */}
-          {form.student_id && studentFormulas.length > 0 && (
+          {/* Offer selection from catalog */}
+          {offers.length > 0 && (
+            <div>
+              <Label className="flex items-center gap-1.5">
+                <PackageCheck className="w-3.5 h-3.5 text-muted-foreground" />
+                Offre
+              </Label>
+              <select value={form.offer_id} onChange={(e) => {
+                const offerId = e.target.value;
+                set("offer_id", offerId);
+                // Auto-link to matching student formula if exists
+                if (offerId && form.student_id) {
+                  const matchingFormula = studentFormulas.find(f => f.offer_id === offerId);
+                  if (matchingFormula) {
+                    set("formula_id", matchingFormula.id);
+                  } else {
+                    set("formula_id", "");
+                  }
+                } else {
+                  set("formula_id", "");
+                }
+              }}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <option value="">Aucune offre</option>
+                {offers.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name} ({offerTypeLabels[o.type] || o.type}) — {o.price}€{o.hours ? ` / ${o.hours}h` : ""}
+                  </option>
+                ))}
+              </select>
+              {/* Show linked formula info */}
+              {form.offer_id && form.student_id && (() => {
+                const matchingFormula = studentFormulas.find(f => f.offer_id === form.offer_id);
+                if (matchingFormula) {
+                  const consumed = hoursConsumedMap[matchingFormula.id] || 0;
+                  const remaining = Number(matchingFormula.hours_bought) - consumed;
+                  return (
+                    <div className={`flex items-center gap-2 mt-1.5 px-3 py-2 rounded-lg text-xs ${
+                      remaining < form.duration_hours
+                        ? "bg-warning/10 border border-warning/20 text-warning"
+                        : "bg-success/10 border border-success/20 text-success"
+                    }`}>
+                      <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>Formule liée automatiquement — <span className="font-semibold">{remaining}h</span> restantes sur {matchingFormula.hours_bought}h</span>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="flex items-center gap-2 mt-1.5 px-3 py-2 rounded-lg text-xs bg-muted/50 border border-border/50 text-muted-foreground">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span>Aucune formule active pour cette offre. Facturez un pack/forfait pour en créer une.</span>
+                    </div>
+                  );
+                }
+              })()}
+            </div>
+          )}
+
+          {/* Formula selection — only when student has active formulas and no offer selected */}
+          {form.student_id && studentFormulas.length > 0 && !form.offer_id && (
             <div>
               <Label className="flex items-center gap-1.5">
                 <PackageCheck className="w-3.5 h-3.5 text-muted-foreground" />
@@ -254,14 +313,6 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
                   <span>Cette séance ({form.duration_hours}h) dépassera le solde restant ({selectedFormulaRemaining}h)</span>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Show available offers to buy if student has no formulas */}
-          {form.student_id && studentFormulas.length === 0 && offers.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground">
-              <PackageCheck className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>Cet élève n'a aucune formule active. Facturez un pack/forfait pour en créer une.</span>
             </div>
           )}
 
