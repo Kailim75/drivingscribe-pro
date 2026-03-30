@@ -397,10 +397,16 @@ export default function Planning() {
                                         </div>
                                       )}
                                     </div>
-                                    <button onClick={() => setEditLesson(lesson)}
-                                      className="flex-shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted opacity-0 group-hover:opacity-100 transition-all">
-                                      <Pencil className="w-3.5 h-3.5" />
-                                    </button>
+                                    <div className="flex flex-col gap-1 flex-shrink-0">
+                                      <button onClick={() => setEditLesson(lesson)}
+                                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted opacity-0 group-hover:opacity-100 transition-all">
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button onClick={(e) => { e.stopPropagation(); setDeleteConfirm(lesson.id); }}
+                                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               );
