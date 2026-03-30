@@ -107,5 +107,14 @@ export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?
     onError: () => toast.error("Erreur lors de l'annulation"),
   });
 
-  return { ...query, lessons: query.data ?? [], checkConflicts, create, update, updateStatus, archive };
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("lessons").delete().eq("id", id).eq("organization_id", orgId!);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["lessons"] }); toast.success("Séance supprimée"); },
+    onError: () => toast.error("Erreur lors de la suppression"),
+  });
+
+  return { ...query, lessons: query.data ?? [], checkConflicts, create, update, updateStatus, archive, remove };
 }
