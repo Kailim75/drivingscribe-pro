@@ -8,6 +8,7 @@ import WeeklyCalendarView from "@/components/planning/WeeklyCalendarView";
 import BulkLessonActions from "@/components/planning/BulkLessonActions";
 import { cn } from "@/lib/utils";
 import { useLessons } from "@/hooks/useLessons";
+import { useOffers } from "@/hooks/useOffers";
 import { useStudents } from "@/hooks/useStudents";
 import { useInstructors } from "@/hooks/useInstructors";
 import { useVehicles } from "@/hooks/useVehicles";
