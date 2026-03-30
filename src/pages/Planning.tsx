@@ -165,6 +165,16 @@ export default function Planning() {
     setStatusConfirm({ lessonId, status, label: labels[status] || status });
   };
 
+  const openSlotForm = (date: string, hour: number) => {
+    setCreateInitial({
+      date,
+      start_time: `${String(hour).padStart(2, "0")}:00`,
+      end_time: `${String(hour + 1).padStart(2, "0")}:00`,
+      duration_hours: 1,
+    });
+    setShowForm(true);
+  };
+
   const sortedLessons = [...lessons].sort((a: any, b: any) =>
     (a.date || "").localeCompare(b.date || "") || (a.start_time || "").localeCompare(b.start_time || "")
   );
