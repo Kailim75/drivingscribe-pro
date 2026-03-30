@@ -508,7 +508,7 @@ export default function Planning() {
       </motion.div>
       )}
 
-      <LessonFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} onCheckConflicts={checkConflicts} loading={create.isPending} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} offers={offers.filter(o => o.active)} />
+      <LessonFormDialog open={showForm} onClose={() => { setShowForm(false); setCreateInitial(null); }} onSubmit={handleCreate} onCheckConflicts={checkConflicts} loading={create.isPending} initial={createInitial} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} offers={offers.filter(o => o.active)} />
       <LessonFormDialog open={!!editLesson} onClose={() => setEditLesson(null)} onSubmit={handleEdit} onCheckConflicts={checkConflicts} loading={update.isPending} initial={editLesson} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} offers={offers.filter(o => o.active)} />
 
       <AlertDialog open={!!statusConfirm} onOpenChange={(v) => !v && setStatusConfirm(null)}>
