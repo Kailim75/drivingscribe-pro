@@ -32,6 +32,7 @@ export default function Planning() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekStartDate, setWeekStartDate] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [showForm, setShowForm] = useState(false);
+  const [createInitial, setCreateInitial] = useState<any>(null);
   const [editLesson, setEditLesson] = useState<any>(null);
   const [statusConfirm, setStatusConfirm] = useState<{ lessonId: string; status: string; label: string } | null>(null);
   const [showAiSuggest, setShowAiSuggest] = useState(false);
