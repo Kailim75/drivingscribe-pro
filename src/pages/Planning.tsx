@@ -321,130 +321,110 @@ export default function Planning() {
             </div>
 
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-              {sortedLessons.length === 0 ? (
-                <div className="glass-card rounded-xl flex flex-col items-center justify-center py-16 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
-                    <CalendarDays className="w-7 h-7 text-muted-foreground/40" />
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">Journée libre</p>
-                  <p className="text-xs text-muted-foreground mt-1 max-w-[200px]">Aucune séance prévue. Ajoutez-en une depuis le bouton ci-dessous.</p>
-                  <button onClick={() => setShowForm(true)} className="btn-primary mt-5 text-xs">
-                    <Plus className="w-3.5 h-3.5" /> Ajouter une séance
-                  </button>
-                </div>
-              ) : (
-                <div className="relative">
-                  {/* Timeline line */}
-                  <div className="absolute left-[27px] top-4 bottom-4 w-px bg-border hidden sm:block" />
+              <div className="glass-card rounded-xl overflow-hidden">
+                {DAY_HOURS.map((hour, hourIdx) => {
+                  // Find lessons starting at this hour
+                  const hourLessons = sortedLessons.filter((l: any) => {
+                    const startH = parseInt(l.start_time?.split(":")[0] || "0", 10);
+                    return startH === hour;
+                  });
+                  const hasLesson = hourLessons.length > 0;
 
-                  <div className="space-y-3">
-                    {sortedLessons.map((lesson: any, idx: number) => {
-                      const Icon = statusIcons[lesson.status] || Clock;
-                      const statusColor = lesson.status === "effectue" ? "bg-success" :
-                        lesson.status === "annule" ? "bg-destructive" :
-                        lesson.status === "absent" ? "bg-warning" : "bg-primary";
+                  return (
+                    <div key={hour} className={cn(
+                      "flex border-b border-border/30 last:border-b-0",
+                      hourIdx % 2 === 0 ? "bg-muted/10" : ""
+                    )}>
+                      {/* Hour label */}
+                      <div className="w-16 flex-shrink-0 px-3 py-3 text-right border-r border-border/30">
+                        <span className="text-[11px] font-semibold text-muted-foreground/60 tabular-nums">
+                          {String(hour).padStart(2, "0")}:00
+                        </span>
+                      </div>
 
-                      return (
-                        <motion.div
-                          key={lesson.id}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.04 }}
-                          onClick={() => selectedIds.length > 0 && lesson.status === "prevu" ? toggleSelect(lesson.id) : undefined}
-                          className={cn(
-                            "group relative flex gap-3 sm:gap-4",
-                            selectedIds.includes(lesson.id) && "ring-2 ring-primary/40 rounded-xl"
-                          )}
-                        >
-                          {/* Timeline dot */}
-                          <div className="hidden sm:flex flex-col items-center pt-4 z-10">
-                            <div className={cn("w-3 h-3 rounded-full ring-2 ring-background shadow-sm", statusColor)} />
-                          </div>
-
-                          {/* Card */}
-                          <div className={cn(
-                            "flex-1 rounded-xl border bg-card p-4 transition-all hover:shadow-md hover:border-primary/20",
-                            lesson.status === "effectue" && "border-l-[3px] border-l-success",
-                            lesson.status === "annule" && "border-l-[3px] border-l-destructive opacity-60",
-                            lesson.status === "absent" && "border-l-[3px] border-l-warning opacity-60",
-                            lesson.status === "prevu" && "border-l-[3px] border-l-primary",
-                          )}>
-                            <div className="flex items-start gap-3">
-                              {/* Selection checkbox */}
-                              {selectedIds.length > 0 && lesson.status === "prevu" && (
-                                <button onClick={(e) => { e.stopPropagation(); toggleSelect(lesson.id); }}
-                                  className="mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
-                                  style={{ borderColor: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'hsl(var(--border))', background: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'transparent' }}>
-                                  {selectedIds.includes(lesson.id) && <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />}
-                                </button>
-                              )}
-
-                              {/* Time block */}
-                              <div className="flex-shrink-0 w-16 text-center rounded-lg bg-muted/60 py-1.5 px-1">
-                                <p className="text-sm font-bold text-foreground leading-tight">{lesson.start_time?.slice(0, 5)}</p>
-                                <div className="w-3 h-px bg-border mx-auto my-0.5" />
-                                <p className="text-[11px] text-muted-foreground leading-tight">{lesson.end_time?.slice(0, 5)}</p>
-                              </div>
-
-                              {/* Content */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="font-semibold text-foreground text-sm truncate">
-                                    {lesson.students?.first_name} {lesson.students?.last_name}
-                                  </p>
-                                  <span className={cn("status-badge inline-flex items-center gap-1 flex-shrink-0 text-[10px]", lessonStatusColors[lesson.status])}>
-                                    <Icon className="w-3 h-3" />{lessonStatusLabels[lesson.status]}
-                                  </span>
-                                  <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md font-medium">{lesson.duration_hours}h</span>
+                      {/* Slot content */}
+                      <div
+                        className={cn(
+                          "flex-1 min-h-[52px] transition-all duration-200",
+                          !hasLesson && "cursor-pointer hover:bg-primary/[0.04] group/slot"
+                        )}
+                        onClick={() => !hasLesson && openSlotForm(dateStr, hour)}
+                      >
+                        {hasLesson ? (
+                          <div className="space-y-2 p-2">
+                            {hourLessons.map((lesson: any) => {
+                              const Icon = statusIcons[lesson.status] || Clock;
+                              return (
+                                <div
+                                  key={lesson.id}
+                                  onClick={() => selectedIds.length > 0 && lesson.status === "prevu" ? toggleSelect(lesson.id) : undefined}
+                                  className={cn(
+                                    "group relative rounded-lg border bg-card p-3 transition-all hover:shadow-md hover:border-primary/20",
+                                    lesson.status === "effectue" && "border-l-[3px] border-l-success",
+                                    lesson.status === "annule" && "border-l-[3px] border-l-destructive opacity-60",
+                                    lesson.status === "absent" && "border-l-[3px] border-l-warning opacity-60",
+                                    lesson.status === "prevu" && "border-l-[3px] border-l-primary",
+                                    selectedIds.includes(lesson.id) && "ring-2 ring-primary/40"
+                                  )}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    {selectedIds.length > 0 && lesson.status === "prevu" && (
+                                      <button onClick={(e) => { e.stopPropagation(); toggleSelect(lesson.id); }}
+                                        className="mt-0.5 flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
+                                        style={{ borderColor: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'hsl(var(--border))', background: selectedIds.includes(lesson.id) ? 'hsl(var(--primary))' : 'transparent' }}>
+                                        {selectedIds.includes(lesson.id) && <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />}
+                                      </button>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <p className="font-semibold text-foreground text-sm truncate">
+                                          {lesson.students?.first_name} {lesson.students?.last_name}
+                                        </p>
+                                        <span className={cn("status-badge inline-flex items-center gap-1 flex-shrink-0 text-[10px]", lessonStatusColors[lesson.status])}>
+                                          <Icon className="w-3 h-3" />{lessonStatusLabels[lesson.status]}
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-md font-medium">
+                                          {lesson.start_time?.slice(0, 5)} – {lesson.end_time?.slice(0, 5)} ({lesson.duration_hours}h)
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1 text-xs text-muted-foreground">
+                                        <span className="inline-flex items-center gap-1 truncate">🚗 {lesson.vehicles?.brand} {lesson.vehicles?.model}</span>
+                                        <span className="inline-flex items-center gap-1 truncate">👤 {lesson.instructors?.first_name} {lesson.instructors?.last_name}</span>
+                                      </div>
+                                      {lesson.note && (
+                                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 truncate">
+                                          <MessageSquare className="w-3 h-3 flex-shrink-0" /> {lesson.note}
+                                        </p>
+                                      )}
+                                      {lesson.status === "prevu" && (
+                                        <div className="flex items-center gap-1.5 mt-2">
+                                          <button onClick={() => confirmStatus(lesson.id, "effectue")} className="text-[10px] px-2 py-1 rounded-md bg-success/10 text-success hover:bg-success/15 font-medium">✓ Effectué</button>
+                                          <button onClick={() => confirmStatus(lesson.id, "annule")} className="text-[10px] px-2 py-1 rounded-md bg-destructive/10 text-destructive hover:bg-destructive/15 font-medium">✗ Annulé</button>
+                                          <button onClick={() => confirmStatus(lesson.id, "absent")} className="text-[10px] px-2 py-1 rounded-md bg-warning/10 text-warning hover:bg-warning/15 font-medium">⚠ Absent</button>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <button onClick={() => setEditLesson(lesson)}
+                                      className="flex-shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted opacity-0 group-hover:opacity-100 transition-all">
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
-                                <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1.5 text-xs text-muted-foreground">
-                                  <span className="inline-flex items-center gap-1 truncate">
-                                    <span className="w-4 h-4 rounded bg-muted flex items-center justify-center text-[10px]">🚗</span>
-                                    {lesson.vehicles?.brand} {lesson.vehicles?.model}
-                                  </span>
-                                  <span className="inline-flex items-center gap-1 truncate">
-                                    <span className="w-4 h-4 rounded bg-muted flex items-center justify-center text-[10px]">👤</span>
-                                    {lesson.instructors?.first_name} {lesson.instructors?.last_name}
-                                  </span>
-                                </div>
-                                {lesson.note && (
-                                  <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1.5 truncate bg-muted/40 rounded-md px-2 py-1">
-                                    <MessageSquare className="w-3 h-3 flex-shrink-0 text-muted-foreground/60" /> {lesson.note}
-                                  </p>
-                                )}
-                              </div>
-
-                              {/* Edit button */}
-                              <button onClick={() => setEditLesson(lesson)}
-                                className="flex-shrink-0 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted opacity-0 group-hover:opacity-100 transition-all">
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-
-                            {/* Action buttons */}
-                            {lesson.status === "prevu" && (
-                              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
-                                <button onClick={() => confirmStatus(lesson.id, "effectue")}
-                                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-success/10 text-success hover:bg-success/20 transition-colors font-medium">
-                                  <CheckCircle2 className="w-3.5 h-3.5" /> Effectué
-                                </button>
-                                <button onClick={() => confirmStatus(lesson.id, "annule")}
-                                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors font-medium">
-                                  <XCircle className="w-3.5 h-3.5" /> Annulé
-                                </button>
-                                <button onClick={() => confirmStatus(lesson.id, "absent")}
-                                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-warning/10 text-warning hover:bg-warning/20 transition-colors font-medium">
-                                  <UserX className="w-3.5 h-3.5" /> Absent
-                                </button>
-                              </div>
-                            )}
+                              );
+                            })}
                           </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                        ) : (
+                          <div className="flex items-center justify-center h-full opacity-0 group-hover/slot:opacity-100 transition-opacity">
+                            <span className="flex items-center gap-1.5 text-[11px] text-primary/60 font-medium">
+                              <Plus className="w-3 h-3" /> Ajouter une séance
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </motion.div>
           </div>
         </div>
