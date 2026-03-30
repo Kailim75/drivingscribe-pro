@@ -56,6 +56,7 @@ export default function Planning() {
   const { students } = useStudents();
   const { instructors } = useInstructors();
   const { vehicles } = useVehicles();
+  const { offers } = useOffers();
   const { log } = useAuditLog();
 
   // Days with lessons for calendar dot indicators
