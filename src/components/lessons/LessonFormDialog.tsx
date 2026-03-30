@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Loader2, PackageCheck } from "lucide-react";
+import { AlertTriangle, Loader2, PackageCheck, Clock, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 import type { LessonConflict } from "@/hooks/useLessons";
 
 interface Offer {
@@ -29,6 +32,9 @@ interface Props {
 }
 
 export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConflicts, loading, initial, students, instructors, vehicles, offers = [] }: Props) {
+  const { organization } = useOrg();
+  const orgId = organization?.id;
+
   const [form, setForm] = useState({
     student_id: "", instructor_id: "", vehicle_id: "",
     date: new Date().toISOString().split("T")[0],
@@ -37,6 +43,48 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
   });
   const [conflicts, setConflicts] = useState<LessonConflict[]>([]);
   const [checking, setChecking] = useState(false);
+
+  // Fetch student's active formulas when a student is selected
+  const studentId = form.student_id;
+  const { data: studentFormulas = [] } = useQuery({
+    queryKey: ["student_formulas", orgId, studentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("student_formulas")
+        .select("*")
+        .eq("organization_id", orgId!)
+        .eq("student_id", studentId)
+        .eq("active", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId && !!studentId && open,
+  });
+
+  // Fetch hours consumed per formula (sum of duration_hours from linked lessons)
+  const formulaIds = useMemo(() => studentFormulas.map(f => f.id), [studentFormulas]);
+  const { data: hoursConsumedMap = {} } = useQuery({
+    queryKey: ["formula_hours_consumed", formulaIds],
+    queryFn: async () => {
+      if (formulaIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("lessons")
+        .select("formula_id, duration_hours, status")
+        .in("formula_id", formulaIds)
+        .in("status", ["prevu", "effectue"]);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      (data || []).forEach((l) => {
+        if (l.formula_id) {
+          // If editing, exclude current lesson's hours from count
+          map[l.formula_id] = (map[l.formula_id] || 0) + Number(l.duration_hours);
+        }
+      });
+      return map;
+    },
+    enabled: formulaIds.length > 0 && open,
+  });
 
   useEffect(() => {
     if (initial) {
@@ -61,6 +109,13 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
     }
     setConflicts([]);
   }, [initial, open]);
+
+  // Reset formula_id when student changes
+  useEffect(() => {
+    if (!initial) {
+      setForm(p => ({ ...p, formula_id: "" }));
+    }
+  }, [form.student_id]);
 
   const set = (k: string, v: any) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -116,13 +171,18 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
   const availableVehicles = vehicles.filter((v) => v.status === "actif");
 
   const offerTypeLabels: Record<string, string> = { heure: "Heure", pack: "Pack", forfait: "Forfait" };
-  const selectedOffer = offers.find(o => o.id === form.formula_id);
+
+  // Compute balance for selected formula
+  const selectedFormula = studentFormulas.find(f => f.id === form.formula_id);
+  const selectedFormulaConsumed = selectedFormula ? (hoursConsumedMap[selectedFormula.id] || 0) : 0;
+  const selectedFormulaRemaining = selectedFormula ? Number(selectedFormula.hours_bought) - selectedFormulaConsumed : null;
+  const willExceed = selectedFormulaRemaining !== null && selectedFormulaRemaining < form.duration_hours;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{initial ? "Modifier la séance" : "Nouvelle séance"}</DialogTitle>
+          <DialogTitle>{initial?.id ? "Modifier la séance" : "Nouvelle séance"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
@@ -152,29 +212,56 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
             </div>
           </div>
 
-          {/* Offer selection */}
-          {offers.length > 0 && (
+          {/* Formula selection — only when student has active formulas */}
+          {form.student_id && studentFormulas.length > 0 && (
             <div>
               <Label className="flex items-center gap-1.5">
                 <PackageCheck className="w-3.5 h-3.5 text-muted-foreground" />
-                Offre associée
+                Formule / Pack de l'élève
               </Label>
               <select value={form.formula_id} onChange={(e) => set("formula_id", e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option value="">Aucune offre</option>
-                {offers.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name} ({offerTypeLabels[o.type] || o.type}{o.hours ? ` — ${o.hours}h` : ""} — {o.price}€)
-                  </option>
-                ))}
+                <option value="">Aucune formule</option>
+                {studentFormulas.map((f) => {
+                  const consumed = hoursConsumedMap[f.id] || 0;
+                  const remaining = Number(f.hours_bought) - consumed;
+                  return (
+                    <option key={f.id} value={f.id}>
+                      {f.offer_name} ({offerTypeLabels[f.offer_type] || f.offer_type}) — {remaining}h/{f.hours_bought}h restantes
+                    </option>
+                  );
+                })}
               </select>
-              {selectedOffer && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {offerTypeLabels[selectedOffer.type] || selectedOffer.type}
-                  {selectedOffer.hours ? ` • ${selectedOffer.hours}h incluses` : ""}
-                  {" • "}{selectedOffer.price}€
-                </p>
+
+              {/* Balance indicator */}
+              {selectedFormula && (
+                <div className={`flex items-center gap-2 mt-1.5 px-3 py-2 rounded-lg text-xs ${
+                  willExceed 
+                    ? "bg-warning/10 border border-warning/20 text-warning" 
+                    : "bg-primary/5 border border-primary/10 text-primary"
+                }`}>
+                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="font-semibold">{selectedFormulaRemaining}h</span> restantes sur {selectedFormula.hours_bought}h
+                    <span className="text-muted-foreground ml-1">({selectedFormulaConsumed}h consommées)</span>
+                  </div>
+                </div>
               )}
+
+              {willExceed && (
+                <div className="flex items-center gap-2 mt-1 px-3 py-1.5 rounded-lg bg-warning/10 text-warning text-xs">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>Cette séance ({form.duration_hours}h) dépassera le solde restant ({selectedFormulaRemaining}h)</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Show available offers to buy if student has no formulas */}
+          {form.student_id && studentFormulas.length === 0 && offers.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground">
+              <PackageCheck className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Cet élève n'a aucune formule active. Facturez un pack/forfait pour en créer une.</span>
             </div>
           )}
 
@@ -211,7 +298,7 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
             <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
             <Button type="submit" disabled={loading || conflicts.length > 0}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {initial ? "Enregistrer" : "Créer"}
+              {initial?.id ? "Enregistrer" : "Créer"}
             </Button>
           </DialogFooter>
         </form>
