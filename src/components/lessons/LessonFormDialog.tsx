@@ -35,6 +35,8 @@ interface Props {
 export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConflicts, loading, initial, students, instructors, vehicles, offers = [] }: Props) {
   const { organization } = useOrg();
   const orgId = organization?.id;
+  const qc = useQueryClient();
+  const [creatingFormula, setCreatingFormula] = useState(false);
 
   const [form, setForm] = useState({
     student_id: "", instructor_id: "", vehicle_id: "",
