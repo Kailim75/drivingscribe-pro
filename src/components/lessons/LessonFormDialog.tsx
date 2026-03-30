@@ -98,6 +98,7 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
         duration_hours: initial.duration_hours || 1,
         note: initial.note || "",
         formula_id: initial.formula_id || "",
+        offer_id: "",
       });
     } else {
       setForm({
