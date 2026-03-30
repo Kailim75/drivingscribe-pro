@@ -69,7 +69,9 @@ export default function StudentDetail() {
   const totalHoursBought = formulas.reduce((s, f) => s + Number(f.hours_bought), 0);
   const healthScore = computeHealthScore(lessons, formulas, evaluations, categories.length);
   const completedLessons = lessons.filter((l: any) => l.status === "effectue");
+  const plannedLessons = lessons.filter((l: any) => l.status === "prevu");
   const totalHoursDone = completedLessons.reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
+  const totalHoursPlanned = plannedLessons.reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
   const totalHoursRemaining = totalHoursBought - totalHoursDone;
 
   const handleUpdate = (data: any) => {
