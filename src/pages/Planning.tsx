@@ -27,6 +27,8 @@ const statusIcons: Record<string, React.ElementType> = {
 
 type View = "jour" | "semaine" | "liste";
 
+const DAY_HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7h-19h
+
 export default function Planning() {
   const [view, setView] = useState<View>("semaine");
   const [selectedDate, setSelectedDate] = useState(new Date());
