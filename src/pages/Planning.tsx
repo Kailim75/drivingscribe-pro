@@ -8,6 +8,7 @@ import WeeklyCalendarView from "@/components/planning/WeeklyCalendarView";
 import BulkLessonActions from "@/components/planning/BulkLessonActions";
 import { cn } from "@/lib/utils";
 import { useLessons } from "@/hooks/useLessons";
+import { useOffers } from "@/hooks/useOffers";
 import { useStudents } from "@/hooks/useStudents";
 import { useInstructors } from "@/hooks/useInstructors";
 import { useVehicles } from "@/hooks/useVehicles";
@@ -48,13 +49,14 @@ export default function Planning() {
   const weekEndDate = addDays(weekStartDate, 6);
   const weekFrom = format(weekStartDate, "yyyy-MM-dd");
   const weekTo = format(weekEndDate, "yyyy-MM-dd");
-  const { lessons, isLoading, checkConflicts, create, update, updateStatus, archive } = useLessons(
+  const { lessons, isLoading, checkConflicts, create, update, updateStatus, archive, remove } = useLessons(
     view === "jour" ? { date: dateStr } : view === "semaine" ? { dateFrom: weekFrom, dateTo: weekTo } : undefined
   );
   const { lessons: monthLessons } = useLessons({ dateFrom: monthStart, dateTo: monthEnd });
   const { students } = useStudents();
   const { instructors } = useInstructors();
   const { vehicles } = useVehicles();
+  const { offers } = useOffers();
   const { log } = useAuditLog();
 
   // Days with lessons for calendar dot indicators
@@ -217,7 +219,7 @@ export default function Planning() {
           onEditLesson={setEditLesson}
           onUpdateLesson={(data) => update.mutate(data)}
           onUpdateStatus={(data) => updateStatus.mutate({ id: data.id, status: data.status as any })}
-          onDeleteLesson={(id) => archive.mutate(id)}
+          onDeleteLesson={(id) => remove.mutate(id)}
           creating={create.isPending}
           checkConflicts={checkConflicts}
         />
@@ -496,8 +498,8 @@ export default function Planning() {
       </motion.div>
       )}
 
-      <LessonFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} onCheckConflicts={checkConflicts} loading={create.isPending} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} />
-      <LessonFormDialog open={!!editLesson} onClose={() => setEditLesson(null)} onSubmit={handleEdit} onCheckConflicts={checkConflicts} loading={update.isPending} initial={editLesson} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} />
+      <LessonFormDialog open={showForm} onClose={() => setShowForm(false)} onSubmit={handleCreate} onCheckConflicts={checkConflicts} loading={create.isPending} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} offers={offers.filter(o => o.active)} />
+      <LessonFormDialog open={!!editLesson} onClose={() => setEditLesson(null)} onSubmit={handleEdit} onCheckConflicts={checkConflicts} loading={update.isPending} initial={editLesson} students={students} instructors={instructors.filter((i) => i.status === "actif")} vehicles={vehicles} offers={offers.filter(o => o.active)} />
 
       <AlertDialog open={!!statusConfirm} onOpenChange={(v) => !v && setStatusConfirm(null)}>
         <AlertDialogContent>
