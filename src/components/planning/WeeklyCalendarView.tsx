@@ -250,6 +250,7 @@ export default function WeeklyCalendarView({
   onUpdateLesson,
   onUpdateStatus,
   onDeleteLesson,
+  onSlotClick,
   creating,
   checkConflicts,
 }: Props) {
