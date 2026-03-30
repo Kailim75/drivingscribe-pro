@@ -69,7 +69,9 @@ export default function StudentDetail() {
   const totalHoursBought = formulas.reduce((s, f) => s + Number(f.hours_bought), 0);
   const healthScore = computeHealthScore(lessons, formulas, evaluations, categories.length);
   const completedLessons = lessons.filter((l: any) => l.status === "effectue");
+  const plannedLessons = lessons.filter((l: any) => l.status === "prevu");
   const totalHoursDone = completedLessons.reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
+  const totalHoursPlanned = plannedLessons.reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
   const totalHoursRemaining = totalHoursBought - totalHoursDone;
 
   const handleUpdate = (data: any) => {
@@ -122,9 +124,10 @@ export default function StudentDetail() {
       )}
 
       {/* Hours summary */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold text-foreground">{totalHoursBought}h</p><p className="text-xs text-muted-foreground mt-1">Achetées</p></div>
         <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold text-success">{totalHoursDone}h</p><p className="text-xs text-muted-foreground mt-1">Réalisées</p></div>
+        <div className="glass-card rounded-xl p-4 text-center"><p className="text-2xl font-bold text-info">{totalHoursPlanned}h</p><p className="text-xs text-muted-foreground mt-1">Planifiées</p></div>
         <div className="glass-card rounded-xl p-4 text-center"><p className={cn("text-2xl font-bold", totalHoursRemaining <= 3 ? "text-warning" : "text-foreground")}>{totalHoursRemaining}h</p><p className="text-xs text-muted-foreground mt-1">Restantes</p></div>
       </div>
 
@@ -144,17 +147,23 @@ export default function StudentDetail() {
               {formulas.length === 0 ? (<p className="text-sm text-muted-foreground text-center py-4">Aucune formule</p>) : (
                 <div className="space-y-2">
                   {formulas.map((f) => {
-                    const fLessons = lessons.filter((l: any) => l.formula_id === f.id && l.status === "effectue");
-                    const done = fLessons.reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
+                    const fDone = lessons.filter((l: any) => l.formula_id === f.id && l.status === "effectue");
+                    const fPlanned = lessons.filter((l: any) => l.formula_id === f.id && l.status === "prevu");
+                    const done = fDone.reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
+                    const planned = fPlanned.reduce((s: number, l: any) => s + Number(l.duration_hours), 0);
                     const remaining = Number(f.hours_bought) - done;
                     const progress = Number(f.hours_bought) > 0 ? (done / Number(f.hours_bought)) * 100 : 0;
+                    const plannedProgress = Number(f.hours_bought) > 0 ? ((done + planned) / Number(f.hours_bought)) * 100 : 0;
                     return (
                       <div key={f.id} className="p-3 rounded-lg bg-muted/40 border border-border/60">
                         <div className="flex items-center justify-between mb-2">
                           <div><p className="text-sm font-medium text-foreground">{f.offer_name}</p><p className="text-xs text-muted-foreground">{offerTypeLabels[f.offer_type]} · {f.active ? "Active" : "Inactive"}</p></div>
-                          <div className="text-right"><p className="text-sm font-semibold text-foreground">{done}/{f.hours_bought}h</p><p className={cn("text-xs", remaining <= 3 && remaining > 0 ? "text-warning" : "text-muted-foreground")}>Reste {remaining}h</p></div>
+                          <div className="text-right"><p className="text-sm font-semibold text-foreground">{done}/{f.hours_bought}h</p><p className={cn("text-xs", remaining <= 3 && remaining > 0 ? "text-warning" : remaining <= 0 ? "text-destructive" : "text-muted-foreground")}>Reste {remaining}h{planned > 0 ? ` · ${planned}h planifiées` : ""}</p></div>
                         </div>
-                        <div className="h-1.5 bg-border rounded-full overflow-hidden"><div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(100, progress)}%` }} /></div>
+                        <div className="h-1.5 bg-border rounded-full overflow-hidden relative">
+                          {planned > 0 && <div className="absolute h-full bg-info/40 rounded-full transition-all" style={{ width: `${Math.min(100, plannedProgress)}%` }} />}
+                          <div className="relative h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(100, progress)}%` }} />
+                        </div>
                       </div>
                     );
                   })}
