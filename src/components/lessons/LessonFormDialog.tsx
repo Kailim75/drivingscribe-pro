@@ -266,7 +266,40 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
                   return (
                     <div className="flex items-center gap-2 mt-1.5 px-3 py-2 rounded-lg text-xs bg-muted/50 border border-border/50 text-muted-foreground">
                       <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>Aucune formule active pour cette offre. Facturez un pack/forfait pour en créer une.</span>
+                      <span className="flex-1">Aucune formule active pour cette offre.</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-6 text-xs gap-1"
+                        disabled={creatingFormula}
+                        onClick={async () => {
+                          const selectedOffer = offers.find(o => o.id === form.offer_id);
+                          if (!selectedOffer || !orgId || !form.student_id) return;
+                          setCreatingFormula(true);
+                          try {
+                            const { data, error } = await supabase.from("student_formulas").insert({
+                              organization_id: orgId,
+                              student_id: form.student_id,
+                              offer_id: selectedOffer.id,
+                              offer_name: selectedOffer.name,
+                              offer_type: selectedOffer.type as any,
+                              hours_bought: selectedOffer.hours || 0,
+                              total_price: selectedOffer.price,
+                            }).select().single();
+                            if (error) throw error;
+                            qc.invalidateQueries({ queryKey: ["student_formulas"] });
+                            set("formula_id", data.id);
+                            toast.success("Formule créée et liée automatiquement");
+                          } catch {
+                            toast.error("Erreur lors de la création de la formule");
+                          }
+                          setCreatingFormula(false);
+                        }}
+                      >
+                        {creatingFormula ? <Loader2 className="w-3 h-3 animate-spin" /> : <PlusCircle className="w-3 h-3" />}
+                        Créer la formule
+                      </Button>
                     </div>
                   );
                 }
