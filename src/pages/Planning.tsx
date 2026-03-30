@@ -233,15 +233,7 @@ export default function Planning() {
           onUpdateLesson={(data) => update.mutate(data)}
           onUpdateStatus={(data) => updateStatus.mutate({ id: data.id, status: data.status as any })}
           onDeleteLesson={(id) => remove.mutate(id)}
-          onSlotClick={(date, hour) => {
-            setCreateInitial({
-              date,
-              start_time: `${String(hour).padStart(2, "0")}:00`,
-              end_time: `${String(hour + 1).padStart(2, "0")}:00`,
-              duration_hours: 1,
-            });
-            setShowForm(true);
-          }}
+          onSlotClick={(date, hour) => openSlotForm(date, hour)}
           creating={create.isPending}
           checkConflicts={checkConflicts}
         />
