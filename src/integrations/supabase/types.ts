@@ -1386,6 +1386,10 @@ export type Database = {
           conflicting_label: string
         }[]
       }
+      get_organization_webhook_key: {
+        Args: { _org_id: string }
+        Returns: string
+      }
       get_user_org_ids: { Args: { _user_id: string }; Returns: string[] }
       has_any_role: {
         Args: {
