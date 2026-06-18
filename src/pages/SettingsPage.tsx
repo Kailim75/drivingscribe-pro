@@ -242,15 +242,15 @@ export default function SettingsPage() {
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Clé API (header <code className="text-[10px] bg-accent px-1 py-0.5 rounded">x-api-key</code>)</label>
                 <div className="flex gap-2">
-                  <input type="text" readOnly value={(form as any).webhook_api_key || "—"} className="flex-1 bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border opacity-70 font-mono text-xs" />
-                  {(form as any).webhook_api_key && (<button type="button" onClick={() => { navigator.clipboard.writeText((form as any).webhook_api_key); toast.success("Clé copiée"); }} className="btn-secondary text-xs px-3">Copier</button>)}
+                  <input type="text" readOnly value={webhookKey || "—"} className="flex-1 bg-card text-foreground text-sm px-3 py-2.5 rounded-lg border border-border opacity-70 font-mono text-xs" />
+                  {webhookKey && (<button type="button" onClick={() => { navigator.clipboard.writeText(webhookKey); toast.success("Clé copiée"); }} className="btn-secondary text-xs px-3">Copier</button>)}
                 </div>
               </div>
-              {isOwnerOrAdmin && !(form as any).webhook_api_key && (
+              {isOwnerOrAdmin && !webhookKey && (
                 <button type="button" onClick={async () => {
-                  const key = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-                  const { error } = await supabase.from("organizations").update({ webhook_api_key: key } as any).eq("id", organization.id);
-                  if (!error) { update_field("webhook_api_key" as any, key); toast.success("Clé API générée"); await refreshOrg(); }
+                  const { data, error } = await supabase.rpc("admin_generate_api_key" as any, { _org_id: organization.id });
+                  if (!error && data) { setWebhookKey(data as string); toast.success("Clé API générée"); await refreshOrg(); }
+                  else if (error) toast.error("Erreur lors de la génération");
                 }} className="btn-primary text-xs">Générer une clé API</button>
               )}
             </div>
