@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuditLog } from "./useAuditLog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { Database, TablesUpdate } from "@/integrations/supabase/types";
 
 type InvoiceStatus = Database["public"]["Enums"]["invoice_status"];
@@ -83,9 +83,9 @@ export function useInvoices() {
       qc.invalidateQueries({ queryKey: ["invoices"] });
       qc.invalidateQueries({ queryKey: ["student_formulas"] });
       log({ action: input.type === "devis" ? "Devis créé" : "Facture créée", entity: "invoice", entity_id: data.id, details: `${input.number} — ${input.total_ttc} € TTC` });
-      toast({ title: input.type === "devis" ? "Devis créé" : "Facture créée", description: input.offer_formula ? "Formule élève créée automatiquement" : undefined });
+      toast.success(input.type === "devis" ? "Devis créé" : "Facture créée", { description: input.offer_formula ? "Formule élève créée automatiquement" : undefined });
     },
-    onError: () => toast({ title: "Erreur", description: "Impossible de créer le document", variant: "destructive" }),
+    onError: () => toast.error("Erreur", { description: "Impossible de créer le document" }),
   });
 
   const update = useMutation({
@@ -139,9 +139,9 @@ export function useInvoices() {
     onSuccess: (_, input) => {
       qc.invalidateQueries({ queryKey: ["invoices"] });
       log({ action: "Facture brouillon modifiée", entity: "invoice", entity_id: input.id, details: `${input.lines.length} lignes` });
-      toast({ title: "Facture modifiée" });
+      toast.success("Facture modifiée");
     },
-    onError: () => toast({ title: "Erreur", description: "Impossible de modifier la facture", variant: "destructive" }),
+    onError: () => toast.error("Erreur", { description: "Impossible de modifier la facture" }),
   });
 
   const convertToInvoice = useMutation({
@@ -194,7 +194,7 @@ export function useInvoices() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["invoices"] });
       log({ action: "Devis converti en facture", entity: "invoice", entity_id: data.id, details: data.number });
-      toast({ title: "Devis converti en facture" });
+      toast.success("Devis converti en facture");
     },
   });
 
@@ -206,7 +206,7 @@ export function useInvoices() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["invoices"] });
-      toast({ title: "Document archivé" });
+      toast.success("Document archivé");
     },
   });
 

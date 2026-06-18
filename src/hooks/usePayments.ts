@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuditLog } from "./useAuditLog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { Database, TablesUpdate } from "@/integrations/supabase/types";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
@@ -92,9 +92,9 @@ export function usePayments() {
       qc.invalidateQueries({ queryKey: ["payments"] });
       qc.invalidateQueries({ queryKey: ["invoices"] });
       log({ action: "Paiement enregistré", entity: "payment", entity_id: data.id, details: `${input.amount} € — ${input.method}` });
-      toast({ title: "Paiement enregistré" });
+      toast.success("Paiement enregistré");
     },
-    onError: () => toast({ title: "Erreur", description: "Impossible d'enregistrer le paiement", variant: "destructive" }),
+    onError: () => toast.error("Erreur", { description: "Impossible d'enregistrer le paiement" }),
   });
 
   const update = useMutation({
@@ -132,9 +132,9 @@ export function usePayments() {
       qc.invalidateQueries({ queryKey: ["payments"] });
       qc.invalidateQueries({ queryKey: ["invoices"] });
       log({ action: "Paiement modifié", entity: "payment", entity_id: data.id });
-      toast({ title: "Paiement modifié" });
+      toast.success("Paiement modifié");
     },
-    onError: () => toast({ title: "Erreur", description: "Impossible de modifier le paiement", variant: "destructive" }),
+    onError: () => toast.error("Erreur", { description: "Impossible de modifier le paiement" }),
   });
 
   const remove = useMutation({
@@ -154,9 +154,9 @@ export function usePayments() {
       qc.invalidateQueries({ queryKey: ["payments"] });
       qc.invalidateQueries({ queryKey: ["invoices"] });
       log({ action: "Paiement supprimé", entity: "payment", entity_id: input.id });
-      toast({ title: "Paiement supprimé" });
+      toast.success("Paiement supprimé");
     },
-    onError: () => toast({ title: "Erreur", description: "Impossible de supprimer le paiement", variant: "destructive" }),
+    onError: () => toast.error("Erreur", { description: "Impossible de supprimer le paiement" }),
   });
 
   return { payments: paymentsQuery.data || [], isLoading: paymentsQuery.isLoading, create, update, remove };

@@ -19,7 +19,7 @@ import {
 import { useInvoices } from "@/hooks/useInvoices";
 import { useStudents } from "@/hooks/useStudents";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import BatchInvoiceDialog from "@/components/invoicing/BatchInvoiceDialog";
 import InvoiceCreateDialog from "@/components/invoicing/InvoiceCreateDialog";
@@ -129,9 +129,9 @@ export default function Invoicing() {
       a.download = result.filename;
       a.click();
       URL.revokeObjectURL(url);
-      toast({ title: "PDF téléchargé" });
+      toast.success("PDF téléchargé");
     } catch (err: any) {
-      toast({ title: "Erreur PDF", description: err.message, variant: "destructive" });
+      toast.error("Erreur PDF", { description: err.message });
     } finally {
       setDownloadingId(null);
     }
@@ -140,7 +140,7 @@ export default function Invoicing() {
   const handleCopyPaymentLink = (invoiceId: string) => {
     const url = `${window.location.origin}/p/facture?id=${invoiceId}`;
     navigator.clipboard.writeText(url);
-    toast({ title: "Lien copié", description: "Le lien de paiement a été copié" });
+    toast.success("Lien copié", { description: "Le lien de paiement a été copié" });
   };
 
   if (isLoading) {

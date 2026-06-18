@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { Database, TablesUpdate } from "@/integrations/supabase/types";
 
 type ExpenseType = Database["public"]["Enums"]["expense_type"];
@@ -58,9 +58,9 @@ export function useExpenses() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["expenses"] });
-      toast({ title: "Dépense enregistrée" });
+      toast.success("Dépense enregistrée");
     },
-    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+    onError: () => toast.error("Erreur"),
   });
 
   const update = useMutation({
@@ -89,9 +89,9 @@ export function useExpenses() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["expenses"] });
-      toast({ title: "Dépense modifiée" });
+      toast.success("Dépense modifiée");
     },
-    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+    onError: () => toast.error("Erreur"),
   });
 
   const remove = useMutation({
@@ -105,9 +105,9 @@ export function useExpenses() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["expenses"] });
-      toast({ title: "Dépense supprimée" });
+      toast.success("Dépense supprimée");
     },
-    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+    onError: () => toast.error("Erreur"),
   });
 
   return { expenses: expensesQuery.data || [], isLoading: expensesQuery.isLoading, create, update, remove };

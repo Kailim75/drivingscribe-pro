@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuditLog } from "./useAuditLog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
 type ReminderType = Database["public"]["Enums"]["reminder_type"];
@@ -57,9 +57,9 @@ export function useReminders() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["reminders"] });
       log({ action: "Rappel créé", entity: "reminder", entity_id: data.id, details: data.message?.substring(0, 60) });
-      toast({ title: "Rappel créé" });
+      toast.success("Rappel créé");
     },
-    onError: () => toast({ title: "Erreur", variant: "destructive" }),
+    onError: () => toast.error("Erreur"),
   });
 
   const markSent = useMutation({
@@ -71,7 +71,7 @@ export function useReminders() {
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: ["reminders"] });
       log({ action: "Rappel envoyé", entity: "reminder", entity_id: id });
-      toast({ title: "Rappel marqué comme envoyé" });
+      toast.success("Rappel marqué comme envoyé");
     },
   });
 

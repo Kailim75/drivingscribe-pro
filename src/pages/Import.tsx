@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 type Step = "upload" | "mapping" | "preview" | "importing" | "done";
@@ -45,7 +45,7 @@ export default function Import() {
     reader.onload = (e) => {
       const text = e.target?.result as string;
       const rows = parseCSV(text);
-      if (rows.length < 2) { toast({ title: "Fichier vide ou invalide", variant: "destructive" }); return; }
+      if (rows.length < 2) { toast.error("Fichier vide ou invalide"); return; }
       setHeaders(rows[0]);
       setRawData(rows.slice(1));
       const autoMap: Record<string, number> = {};

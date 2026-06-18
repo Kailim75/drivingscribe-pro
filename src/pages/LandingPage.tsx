@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 /* ═══════ helpers ═══════ */
 const fade = (delay = 0) => ({
@@ -814,7 +814,7 @@ function BetaFormDialog({ open, onClose }: { open: boolean; onClose: () => void 
     await new Promise((r) => setTimeout(r, 1200));
     setLoading(false);
     setSubmitted(true);
-    toast({ title: "Demande envoyée !", description: "Nous vous recontacterons sous 48 heures." });
+    toast.success("Demande envoyée !", { description: "Nous vous recontacterons sous 48 heures." });
   };
 
   useEffect(() => {

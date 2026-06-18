@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuditLog } from "@/hooks/useAuditLog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, Zap, CheckCircle2, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
@@ -97,7 +97,7 @@ export default function BatchInvoiceDialog({ open, onOpenChange }: Props) {
       }
       setGroups(Array.from(map.values()).sort((a, b) => a.student_name.localeCompare(b.student_name)));
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      toast.error("Erreur", { description: err.message });
     } finally {
       setLoading(false);
     }
@@ -177,10 +177,10 @@ export default function BatchInvoiceDialog({ open, onOpenChange }: Props) {
       }
 
       qc.invalidateQueries({ queryKey: ["invoices"] });
-      toast({ title: `${created} facture${created > 1 ? "s" : ""} créée${created > 1 ? "s" : ""}` });
+      toast.success(`${created} facture${created > 1 ? "s" : ""} créée${created > 1 ? "s" : ""}`);
       onOpenChange(false);
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      toast.error("Erreur", { description: err.message });
     } finally {
       setGenerating(false);
     }

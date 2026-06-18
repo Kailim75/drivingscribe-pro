@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
@@ -97,10 +97,10 @@ export default function GroupedBillingTab() {
       const results = Array.from(payerMap.values()).filter((p) => p.lessons.length > 0 || p.formulas.length > 0);
       setPreviews(results);
       if (results.length === 0) {
-        toast({ title: "Aucun élément à facturer", description: "Aucune séance ou formule éligible trouvée pour cette période." });
+        toast.info("Aucun élément à facturer", { description: "Aucune séance ou formule éligible trouvée pour cette période." });
       }
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      toast.error("Erreur", { description: err.message });
     } finally {
       setLoading(false);
     }
@@ -140,7 +140,7 @@ export default function GroupedBillingTab() {
     const includedFormulas = preview.formulas.filter((f) => !f.excluded);
 
     if (includedLessons.length === 0 && includedFormulas.length === 0) {
-      toast({ title: "Aucune ligne à facturer", description: "Toutes les lignes ont été exclues.", variant: "destructive" });
+      toast.error("Aucune ligne à facturer", { description: "Toutes les lignes ont été exclues." });
       return;
     }
 
@@ -184,12 +184,12 @@ export default function GroupedBillingTab() {
       if (linesErr) throw linesErr;
 
       setGenerated((prev) => new Set([...prev, preview.payer_id]));
-      toast({ title: "Facture brouillon créée", description: `${number} — ${formatEur(totalTtc)}${isFranchise ? "" : " TTC"}` });
+      toast.success("Facture brouillon créée", { description: `${number} — ${formatEur(totalTtc)}${isFranchise ? "" : " TTC"}` });
     } catch (err: any) {
       if (err.message?.includes("unique") || err.code === "23505") {
-        toast({ title: "Doublon détecté", description: "Certaines séances ou formules sont déjà facturées.", variant: "destructive" });
+        toast.error("Doublon détecté", { description: "Certaines séances ou formules sont déjà facturées." });
       } else {
-        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+        toast.error("Erreur", { description: err.message });
       }
     } finally {
       setGenerating(null);
