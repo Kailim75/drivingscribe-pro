@@ -42,7 +42,8 @@ Depot audite: `Kailim75/drivingscribe-pro`
 ### Baseline commandes
 
 - Avant installation: `npm ci` echouait car `package-lock.json` n'etait pas synchronise avec `package.json`.
-- Apres correction lockfile: `npm run build` passe, avec avertissement CSS `@import` et bundle JS de 1,87 MB.
+- Apres correction lockfile: `npm run build` passe, avec avertissement CSS `@import`; avant lazy-loading le bundle JS principal etait de 1,87 MB.
+- Apres quick wins architecture: les pages sont decoupees en chunks; le socle initial principal descend a ~727 kB minifie, avec un chunk Recharts separe de ~349 kB.
 - `npm test` passe: 17 tests.
 - `npm ci` passe apres correction du lockfile.
 - `npm run lint` echoue encore: 215 erreurs et 21 warnings apres corrections ciblees, majoritairement `@typescript-eslint/no-explicit-any`.
@@ -55,7 +56,7 @@ Depot audite: `Kailim75/drivingscribe-pro`
 | Fichier | Gravite | Impact | Recommandation |
 | --- | --- | --- | --- |
 | `src/App.tsx:63` | Elevee | `/admin` est route publique; UX bloquee si non connecte et protection front non explicite. | Ajouter une route protegee admin dediee avec verification de role super-admin. |
-| `src/App.tsx:1-31` | Moyenne | Toutes les pages lourdes sont importees statiquement; bundle initial tres gros. | Passer les pages principales en `React.lazy` avec `Suspense`. |
+| `src/App.tsx` | Moyenne | Les pages lourdes etaient importees statiquement; le bundle initial etait tres gros. | Corrige: routes chargees via `React.lazy` et `Suspense`. |
 | `src/pages/*`, `src/components/*` | Moyenne | Pages volumineuses avec logique data/UI melangee. | Extraire vues, hooks et types par domaine progressivement. |
 
 ### Qualite code et TypeScript
@@ -157,6 +158,7 @@ Ordre recommande: securite Edge Functions et secrets, reproductibilite, route ad
 - `public-invoice`: validation du format UUID avant requete service-role.
 - `Payments.tsx`: correction de l'appel `usePagination` dans le rendu.
 - `BulkAssignPayerDialog`, `command.tsx`, `textarea.tsx`: petites corrections lint ciblees.
+- Architecture quick wins: suppression de `src/data/mockData.ts`, lazy-loading des routes, unification des notifications sur `sonner` et suppression du toaster shadcn inutilise.
 
 ## 5. Backlog residuel
 
@@ -166,7 +168,7 @@ Ordre recommande: securite Edge Functions et secrets, reproductibilite, route ad
 - P1: migrer Vite vers une version non vulnerable, avec campagne de regression front.
 - P1: reduire les `any` par domaine et faire passer `npm run lint`.
 - P1: ajouter CI build/test/audit; activer lint en warning gate pendant la phase de remediation.
-- P2: lazy-load des routes et charts pour reduire le bundle initial.
+- P2: poursuivre le decoupage des charts et dependances lourdes pour reduire encore le socle initial.
 - P2: corriger `src/index.css` pour placer `@import` avant Tailwind ou auto-heberger les fonts.
 - P2: ajouter meta par route publique, canonical, sitemap et strategie de pre-render.
 - P2: renforcer a11y sur boutons icon-only et formulaires custom.
