@@ -58,8 +58,20 @@ export default function SettingsPage() {
     createSkill.mutate(name, { onSuccess: () => setNewSkillName("") });
   };
 
+  const [webhookKey, setWebhookKey] = useState<string | null>(null);
   useEffect(() => {
-    if (organization) { setForm(organization); fetchMembers(); fetchActivityTypes(); }
+    if (organization) {
+      setForm(organization);
+      fetchMembers();
+      fetchActivityTypes();
+      if (isOwnerOrAdmin) {
+        supabase.rpc("get_organization_webhook_key" as any, { _org_id: organization.id }).then(({ data }) => {
+          setWebhookKey((data as string | null) ?? null);
+        });
+      } else {
+        setWebhookKey(null);
+      }
+    }
   }, [organization]);
 
   const fetchMembers = async () => {
