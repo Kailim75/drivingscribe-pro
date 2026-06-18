@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const MAX_PAYLOAD_BYTES = 100_000;
+
 Deno.serve(async (req) => {
   console.log(`[webhook] ${req.method} received from ${req.headers.get("origin") || req.headers.get("referer") || "unknown"}`);
   console.log(`[webhook] Headers: content-type=${req.headers.get("content-type")}, x-api-key=${req.headers.get("x-api-key") ? "present" : "missing"}`);
@@ -57,7 +59,14 @@ Deno.serve(async (req) => {
       .eq("id", org.id);
 
     const rawBody = await req.text();
-    console.log(`[webhook] Body received (${rawBody.length} chars):`, rawBody.substring(0, 500));
+    if (rawBody.length > MAX_PAYLOAD_BYTES) {
+      return new Response(JSON.stringify({ error: "Payload too large" }), {
+        status: 413,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`[webhook] Body received (${rawBody.length} chars)`);
     
     let body: any;
     try {
@@ -92,7 +101,7 @@ Deno.serve(async (req) => {
       return normalized;
     };
 
-    const students = extractStudents(body);
+    const students = extractStudents(body).slice(0, 100);
     const results: { success: boolean; name?: string; error?: string }[] = [];
 
     for (const s of students) {

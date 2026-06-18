@@ -12,6 +12,23 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const configuredSecret = Deno.env.get("AUTO_REMINDERS_SECRET");
+    const providedSecret = req.headers.get("x-cron-secret");
+
+    if (!configuredSecret) {
+      return new Response(
+        JSON.stringify({ error: "AUTO_REMINDERS_SECRET is not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (providedSecret !== configuredSecret) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
