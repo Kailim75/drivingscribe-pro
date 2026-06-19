@@ -17,7 +17,6 @@ import AtRiskStudentsAlert from "@/components/dashboard/AtRiskStudentsAlert";
 import QuickActions from "@/components/dashboard/QuickActions";
 import MicroSummary, { getDashboardSummaries } from "@/components/dashboard/MicroSummary";
 import { useSkillCategories } from "@/hooks/useSkills";
-import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Progress } from "@/components/ui/progress";
 import { AnimatedCurrency, AnimatedNumber } from "@/components/dashboard/AnimatedValue";
 
@@ -45,7 +44,6 @@ function getGreeting() {
 export default function Dashboard() {
   const [period, setPeriod] = useState<Period>("month");
   const [instructorFilter, setInstructorFilter] = useState("");
-  useKeyboardShortcuts();
 
   const todayStr = new Date().toISOString().split("T")[0];
   const range = useMemo(() => getDateRange(period), [period]);

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, UserCog, Car, CalendarDays, Package,
   FileText, CreditCard, TrendingUp, FolderOpen, Bell,
   Settings, Upload, ClipboardList, ChevronLeft, Menu, LogOut, ShieldCheck,
-  GraduationCap,
+  GraduationCap, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,9 @@ import { useOrg } from "@/contexts/OrgContext";
 
 interface NavItem { label: string; path: string; icon: React.ElementType; roles?: string[] }
 interface NavGroup { title: string; items: NavItem[] }
+type OrganizationBranding = {
+  logo_url?: string | null;
+};
 
 const navGroups: NavGroup[] = [
   { title: "", items: [
@@ -48,9 +51,10 @@ interface AppSidebarProps {
   onToggle: () => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  onOpenSearch: () => void;
 }
 
-export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: AppSidebarProps) {
+export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose, onOpenSearch }: AppSidebarProps) {
   const location = useLocation();
   const { signOut } = useAuth();
   const { organization, userRoles } = useOrg();
@@ -60,9 +64,8 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
     return item.roles.some((r) => (userRoles as string[]).includes(r));
   };
 
-  const orgAny = organization as any;
-  const primaryColor = orgAny?.primary_color || undefined;
-  const logoUrl = orgAny?.logo_url || undefined;
+  const orgBranding = organization as OrganizationBranding | null;
+  const logoUrl = orgBranding?.logo_url || undefined;
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-sidebar">
@@ -89,6 +92,21 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
         </div>
         <button onClick={onToggle} className="hidden lg:flex items-center justify-center w-7 h-7 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors">
           <ChevronLeft className={cn("w-4 h-4 transition-transform", collapsed && "rotate-180")} />
+        </button>
+      </div>
+
+      <div className="px-2 py-2 border-b border-sidebar-border/70">
+        <button
+          type="button"
+          onClick={onOpenSearch}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-sidebar-foreground/75 transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+            collapsed && "justify-center px-0"
+          )}
+          aria-label="Rechercher"
+        >
+          <Search className="h-[17px] w-[17px] flex-shrink-0" />
+          {!collapsed && <span className="truncate">Rechercher</span>}
         </button>
       </div>
 
@@ -169,7 +187,7 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
 
 export function MobileMenuButton({ onClick }: { onClick: () => void }) {
   return (
-    <button onClick={onClick} className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+    <button onClick={onClick} className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted text-muted-foreground transition-colors" aria-label="Ouvrir le menu">
       <Menu className="w-5 h-5" />
     </button>
   );
