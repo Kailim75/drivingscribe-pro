@@ -41,8 +41,8 @@ export function usePayers() {
 
   const update = useMutation({
     mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
-      const { error } = await supabase
-        .from("payers")
+      const { error } = await (supabase
+        .from("payers") as any)
         .update(updates)
         .eq("id", id)
         .eq("organization_id", orgId!);

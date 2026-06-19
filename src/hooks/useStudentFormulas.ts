@@ -41,7 +41,7 @@ export function useStudentFormulas(studentId?: string) {
 
   const update = useMutation({
     mutationFn: async ({ id, ...input }: { id: string } & Record<string, any>) => {
-      const { error } = await supabase.from("student_formulas").update(input).eq("id", id);
+      const { error } = await (supabase.from("student_formulas") as any).update(input).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["student_formulas"] }); },
