@@ -23,7 +23,6 @@ export default function QuickActions({ onNewLesson, onNewInvoice, onNewStudent }
       <div className="flex items-center gap-2 mb-3">
         <Zap className="w-4 h-4 text-primary" />
         <h2 className="font-semibold text-foreground text-sm">Actions rapides</h2>
-        <span className="text-[10px] text-muted-foreground ml-auto hidden sm:block">Raccourcis : N S F P</span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {actions.map((a) => (

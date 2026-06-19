@@ -66,6 +66,7 @@ export default function Payments() {
     const name = p.students ? `${p.students.first_name} ${p.students.last_name}` : "";
     return name.toLowerCase().includes(search.toLowerCase()) || p.reference.toLowerCase().includes(search.toLowerCase());
   });
+  const { paginated } = usePagination(filtered, page);
 
   const totalReceived = periodPayments.reduce((s, p) => s + p.amount, 0);
   const methods = (Object.keys(methodConfig) as PaymentMethod[]);
@@ -204,7 +205,7 @@ export default function Payments() {
               </tr>
             </thead>
             <tbody>
-              {usePagination(filtered, page).paginated.map((p) => {
+              {paginated.map((p) => {
                 const cfg = methodConfig[p.method as PaymentMethod] || methodConfig.carte;
                 const studentName = p.students ? `${p.students.first_name} ${p.students.last_name}` : "—";
                 const invNumber = p.invoices?.number || "—";

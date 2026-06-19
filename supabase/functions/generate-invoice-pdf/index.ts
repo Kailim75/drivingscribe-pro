@@ -20,8 +20,6 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
     const authClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -30,24 +28,26 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
-    const supabase = createClient(supabaseUrl, serviceKey);
-
     const { invoice_id } = await req.json();
     if (!invoice_id) throw new Error("invoice_id required");
 
-    const { data: invoice, error } = await supabase
+    const { data: invoice, error } = await authClient
       .from("invoices")
       .select("*, invoice_lines(*), students(first_name, last_name, email, phone, address), payers(name, email, phone, address, siret)")
       .eq("id", invoice_id)
       .single();
-    if (error || !invoice) throw new Error("Invoice not found");
+    if (error || !invoice) {
+      return new Response(JSON.stringify({ error: "Invoice not found" }), { status: 404, headers: corsHeaders });
+    }
 
-    const { data: org } = await supabase
+    const { data: org } = await authClient
       .from("organizations")
       .select("*")
       .eq("id", invoice.organization_id)
       .single();
-    if (!org) throw new Error("Organization not found");
+    if (!org) {
+      return new Response(JSON.stringify({ error: "Organization not found" }), { status: 404, headers: corsHeaders });
+    }
 
     const isDevis = invoice.type === "devis";
     const docLabel = isDevis ? "DEVIS" : "FACTURE";

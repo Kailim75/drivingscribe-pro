@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useAuditLog } from "./useAuditLog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export function useDocuments() {
   const { organization } = useOrg();
@@ -60,9 +60,9 @@ export function useDocuments() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["documents"] });
       log({ action: "Document ajouté", entity: "document", entity_id: data.id, details: data.name });
-      toast({ title: "Document ajouté" });
+      toast.success("Document ajouté");
     },
-    onError: () => toast({ title: "Erreur", description: "Impossible d'ajouter le document", variant: "destructive" }),
+    onError: () => toast.error("Erreur", { description: "Impossible d'ajouter le document" }),
   });
 
   const remove = useMutation({
@@ -73,7 +73,7 @@ export function useDocuments() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["documents"] });
-      toast({ title: "Document supprimé" });
+      toast.success("Document supprimé");
     },
   });
 

@@ -9,8 +9,7 @@ export function useKeyboardShortcuts() {
       // Skip if user is typing in an input/textarea/select
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (e.target as HTMLElement)?.isContentEditable) return;
-      // Skip if any modifier key is held (except for specific combos)
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (!e.altKey || e.ctrlKey || e.metaKey) return;
 
       switch (e.key.toLowerCase()) {
         case "n": navigate("/planning"); break;

@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useOffers } from "@/hooks/useOffers";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const formatEur = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
@@ -125,7 +125,7 @@ export default function InvoiceCreateDialog({ open, onOpenChange, docType, stude
       _type: docType,
     });
     if (numberError || !numberResult) {
-      toast({ title: "Erreur", description: "Impossible de générer le numéro", variant: "destructive" });
+      toast.error("Erreur", { description: "Impossible de générer le numéro" });
       return;
     }
 

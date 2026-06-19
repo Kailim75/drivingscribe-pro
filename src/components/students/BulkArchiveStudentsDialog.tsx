@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuditLog } from "@/hooks/useAuditLog";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, Archive, CheckCircle2, UserX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -93,7 +93,7 @@ export default function BulkArchiveStudentsDialog({ open, onOpenChange }: Props)
       inactive.sort((a, b) => b.days_inactive - a.days_inactive);
       setStudents(inactive);
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      toast.error("Erreur", { description: err.message });
     } finally {
       setLoading(false);
     }
@@ -132,10 +132,10 @@ export default function BulkArchiveStudentsDialog({ open, onOpenChange }: Props)
       }
 
       qc.invalidateQueries({ queryKey: ["students"] });
-      toast({ title: `${selected.length} élève${selected.length > 1 ? "s" : ""} archivé${selected.length > 1 ? "s" : ""}` });
+      toast.success(`${selected.length} élève${selected.length > 1 ? "s" : ""} archivé${selected.length > 1 ? "s" : ""}`);
       onOpenChange(false);
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      toast.error("Erreur", { description: err.message });
     } finally {
       setArchiving(false);
     }
