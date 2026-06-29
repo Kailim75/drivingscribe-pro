@@ -533,6 +533,77 @@ export default function GroupedBillingTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={manageStudentsFor !== null} onOpenChange={(o) => !o && setManageStudentsFor(null)}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Apprenants rattachés à {payers.find((p) => p.id === manageStudentsFor)?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Cochez les apprenants à rattacher à ce tiers payeur. Ils apparaîtront ensuite dans la facturation groupée.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un apprenant..."
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          {(() => {
+            const selectedCount = Object.values(pendingAssignments).filter(Boolean).length;
+            return (
+              <p className="text-xs text-muted-foreground">
+                {selectedCount} apprenant{selectedCount > 1 ? "s" : ""} sélectionné{selectedCount > 1 ? "s" : ""}
+              </p>
+            );
+          })()}
+          <div className="flex-1 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+            {students
+              .filter((s) => {
+                const q = studentSearch.toLowerCase().trim();
+                if (!q) return true;
+                return `${s.first_name} ${s.last_name}`.toLowerCase().includes(q);
+              })
+              .map((s) => {
+                const isChecked = !!pendingAssignments[s.id];
+                const otherPayerId = (s as any).payer_id;
+                const linkedElsewhere = otherPayerId && otherPayerId !== manageStudentsFor;
+                const otherPayerName = linkedElsewhere ? payers.find((p) => p.id === otherPayerId)?.name : null;
+                return (
+                  <label
+                    key={s.id}
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/50 cursor-pointer transition-colors"
+                  >
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={(v) => setPendingAssignments((prev) => ({ ...prev, [s.id]: !!v }))}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{s.first_name} {s.last_name}</p>
+                      {linkedElsewhere && !isChecked && (
+                        <p className="text-[11px] text-warning">Déjà rattaché à {otherPayerName}</p>
+                      )}
+                    </div>
+                  </label>
+                );
+              })}
+            {students.length === 0 && (
+              <div className="p-6 text-center text-sm text-muted-foreground">Aucun apprenant enregistré.</div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManageStudentsFor(null)}>Annuler</Button>
+            <Button onClick={handleSaveAssignments} disabled={savingAssignments}>
+              {savingAssignments ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
