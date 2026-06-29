@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Users, FileText, Calendar, ChevronRight, ChevronDown, Check, Loader2, AlertCircle, Plus, Building2, Pencil, X } from "lucide-react";
+import { Users, FileText, Calendar, ChevronRight, ChevronDown, Check, Loader2, AlertCircle, Plus, Building2, Pencil, X, UserPlus, Search, Zap } from "lucide-react";
 import { usePayers } from "@/hooks/usePayers";
 import { useStudents } from "@/hooks/useStudents";
 import { useInvoices } from "@/hooks/useInvoices";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
@@ -29,7 +29,7 @@ interface PayerPreview {
 
 export default function GroupedBillingTab() {
   const { payers, create: createPayer, update: updatePayer } = usePayers();
-  const { students } = useStudents();
+  const { students, update: updateStudent } = useStudents();
   const { create: createInvoice } = useInvoices();
   const { organization } = useOrg();
 
@@ -38,11 +38,16 @@ export default function GroupedBillingTab() {
   const [previews, setPreviews] = useState<PayerPreview[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
   const [expandedPayer, setExpandedPayer] = useState<string | null>(null);
   const [generated, setGenerated] = useState<Set<string>>(new Set());
   const [payerDialogOpen, setPayerDialogOpen] = useState(false);
   const [editingPayer, setEditingPayer] = useState<string | null>(null);
   const [payerForm, setPayerForm] = useState({ name: "", email: "", phone: "", siret: "", address: "" });
+  const [manageStudentsFor, setManageStudentsFor] = useState<string | null>(null);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [pendingAssignments, setPendingAssignments] = useState<Record<string, boolean>>({});
+  const [savingAssignments, setSavingAssignments] = useState(false);
 
   const isFranchise = (organization as any)?.tva_regime === "franchise_en_base";
   const tvaRate = isFranchise ? 0 : (organization?.tva_rate || 20);
@@ -213,6 +218,54 @@ export default function GroupedBillingTab() {
     }
   };
 
+  const handleOpenManageStudents = (payerId: string) => {
+    const current: Record<string, boolean> = {};
+    for (const s of students) {
+      current[s.id] = (s as any).payer_id === payerId;
+    }
+    setPendingAssignments(current);
+    setStudentSearch("");
+    setManageStudentsFor(payerId);
+  };
+
+  const handleSaveAssignments = async () => {
+    if (!manageStudentsFor) return;
+    setSavingAssignments(true);
+    try {
+      const updates: Promise<any>[] = [];
+      for (const s of students) {
+        const wasLinked = (s as any).payer_id === manageStudentsFor;
+        const willBeLinked = pendingAssignments[s.id];
+        if (wasLinked && !willBeLinked) {
+          updates.push(updateStudent.mutateAsync({ id: s.id, payer_id: null } as any));
+        } else if (!wasLinked && willBeLinked) {
+          updates.push(updateStudent.mutateAsync({ id: s.id, payer_id: manageStudentsFor } as any));
+        }
+      }
+      await Promise.all(updates);
+      toast.success("Rattachements mis à jour", { description: `${updates.length} modification${updates.length > 1 ? "s" : ""}` });
+      setManageStudentsFor(null);
+    } catch (err: any) {
+      toast.error("Erreur", { description: err.message });
+    } finally {
+      setSavingAssignments(false);
+    }
+  };
+
+  const handleBulkGenerate = async () => {
+    setBulkGenerating(true);
+    try {
+      for (let i = 0; i < previews.length; i++) {
+        const p = previews[i];
+        if (generated.has(p.payer_id)) continue;
+        if (p.lessons.filter((l) => !l.excluded).length === 0 && p.formulas.filter((f) => !f.excluded).length === 0) continue;
+        await handleGenerate(p, i);
+      }
+    } finally {
+      setBulkGenerating(false);
+    }
+  };
+
   // Build sub-totals per student for a given preview
   const getStudentSubtotals = (preview: PayerPreview) => {
     const map = new Map<string, { name: string; total: number; excluded: boolean }>();
@@ -242,19 +295,31 @@ export default function GroupedBillingTab() {
       </div>
 
       {payers.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {payers.slice(0, 4).map((p) => {
-            const count = studentsWithPayer.filter((s) => (s as any).payer_id === p.id).length;
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {payers.map((p) => {
+            const linkedStudents = studentsWithPayer.filter((s) => (s as any).payer_id === p.id);
+            const count = linkedStudents.length;
             return (
-              <div key={p.id} className="glass-card rounded-xl p-4 group relative">
-                <button onClick={() => handleOpenEditPayer(p.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-accent" title="Modifier">
+              <div key={p.id} className="glass-card rounded-xl p-4 group relative space-y-2">
+                <button onClick={() => handleOpenEditPayer(p.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-accent" title="Modifier le payeur">
                   <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
-                <div className="flex items-center gap-2 mb-1">
-                  <Building2 className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-primary flex-shrink-0" />
                   <span className="text-sm font-semibold text-foreground truncate">{p.name}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">{count} apprenant{count > 1 ? "s" : ""}</p>
+                <p className="text-xs text-muted-foreground">
+                  {count} apprenant{count > 1 ? "s" : ""} rattaché{count > 1 ? "s" : ""}
+                </p>
+                {count > 0 && (
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">
+                    {linkedStudents.slice(0, 3).map((s) => `${s.first_name} ${s.last_name}`).join(", ")}
+                    {count > 3 && ` +${count - 3}`}
+                  </p>
+                )}
+                <Button onClick={() => handleOpenManageStudents(p.id)} variant="outline" size="sm" className="w-full gap-1.5 mt-1 h-8 text-xs">
+                  <UserPlus className="w-3.5 h-3.5" /> Gérer les apprenants
+                </Button>
               </div>
             );
           })}
@@ -286,7 +351,15 @@ export default function GroupedBillingTab() {
 
       {previews.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">{previews.length} payeur{previews.length > 1 ? "s" : ""} éligible{previews.length > 1 ? "s" : ""}</h2>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="text-sm font-semibold text-foreground">{previews.length} payeur{previews.length > 1 ? "s" : ""} éligible{previews.length > 1 ? "s" : ""}</h2>
+            {previews.some((p) => !generated.has(p.payer_id)) && (
+              <Button onClick={handleBulkGenerate} disabled={bulkGenerating} size="sm" className="gap-2">
+                {bulkGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                Tout facturer en un clic
+              </Button>
+            )}
+          </div>
           {previews.map((preview, payerIdx) => {
             const isExpanded = expandedPayer === preview.payer_id;
             const isGenerated = generated.has(preview.payer_id);
@@ -456,6 +529,77 @@ export default function GroupedBillingTab() {
             <Button onClick={handleSavePayer} disabled={createPayer.isPending || updatePayer.isPending}>
               {(createPayer.isPending || updatePayer.isPending) ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {editingPayer ? "Enregistrer" : "Créer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={manageStudentsFor !== null} onOpenChange={(o) => !o && setManageStudentsFor(null)}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Apprenants rattachés à {payers.find((p) => p.id === manageStudentsFor)?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Cochez les apprenants à rattacher à ce tiers payeur. Ils apparaîtront ensuite dans la facturation groupée.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Rechercher un apprenant..."
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          {(() => {
+            const selectedCount = Object.values(pendingAssignments).filter(Boolean).length;
+            return (
+              <p className="text-xs text-muted-foreground">
+                {selectedCount} apprenant{selectedCount > 1 ? "s" : ""} sélectionné{selectedCount > 1 ? "s" : ""}
+              </p>
+            );
+          })()}
+          <div className="flex-1 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+            {students
+              .filter((s) => {
+                const q = studentSearch.toLowerCase().trim();
+                if (!q) return true;
+                return `${s.first_name} ${s.last_name}`.toLowerCase().includes(q);
+              })
+              .map((s) => {
+                const isChecked = !!pendingAssignments[s.id];
+                const otherPayerId = (s as any).payer_id;
+                const linkedElsewhere = otherPayerId && otherPayerId !== manageStudentsFor;
+                const otherPayerName = linkedElsewhere ? payers.find((p) => p.id === otherPayerId)?.name : null;
+                return (
+                  <label
+                    key={s.id}
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/50 cursor-pointer transition-colors"
+                  >
+                    <Checkbox
+                      checked={isChecked}
+                      onCheckedChange={(v) => setPendingAssignments((prev) => ({ ...prev, [s.id]: !!v }))}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{s.first_name} {s.last_name}</p>
+                      {linkedElsewhere && !isChecked && (
+                        <p className="text-[11px] text-warning">Déjà rattaché à {otherPayerName}</p>
+                      )}
+                    </div>
+                  </label>
+                );
+              })}
+            {students.length === 0 && (
+              <div className="p-6 text-center text-sm text-muted-foreground">Aucun apprenant enregistré.</div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManageStudentsFor(null)}>Annuler</Button>
+            <Button onClick={handleSaveAssignments} disabled={savingAssignments}>
+              {savingAssignments ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>
