@@ -351,7 +351,15 @@ export default function GroupedBillingTab() {
 
       {previews.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">{previews.length} payeur{previews.length > 1 ? "s" : ""} éligible{previews.length > 1 ? "s" : ""}</h2>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="text-sm font-semibold text-foreground">{previews.length} payeur{previews.length > 1 ? "s" : ""} éligible{previews.length > 1 ? "s" : ""}</h2>
+            {previews.some((p) => !generated.has(p.payer_id)) && (
+              <Button onClick={handleBulkGenerate} disabled={bulkGenerating} size="sm" className="gap-2">
+                {bulkGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                Tout facturer en un clic
+              </Button>
+            )}
+          </div>
           {previews.map((preview, payerIdx) => {
             const isExpanded = expandedPayer === preview.payer_id;
             const isGenerated = generated.has(preview.payer_id);
