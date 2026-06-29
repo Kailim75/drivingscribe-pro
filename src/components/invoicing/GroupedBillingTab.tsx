@@ -295,19 +295,31 @@ export default function GroupedBillingTab() {
       </div>
 
       {payers.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {payers.slice(0, 4).map((p) => {
-            const count = studentsWithPayer.filter((s) => (s as any).payer_id === p.id).length;
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {payers.map((p) => {
+            const linkedStudents = studentsWithPayer.filter((s) => (s as any).payer_id === p.id);
+            const count = linkedStudents.length;
             return (
-              <div key={p.id} className="glass-card rounded-xl p-4 group relative">
-                <button onClick={() => handleOpenEditPayer(p.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-accent" title="Modifier">
+              <div key={p.id} className="glass-card rounded-xl p-4 group relative space-y-2">
+                <button onClick={() => handleOpenEditPayer(p.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md hover:bg-accent" title="Modifier le payeur">
                   <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
-                <div className="flex items-center gap-2 mb-1">
-                  <Building2 className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-primary flex-shrink-0" />
                   <span className="text-sm font-semibold text-foreground truncate">{p.name}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">{count} apprenant{count > 1 ? "s" : ""}</p>
+                <p className="text-xs text-muted-foreground">
+                  {count} apprenant{count > 1 ? "s" : ""} rattaché{count > 1 ? "s" : ""}
+                </p>
+                {count > 0 && (
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">
+                    {linkedStudents.slice(0, 3).map((s) => `${s.first_name} ${s.last_name}`).join(", ")}
+                    {count > 3 && ` +${count - 3}`}
+                  </p>
+                )}
+                <Button onClick={() => handleOpenManageStudents(p.id)} variant="outline" size="sm" className="w-full gap-1.5 mt-1 h-8 text-xs">
+                  <UserPlus className="w-3.5 h-3.5" /> Gérer les apprenants
+                </Button>
               </div>
             );
           })}
