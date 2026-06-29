@@ -218,6 +218,54 @@ export default function GroupedBillingTab() {
     }
   };
 
+  const handleOpenManageStudents = (payerId: string) => {
+    const current: Record<string, boolean> = {};
+    for (const s of students) {
+      current[s.id] = (s as any).payer_id === payerId;
+    }
+    setPendingAssignments(current);
+    setStudentSearch("");
+    setManageStudentsFor(payerId);
+  };
+
+  const handleSaveAssignments = async () => {
+    if (!manageStudentsFor) return;
+    setSavingAssignments(true);
+    try {
+      const updates: Promise<any>[] = [];
+      for (const s of students) {
+        const wasLinked = (s as any).payer_id === manageStudentsFor;
+        const willBeLinked = pendingAssignments[s.id];
+        if (wasLinked && !willBeLinked) {
+          updates.push(updateStudent.mutateAsync({ id: s.id, payer_id: null } as any));
+        } else if (!wasLinked && willBeLinked) {
+          updates.push(updateStudent.mutateAsync({ id: s.id, payer_id: manageStudentsFor } as any));
+        }
+      }
+      await Promise.all(updates);
+      toast.success("Rattachements mis à jour", { description: `${updates.length} modification${updates.length > 1 ? "s" : ""}` });
+      setManageStudentsFor(null);
+    } catch (err: any) {
+      toast.error("Erreur", { description: err.message });
+    } finally {
+      setSavingAssignments(false);
+    }
+  };
+
+  const handleBulkGenerate = async () => {
+    setBulkGenerating(true);
+    try {
+      for (let i = 0; i < previews.length; i++) {
+        const p = previews[i];
+        if (generated.has(p.payer_id)) continue;
+        if (p.lessons.filter((l) => !l.excluded).length === 0 && p.formulas.filter((f) => !f.excluded).length === 0) continue;
+        await handleGenerate(p, i);
+      }
+    } finally {
+      setBulkGenerating(false);
+    }
+  };
+
   // Build sub-totals per student for a given preview
   const getStudentSubtotals = (preview: PayerPreview) => {
     const map = new Map<string, { name: string; total: number; excluded: boolean }>();
