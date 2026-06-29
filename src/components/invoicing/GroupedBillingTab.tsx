@@ -36,6 +36,8 @@ export default function GroupedBillingTab() {
   const [dateFrom, setDateFrom] = useState(() => { const d = new Date(); d.setDate(1); return d.toISOString().split("T")[0]; });
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split("T")[0]);
   const [previews, setPreviews] = useState<PayerPreview[]>([]);
+  const [unassigned, setUnassigned] = useState<{ student_id: string; student_name: string; lessons_count: number; formulas_count: number; total: number }[]>([]);
+  const [assigningStudent, setAssigningStudent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const [bulkGenerating, setBulkGenerating] = useState(false);
