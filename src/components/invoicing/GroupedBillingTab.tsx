@@ -16,9 +16,21 @@ import { toast } from "sonner";
 
 const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+type LessonBillingStatus = "prevu" | "effectue" | "annule" | "absent";
+const lessonBillingLabels: Record<LessonBillingStatus, string> = {
+  prevu: "Séance prévue",
+  effectue: "Séance effectuée",
+  annule: "Séance annulée",
+  absent: "Absence facturable",
+};
+const getLessonBillingLabel = (status: LessonBillingStatus) => lessonBillingLabels[status];
+const normalizeLessonBillingStatus = (status: string): LessonBillingStatus => {
+  if (status === "effectue" || status === "annule" || status === "absent") return status;
+  return "prevu";
+};
 
 interface BillableLesson {
-  id: string; date: string; duration_hours: number; billable_amount: number; student_id: string; student_name: string; excluded?: boolean;
+  id: string; date: string; duration_hours: number; billable_amount: number; student_id: string; student_name: string; status: LessonBillingStatus; excluded?: boolean;
 }
 interface BillableFormula {
   id: string; offer_name: string; total_price: number; student_id: string; student_name: string; excluded?: boolean;
@@ -64,9 +76,10 @@ export default function GroupedBillingTab() {
     setGenerated(new Set());
     try {
       const { data: lessons, error: lErr } = await supabase
-        .from("lessons").select("id, date, duration_hours, billable_amount, student_id, billing_rule")
-        .eq("organization_id", organization.id).eq("status", "effectue").neq("billing_rule", "non_facturee")
-        .gte("date", dateFrom).lte("date", dateTo);
+        .from("lessons").select("id, date, duration_hours, billable_amount, student_id, billing_rule, status")
+        .eq("organization_id", organization.id).neq("billing_rule", "non_facturee")
+        .gte("date", dateFrom).lte("date", dateTo)
+        .order("date", { ascending: true });
       if (lErr) throw lErr;
 
       const { data: invoicedLessons } = await supabase.from("invoice_lines").select("source_lesson_id").not("source_lesson_id", "is", null);
@@ -92,7 +105,7 @@ export default function GroupedBillingTab() {
         if (!entry.students.find((st) => st.id === s.id)) {
           entry.students.push({ id: s.id, name: `${s.first_name} ${s.last_name}` });
         }
-        const studentLessons = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id)).map((l) => ({ ...l, student_name: `${s.first_name} ${s.last_name}` }));
+        const studentLessons = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id)).map((l) => ({ ...l, status: normalizeLessonBillingStatus(l.status), student_name: `${s.first_name} ${s.last_name}` }));
         entry.lessons.push(...studentLessons);
         const studentFormulas = (formulas || []).filter((f) => f.student_id === s.id && !invoicedFormulaIds.has(f.id)).map((f) => ({ ...f, student_name: `${s.first_name} ${s.last_name}` }));
         entry.formulas.push(...studentFormulas);
@@ -119,7 +132,7 @@ export default function GroupedBillingTab() {
       setUnassigned(unassignedList);
 
       if (results.length === 0 && unassignedList.length === 0) {
-        toast.info("Aucun élément à facturer", { description: "Aucune séance ou formule éligible trouvée pour cette période." });
+        toast.info("Aucun élément à facturer", { description: "Aucune séance du planning ou formule éligible trouvée pour cette période." });
       }
     } catch (err: any) {
       toast.error("Erreur", { description: err.message });
@@ -190,7 +203,7 @@ export default function GroupedBillingTab() {
         const sLessons = includedLessons.filter((l) => l.student_id === studentId);
         const sFormulas = includedFormulas.filter((f) => f.student_id === studentId);
         for (const lesson of sLessons) {
-          lines.push({ description: `Séance conduite – ${studentName} – ${formatDate(lesson.date)} (${lesson.duration_hours}h)`, quantity: 1, unit_price: lesson.billable_amount, total_ht: lesson.billable_amount, source_lesson_id: lesson.id });
+          lines.push({ description: `${getLessonBillingLabel(lesson.status)} – ${studentName} – ${formatDate(lesson.date)} (${lesson.duration_hours}h)`, quantity: 1, unit_price: lesson.billable_amount, total_ht: lesson.billable_amount, source_lesson_id: lesson.id });
         }
         for (const formula of sFormulas) {
           lines.push({ description: `${formula.offer_name} – ${studentName}`, quantity: 1, unit_price: formula.total_price, total_ht: formula.total_price, source_formula_id: formula.id });
@@ -388,7 +401,7 @@ export default function GroupedBillingTab() {
                 {unassigned.length} apprenant{unassigned.length > 1 ? "s" : ""} du planning sans tiers payeur
               </h3>
               <p className="text-xs text-muted-foreground">
-                Ces apprenants ont des séances ou formules à facturer sur la période, mais ne sont rattachés à aucun payeur. Rattachez-les pour les inclure dans la facturation groupée.
+                Ces apprenants ont des séances du planning ou formules à facturer sur la période, mais ne sont rattachés à aucun payeur. Rattachez-les pour les inclure dans la facturation groupée.
               </p>
             </div>
           </div>
@@ -517,7 +530,7 @@ export default function GroupedBillingTab() {
                               <td className="px-2 py-2 text-center">
                                 <Checkbox checked={!l.excluded} onCheckedChange={() => toggleLineExclusion(payerIdx, "lesson", l.id)} className="w-3.5 h-3.5" />
                               </td>
-                              <td className="px-3 py-2 text-foreground">Séance – {formatDate(l.date)} ({l.duration_hours}h)</td>
+                              <td className="px-3 py-2 text-foreground">{getLessonBillingLabel(l.status)} – {formatDate(l.date)} ({l.duration_hours}h)</td>
                               <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">{l.student_name}</td>
                               <td className="px-3 py-2 text-right font-medium text-foreground">{formatEur(l.billable_amount)}</td>
                             </tr>
