@@ -82,16 +82,23 @@ export default function GroupedBillingTab() {
         .order("date", { ascending: true });
       if (lErr) throw lErr;
 
-      const { data: invoicedLessons } = await supabase.from("invoice_lines").select("source_lesson_id").not("source_lesson_id", "is", null);
-      const invoicedLessonIds = new Set((invoicedLessons || []).map((il) => il.source_lesson_id));
+      // Récupère uniquement les factures non archivées de l'organisation
+      const { data: activeInvoices } = await supabase
+        .from("invoices").select("id")
+        .eq("organization_id", organization.id)
+        .neq("status", "archivé");
+      const activeInvoiceIds = new Set((activeInvoices || []).map((i) => i.id));
+
+      const { data: invoicedLessons } = await supabase.from("invoice_lines").select("source_lesson_id, invoice_id").not("source_lesson_id", "is", null);
+      const invoicedLessonIds = new Set((invoicedLessons || []).filter((il) => activeInvoiceIds.has(il.invoice_id)).map((il) => il.source_lesson_id));
 
       const { data: formulas, error: fErr } = await supabase
         .from("student_formulas").select("id, offer_name, total_price, student_id, active")
         .eq("organization_id", organization.id).eq("active", true);
       if (fErr) throw fErr;
 
-      const { data: invoicedFormulas } = await supabase.from("invoice_lines").select("source_formula_id").not("source_formula_id", "is", null);
-      const invoicedFormulaIds = new Set((invoicedFormulas || []).map((il) => il.source_formula_id));
+      const { data: invoicedFormulas } = await supabase.from("invoice_lines").select("source_formula_id, invoice_id").not("source_formula_id", "is", null);
+      const invoicedFormulaIds = new Set((invoicedFormulas || []).filter((il) => activeInvoiceIds.has(il.invoice_id)).map((il) => il.source_formula_id));
 
       const payerMap = new Map<string, PayerPreview>();
       for (const s of studentsWithPayer) {
