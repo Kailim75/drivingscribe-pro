@@ -60,6 +60,7 @@ export default function GroupedBillingTab() {
     if (!organization?.id) return;
     setLoading(true);
     setPreviews([]);
+    setUnassigned([]);
     setGenerated(new Set());
     try {
       const { data: lessons, error: lErr } = await supabase
@@ -103,13 +104,40 @@ export default function GroupedBillingTab() {
 
       const results = Array.from(payerMap.values()).filter((p) => p.lessons.length > 0 || p.formulas.length > 0);
       setPreviews(results);
-      if (results.length === 0) {
+
+      // Compute unassigned students with billable activity in the period
+      const unassignedMap = new Map<string, { student_id: string; student_name: string; lessons_count: number; formulas_count: number; total: number }>();
+      for (const s of students) {
+        if ((s as any).payer_id) continue;
+        const sLessons = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id));
+        const sFormulas = (formulas || []).filter((f) => f.student_id === s.id && !invoicedFormulaIds.has(f.id));
+        if (sLessons.length === 0 && sFormulas.length === 0) continue;
+        const total = sLessons.reduce((sum, l) => sum + (l.billable_amount || 0), 0) + sFormulas.reduce((sum, f) => sum + (f.total_price || 0), 0);
+        unassignedMap.set(s.id, { student_id: s.id, student_name: `${s.first_name} ${s.last_name}`, lessons_count: sLessons.length, formulas_count: sFormulas.length, total });
+      }
+      const unassignedList = Array.from(unassignedMap.values()).sort((a, b) => b.total - a.total);
+      setUnassigned(unassignedList);
+
+      if (results.length === 0 && unassignedList.length === 0) {
         toast.info("Aucun élément à facturer", { description: "Aucune séance ou formule éligible trouvée pour cette période." });
       }
     } catch (err: any) {
       toast.error("Erreur", { description: err.message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickAssignPayer = async (studentId: string, payerId: string) => {
+    setAssigningStudent(studentId);
+    try {
+      await updateStudent.mutateAsync({ id: studentId, payer_id: payerId } as any);
+      toast.success("Apprenant rattaché", { description: "Relancez la recherche pour mettre à jour la facturation." });
+      setUnassigned((prev) => prev.filter((u) => u.student_id !== studentId));
+    } catch (err: any) {
+      toast.error("Erreur", { description: err.message });
+    } finally {
+      setAssigningStudent(null);
     }
   };
 
