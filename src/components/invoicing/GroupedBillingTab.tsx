@@ -379,6 +379,57 @@ export default function GroupedBillingTab() {
         )}
       </motion.div>
 
+      {unassigned.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-4 space-y-3 border-warning/30">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-foreground">
+                {unassigned.length} apprenant{unassigned.length > 1 ? "s" : ""} du planning sans tiers payeur
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Ces apprenants ont des séances ou formules à facturer sur la période, mais ne sont rattachés à aucun payeur. Rattachez-les pour les inclure dans la facturation groupée.
+              </p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {unassigned.map((u) => (
+              <div key={u.student_id} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-card flex-wrap sm:flex-nowrap">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{u.student_name}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {u.lessons_count} séance{u.lessons_count > 1 ? "s" : ""} · {u.formulas_count} forfait{u.formulas_count > 1 ? "s" : ""} · {formatEur(u.total)}
+                  </p>
+                </div>
+                {payers.length > 0 ? (
+                  <select
+                    disabled={assigningStudent === u.student_id}
+                    defaultValue=""
+                    onChange={(e) => { if (e.target.value) handleQuickAssignPayer(u.student_id, e.target.value); }}
+                    className="h-9 rounded-md border border-input bg-background px-2 text-xs min-w-[160px]"
+                  >
+                    <option value="" disabled>Rattacher à un payeur…</option>
+                    {payers.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => { setEditingPayer(null); setPayerForm({ name: "", email: "", phone: "", siret: "", address: "" }); setPayerDialogOpen(true); }} className="gap-1.5 h-9">
+                    <Plus className="w-3.5 h-3.5" /> Créer un payeur
+                  </Button>
+                )}
+                {assigningStudent === u.student_id && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+              </div>
+            ))}
+          </div>
+          {unassigned.length > 0 && previews.length === 0 && (
+            <Button onClick={handleSearch} variant="outline" size="sm" className="w-full gap-2">
+              <FileText className="w-4 h-4" /> Relancer la recherche après rattachement
+            </Button>
+          )}
+        </motion.div>
+      )}
+
       {previews.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
