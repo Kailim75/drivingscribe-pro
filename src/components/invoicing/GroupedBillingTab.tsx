@@ -16,9 +16,18 @@ import { toast } from "sonner";
 
 const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-type LessonBillingStatus = "prevu" | "effectue";
-const getLessonBillingLabel = (status: LessonBillingStatus) => status === "effectue" ? "Séance effectuée" : "Séance prévue";
-const normalizeLessonBillingStatus = (status: string): LessonBillingStatus => status === "effectue" ? "effectue" : "prevu";
+type LessonBillingStatus = "prevu" | "effectue" | "annule" | "absent";
+const lessonBillingLabels: Record<LessonBillingStatus, string> = {
+  prevu: "Séance prévue",
+  effectue: "Séance effectuée",
+  annule: "Séance annulée",
+  absent: "Absence facturable",
+};
+const getLessonBillingLabel = (status: LessonBillingStatus) => lessonBillingLabels[status];
+const normalizeLessonBillingStatus = (status: string): LessonBillingStatus => {
+  if (status === "effectue" || status === "annule" || status === "absent") return status;
+  return "prevu";
+};
 
 interface BillableLesson {
   id: string; date: string; duration_hours: number; billable_amount: number; student_id: string; student_name: string; status: LessonBillingStatus; excluded?: boolean;
@@ -68,7 +77,7 @@ export default function GroupedBillingTab() {
     try {
       const { data: lessons, error: lErr } = await supabase
         .from("lessons").select("id, date, duration_hours, billable_amount, student_id, billing_rule, status")
-        .eq("organization_id", organization.id).in("status", ["prevu", "effectue"]).neq("billing_rule", "non_facturee")
+        .eq("organization_id", organization.id).neq("billing_rule", "non_facturee")
         .gte("date", dateFrom).lte("date", dateTo)
         .order("date", { ascending: true });
       if (lErr) throw lErr;
@@ -123,7 +132,7 @@ export default function GroupedBillingTab() {
       setUnassigned(unassignedList);
 
       if (results.length === 0 && unassignedList.length === 0) {
-        toast.info("Aucun élément à facturer", { description: "Aucune séance prévue/effectuée ou formule éligible trouvée pour cette période." });
+        toast.info("Aucun élément à facturer", { description: "Aucune séance du planning ou formule éligible trouvée pour cette période." });
       }
     } catch (err: any) {
       toast.error("Erreur", { description: err.message });
@@ -392,7 +401,7 @@ export default function GroupedBillingTab() {
                 {unassigned.length} apprenant{unassigned.length > 1 ? "s" : ""} du planning sans tiers payeur
               </h3>
               <p className="text-xs text-muted-foreground">
-                Ces apprenants ont des séances prévues/effectuées ou formules à facturer sur la période, mais ne sont rattachés à aucun payeur. Rattachez-les pour les inclure dans la facturation groupée.
+                Ces apprenants ont des séances du planning ou formules à facturer sur la période, mais ne sont rattachés à aucun payeur. Rattachez-les pour les inclure dans la facturation groupée.
               </p>
             </div>
           </div>
