@@ -29,7 +29,7 @@ interface PayerPreview {
 
 export default function GroupedBillingTab() {
   const { payers, create: createPayer, update: updatePayer } = usePayers();
-  const { students } = useStudents();
+  const { students, update: updateStudent } = useStudents();
   const { create: createInvoice } = useInvoices();
   const { organization } = useOrg();
 
@@ -38,11 +38,16 @@ export default function GroupedBillingTab() {
   const [previews, setPreviews] = useState<PayerPreview[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
   const [expandedPayer, setExpandedPayer] = useState<string | null>(null);
   const [generated, setGenerated] = useState<Set<string>>(new Set());
   const [payerDialogOpen, setPayerDialogOpen] = useState(false);
   const [editingPayer, setEditingPayer] = useState<string | null>(null);
   const [payerForm, setPayerForm] = useState({ name: "", email: "", phone: "", siret: "", address: "" });
+  const [manageStudentsFor, setManageStudentsFor] = useState<string | null>(null);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [pendingAssignments, setPendingAssignments] = useState<Record<string, boolean>>({});
+  const [savingAssignments, setSavingAssignments] = useState(false);
 
   const isFranchise = (organization as any)?.tva_regime === "franchise_en_base";
   const tvaRate = isFranchise ? 0 : (organization?.tva_rate || 20);
