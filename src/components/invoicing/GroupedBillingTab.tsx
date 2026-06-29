@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Users, FileText, Calendar, ChevronRight, ChevronDown, Check, Loader2, AlertCircle, Plus, Building2, Pencil, X } from "lucide-react";
+import { Users, FileText, Calendar, ChevronRight, ChevronDown, Check, Loader2, AlertCircle, Plus, Building2, Pencil, X, UserPlus, Search, Zap } from "lucide-react";
 import { usePayers } from "@/hooks/usePayers";
 import { useStudents } from "@/hooks/useStudents";
 import { useInvoices } from "@/hooks/useInvoices";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
