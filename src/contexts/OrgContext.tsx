@@ -51,7 +51,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         const [orgResult, rolesResult, profileResult] = await Promise.all([
           supabase.from("organizations").select("*").eq("id", orgId).single(),
           supabase.from("user_roles").select("role").eq("user_id", user.id).eq("organization_id", orgId),
-          supabase.from("profiles").select("suspended").eq("user_id", user.id).single(),
+          supabase.from("profiles").select("suspended").eq("user_id", user.id).maybeSingle(),
         ]);
 
         setOrganization(orgResult.data);
