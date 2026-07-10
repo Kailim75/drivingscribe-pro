@@ -705,6 +705,7 @@ export type Database = {
           cgv_text: string | null
           created_at: string
           currency: string
+          default_hourly_rate: number
           document_header: string | null
           document_logo_url: string | null
           document_template: string | null
@@ -743,6 +744,7 @@ export type Database = {
           cgv_text?: string | null
           created_at?: string
           currency?: string
+          default_hourly_rate?: number
           document_header?: string | null
           document_logo_url?: string | null
           document_template?: string | null
@@ -781,6 +783,7 @@ export type Database = {
           cgv_text?: string | null
           created_at?: string
           currency?: string
+          default_hourly_rate?: number
           document_header?: string | null
           document_logo_url?: string | null
           document_template?: string | null
