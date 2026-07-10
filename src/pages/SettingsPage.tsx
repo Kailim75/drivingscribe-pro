@@ -81,7 +81,7 @@ export default function SettingsPage() {
       const enriched = await Promise.all(
         membersData.map(async (m) => {
           const [profileRes, rolesRes] = await Promise.all([
-            supabase.from("profiles").select("first_name, last_name").eq("user_id", m.user_id).single(),
+            supabase.from("profiles").select("first_name, last_name").eq("user_id", m.user_id).maybeSingle(),
             supabase.from("user_roles").select("role").eq("user_id", m.user_id).eq("organization_id", organization!.id),
           ]);
           return { ...m, profile: profileRes.data, roles: (rolesRes.data || []).map((r) => r.role) };
