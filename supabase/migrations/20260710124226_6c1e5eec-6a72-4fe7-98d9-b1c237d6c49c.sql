@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.compute_lesson_billable_amount() FROM PUBLIC, anon, authenticated;
