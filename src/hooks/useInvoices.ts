@@ -90,7 +90,7 @@ export function useInvoices() {
 
   const update = useMutation({
     mutationFn: async ({ id, ...updates }: { id: string } & TablesUpdate<"invoices">) => {
-      const { error } = await supabase.from("invoices").update(updates).eq("id", id);
+      const { error } = await supabase.from("invoices").update(updates).eq("id", id).eq("organization_id", orgId!);
       if (error) throw error;
     },
     onSuccess: (_, input) => {
@@ -125,7 +125,8 @@ export function useInvoices() {
           total_ttc: totalTtc,
           remaining_amount: totalTtc - (inv?.paid_amount || 0),
         })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("organization_id", orgId!);
       if (error) throw error;
 
       await supabase.from("invoice_lines").delete().eq("invoice_id", id);
@@ -182,12 +183,23 @@ export function useInvoices() {
 
       const lines = devis.invoice_lines || [];
       if (lines.length > 0) {
-        await supabase.from("invoice_lines").insert(
+        const { error: linesError } = await supabase.from("invoice_lines").insert(
           lines.map((l) => ({ invoice_id: data.id, description: l.description, quantity: l.quantity, unit_price: l.unit_price, total_ht: l.total_ht }))
         );
+        // Rollback the newly created invoice if lines fail — avoids archiving the devis with an incomplete invoice
+        if (linesError) {
+          await supabase.from("invoices").delete().eq("id", data.id).eq("organization_id", orgId!);
+          throw linesError;
+        }
       }
 
-      await supabase.from("invoices").update({ status: archiveStatus }).eq("id", devisId);
+      // Only archive the devis AFTER lines are safely inserted
+      const { error: archErr } = await supabase
+        .from("invoices")
+        .update({ status: archiveStatus })
+        .eq("id", devisId)
+        .eq("organization_id", orgId!);
+      if (archErr) throw archErr;
 
       return data;
     },
@@ -196,12 +208,13 @@ export function useInvoices() {
       log({ action: "Devis converti en facture", entity: "invoice", entity_id: data.id, details: data.number });
       toast.success("Devis converti en facture");
     },
+    onError: () => toast.error("Erreur", { description: "Impossible de convertir le devis" }),
   });
 
   const archive = useMutation({
     mutationFn: async (id: string) => {
       const status: InvoiceStatus = "archivé";
-      const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
+      const { error } = await supabase.from("invoices").update({ status }).eq("id", id).eq("organization_id", orgId!);
       if (error) throw error;
     },
     onSuccess: () => {
