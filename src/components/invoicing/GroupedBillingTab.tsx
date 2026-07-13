@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Users, FileText, Calendar, ChevronRight, ChevronDown, Check, Loader2, AlertCircle, Plus, Building2, Pencil, X, UserPlus, Search, Zap } from "lucide-react";
 import { usePayers } from "@/hooks/usePayers";
@@ -44,6 +45,7 @@ export default function GroupedBillingTab() {
   const { students, update: updateStudent } = useStudents();
   const { create: createInvoice } = useInvoices();
   const { organization } = useOrg();
+  const qc = useQueryClient();
 
   const [dateFrom, setDateFrom] = useState(() => { const d = new Date(); d.setDate(1); return d.toISOString().split("T")[0]; });
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().split("T")[0]);
@@ -89,7 +91,8 @@ export default function GroupedBillingTab() {
         .neq("status", "archivé");
       const activeInvoiceIds = new Set((activeInvoices || []).map((i) => i.id));
 
-      const { data: invoicedLessons } = await supabase.from("invoice_lines").select("source_lesson_id, invoice_id").not("source_lesson_id", "is", null);
+      const { data: invoicedLessons, error: ilErr } = await supabase.from("invoice_lines").select("source_lesson_id, invoice_id").not("source_lesson_id", "is", null);
+      if (ilErr) throw ilErr;
       const invoicedLessonIds = new Set((invoicedLessons || []).filter((il) => activeInvoiceIds.has(il.invoice_id)).map((il) => il.source_lesson_id));
 
       const { data: formulas, error: fErr } = await supabase
@@ -97,7 +100,8 @@ export default function GroupedBillingTab() {
         .eq("organization_id", organization.id).eq("active", true);
       if (fErr) throw fErr;
 
-      const { data: invoicedFormulas } = await supabase.from("invoice_lines").select("source_formula_id, invoice_id").not("source_formula_id", "is", null);
+      const { data: invoicedFormulas, error: ifErr } = await supabase.from("invoice_lines").select("source_formula_id, invoice_id").not("source_formula_id", "is", null);
+      if (ifErr) throw ifErr;
       const invoicedFormulaIds = new Set((invoicedFormulas || []).filter((il) => activeInvoiceIds.has(il.invoice_id)).map((il) => il.source_formula_id));
 
       const payerMap = new Map<string, PayerPreview>();
@@ -112,9 +116,9 @@ export default function GroupedBillingTab() {
         if (!entry.students.find((st) => st.id === s.id)) {
           entry.students.push({ id: s.id, name: `${s.first_name} ${s.last_name}` });
         }
-        const studentLessons = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id)).map((l) => ({ ...l, status: normalizeLessonBillingStatus(l.status), student_name: `${s.first_name} ${s.last_name}` }));
+        const studentLessons = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id)).map((l) => ({ ...l, billable_amount: Number(l.billable_amount) || 0, duration_hours: Number(l.duration_hours) || 0, status: normalizeLessonBillingStatus(l.status), student_name: `${s.first_name} ${s.last_name}` }));
         entry.lessons.push(...studentLessons);
-        const studentFormulas = (formulas || []).filter((f) => f.student_id === s.id && !invoicedFormulaIds.has(f.id)).map((f) => ({ ...f, student_name: `${s.first_name} ${s.last_name}` }));
+        const studentFormulas = (formulas || []).filter((f) => f.student_id === s.id && !invoicedFormulaIds.has(f.id)).map((f) => ({ ...f, total_price: Number(f.total_price) || 0, student_name: `${s.first_name} ${s.last_name}` }));
         entry.formulas.push(...studentFormulas);
       }
 
@@ -132,7 +136,7 @@ export default function GroupedBillingTab() {
         const sLessons = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id));
         const sFormulas = (formulas || []).filter((f) => f.student_id === s.id && !invoicedFormulaIds.has(f.id));
         if (sLessons.length === 0 && sFormulas.length === 0) continue;
-        const total = sLessons.reduce((sum, l) => sum + (l.billable_amount || 0), 0) + sFormulas.reduce((sum, f) => sum + (f.total_price || 0), 0);
+        const total = sLessons.reduce((sum, l) => sum + (Number(l.billable_amount) || 0), 0) + sFormulas.reduce((sum, f) => sum + (Number(f.total_price) || 0), 0);
         unassignedMap.set(s.id, { student_id: s.id, student_name: `${s.first_name} ${s.last_name}`, lessons_count: sLessons.length, formulas_count: sFormulas.length, total });
       }
       const unassignedList = Array.from(unassignedMap.values()).sort((a, b) => b.total - a.total);
@@ -233,15 +237,19 @@ export default function GroupedBillingTab() {
       }).select().single();
       if (invErr) throw invErr;
 
-      const { error: linesErr } = await supabase.from("invoice_lines").insert(
+      const { data: insertedLines, error: linesErr } = await supabase.from("invoice_lines").insert(
         lines.map((l) => ({ invoice_id: invoice.id, description: l.description, quantity: l.quantity, unit_price: l.unit_price, total_ht: l.total_ht, source_lesson_id: l.source_lesson_id || null, source_formula_id: l.source_formula_id || null }))
-      );
-      if (linesErr) {
+      ).select("id");
+      if (linesErr || (insertedLines?.length || 0) !== lines.length) {
         // Rollback the empty invoice so we don't leave a shell without lines (would produce an empty PDF)
-        await supabase.from("invoices").delete().eq("id", invoice.id).eq("organization_id", organization.id);
-        throw linesErr;
+        const { error: rollbackErr } = await supabase.from("invoices").delete().eq("id", invoice.id).eq("organization_id", organization.id);
+        if (rollbackErr) {
+          await supabase.from("invoices").update({ status: "archivé" as const, notes: `${invoice.notes || ""}\nFacture archivée automatiquement : lignes de facturation non créées.` }).eq("id", invoice.id).eq("organization_id", organization.id);
+        }
+        throw linesErr || new Error("Les lignes de facturation n'ont pas toutes été créées.");
       }
 
+      qc.invalidateQueries({ queryKey: ["invoices"] });
       setGenerated((prev) => new Set([...prev, preview.payer_id]));
       toast.success("Facture brouillon créée", { description: `${number} — ${formatEur(totalTtc)}${isFranchise ? "" : " TTC"}` });
     } catch (err: any) {
