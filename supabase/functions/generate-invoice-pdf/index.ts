@@ -33,15 +33,26 @@ Deno.serve(async (req) => {
 
     const { data: invoice, error } = await authClient
       .from("invoices")
-      .select("*, invoice_lines(*), students(first_name, last_name, email, phone, address), payers(name, email, phone, address, siret)")
+      .select("*, students(first_name, last_name, email, phone, address), payers(name, email, phone, address, siret)")
       .eq("id", invoice_id)
       .single();
     if (error || !invoice) {
       return new Response(JSON.stringify({ error: "Invoice not found" }), { status: 404, headers: corsHeaders });
     }
 
+    const { data: invoiceLines, error: linesError } = await authClient
+      .from("invoice_lines")
+      .select("*")
+      .eq("invoice_id", invoice_id)
+      .order("created_at", { ascending: true });
+    if (linesError) {
+      return new Response(JSON.stringify({ error: "Impossible de récupérer les prestations facturées." }), { status: 400, headers: corsHeaders });
+    }
+
+    const invoiceWithLines = { ...invoice, invoice_lines: invoiceLines || [] };
+
     // Refuse to generate an empty PDF (invoice header without any lines)
-    if (!invoice.invoice_lines || invoice.invoice_lines.length === 0) {
+    if (!invoiceWithLines.invoice_lines || invoiceWithLines.invoice_lines.length === 0) {
       return new Response(
         JSON.stringify({ error: "Cette facture ne contient aucune prestation. Ajoutez des lignes avant de générer le PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -57,7 +68,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Organization not found" }), { status: 404, headers: corsHeaders });
     }
 
-    const isDevis = invoice.type === "devis";
+    const isDevis = invoiceWithLines.type === "devis";
     const docLabel = isDevis ? "DEVIS" : "FACTURE";
 
     // Fiscal regime
@@ -129,7 +140,7 @@ Deno.serve(async (req) => {
     doc.setTextColor(headerColor.r, headerColor.g, headerColor.b);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text(`${docLabel} ${invoice.number}`, margin, y);
+    doc.text(`${docLabel} ${invoiceWithLines.number}`, margin, y);
     y += 10;
 
     // Dates
@@ -137,16 +148,16 @@ Deno.serve(async (req) => {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(80, 80, 80);
     const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-    doc.text(`Date d'émission : ${formatDate(invoice.issue_date)}`, margin, y);
+    doc.text(`Date d'émission : ${formatDate(invoiceWithLines.issue_date)}`, margin, y);
     y += 4;
-    doc.text(`Date d'échéance : ${formatDate(invoice.due_date)}`, margin, y);
+    doc.text(`Date d'échéance : ${formatDate(invoiceWithLines.due_date)}`, margin, y);
     y += 4;
-    doc.text(`Statut : ${invoice.status}`, margin, y);
+    doc.text(`Statut : ${invoiceWithLines.status}`, margin, y);
     y += 8;
 
     // Client info
-    const payer = invoice.payer_id ? invoice.payers : null;
-    const student = invoice.students;
+    const payer = invoiceWithLines.payer_id ? invoiceWithLines.payers : null;
+    const student = invoiceWithLines.students;
     const recipientName = payer ? payer.name : (student ? `${student.first_name} ${student.last_name}` : "");
     const recipientEmail = payer ? payer.email : student?.email;
     const recipientPhone = payer ? payer.phone : student?.phone;
@@ -185,7 +196,7 @@ Deno.serve(async (req) => {
     // Table rows
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "normal");
-    const lines = invoice.invoice_lines || [];
+    const lines = invoiceWithLines.invoice_lines || [];
     const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 
     lines.forEach((line: any, i: number) => {
@@ -216,7 +227,7 @@ Deno.serve(async (req) => {
       doc.rect(margin + 98, y - 4.5, contentW - 98, 9, "F");
       doc.setTextColor(255, 255, 255);
       doc.text("Total", margin + 105, y + 1.5);
-      doc.text(formatEur(invoice.total_ht), margin + 148, y + 1.5, { align: "right" } as any);
+      doc.text(formatEur(invoiceWithLines.total_ht), margin + 148, y + 1.5, { align: "right" } as any);
       y += 12;
       doc.setTextColor(80, 80, 80);
       doc.setFont("helvetica", "normal");
@@ -225,10 +236,10 @@ Deno.serve(async (req) => {
     } else {
       // Assujetti: show HT + TVA + TTC
       doc.text("Total HT", margin + 105, y);
-      doc.text(formatEur(invoice.total_ht), margin + 148, y, { align: "right" } as any);
+      doc.text(formatEur(invoiceWithLines.total_ht), margin + 148, y, { align: "right" } as any);
       y += 5;
       doc.text(`TVA (${org.tva_rate}%)`, margin + 105, y);
-      doc.text(formatEur(invoice.tva_amount), margin + 148, y, { align: "right" } as any);
+      doc.text(formatEur(invoiceWithLines.tva_amount), margin + 148, y, { align: "right" } as any);
       y += 6;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
@@ -236,30 +247,30 @@ Deno.serve(async (req) => {
       doc.rect(margin + 98, y - 4.5, contentW - 98, 9, "F");
       doc.setTextColor(255, 255, 255);
       doc.text("Total TTC", margin + 105, y + 1.5);
-      doc.text(formatEur(invoice.total_ttc), margin + 148, y + 1.5, { align: "right" } as any);
+      doc.text(formatEur(invoiceWithLines.total_ttc), margin + 148, y + 1.5, { align: "right" } as any);
     }
 
     // Payment info
-    if (!isDevis && invoice.paid_amount > 0) {
+    if (!isDevis && invoiceWithLines.paid_amount > 0) {
       y += 12;
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
-      doc.text(`Déjà payé : ${formatEur(invoice.paid_amount)}`, margin + 105, y);
+      doc.text(`Déjà payé : ${formatEur(invoiceWithLines.paid_amount)}`, margin + 105, y);
       y += 5;
       doc.setFont("helvetica", "bold");
-      doc.text(`Reste à payer : ${formatEur(invoice.remaining_amount)}`, margin + 105, y);
+      doc.text(`Reste à payer : ${formatEur(invoiceWithLines.remaining_amount)}`, margin + 105, y);
     }
 
     // Notes
-    if (invoice.notes) {
+    if (invoiceWithLines.notes) {
       y += 15;
       doc.setTextColor(80, 80, 80);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.text("Notes :", margin, y);
       y += 4;
-      doc.text(invoice.notes, margin, y, { maxWidth: contentW });
+      doc.text(invoiceWithLines.notes, margin, y, { maxWidth: contentW });
     }
 
     // Signature block
@@ -344,7 +355,7 @@ Deno.serve(async (req) => {
     const pdfBase64 = doc.output("datauristring").split(",")[1];
 
     return new Response(
-      JSON.stringify({ pdf: pdfBase64, filename: `${docLabel}_${invoice.number}.pdf` }),
+      JSON.stringify({ pdf: pdfBase64, filename: `${docLabel}_${invoiceWithLines.number}.pdf` }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
