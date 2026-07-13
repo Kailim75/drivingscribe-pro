@@ -40,6 +40,14 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Invoice not found" }), { status: 404, headers: corsHeaders });
     }
 
+    // Refuse to generate an empty PDF (invoice header without any lines)
+    if (!invoice.invoice_lines || invoice.invoice_lines.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Cette facture ne contient aucune prestation. Ajoutez des lignes avant de générer le PDF." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { data: org } = await authClient
       .from("organizations")
       .select("*")
