@@ -236,7 +236,11 @@ export default function GroupedBillingTab() {
       const { error: linesErr } = await supabase.from("invoice_lines").insert(
         lines.map((l) => ({ invoice_id: invoice.id, description: l.description, quantity: l.quantity, unit_price: l.unit_price, total_ht: l.total_ht, source_lesson_id: l.source_lesson_id || null, source_formula_id: l.source_formula_id || null }))
       );
-      if (linesErr) throw linesErr;
+      if (linesErr) {
+        // Rollback the empty invoice so we don't leave a shell without lines (would produce an empty PDF)
+        await supabase.from("invoices").delete().eq("id", invoice.id).eq("organization_id", organization.id);
+        throw linesErr;
+      }
 
       setGenerated((prev) => new Set([...prev, preview.payer_id]));
       toast.success("Facture brouillon créée", { description: `${number} — ${formatEur(totalTtc)}${isFranchise ? "" : " TTC"}` });
