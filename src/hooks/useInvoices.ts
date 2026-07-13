@@ -60,7 +60,11 @@ export function useInvoices() {
         const { error: linesError } = await supabase
           .from("invoice_lines")
           .insert(lines.map((l) => ({ ...l, invoice_id: data.id })));
-        if (linesError) throw linesError;
+        if (linesError) {
+          // Rollback the empty invoice — otherwise it becomes a shell that renders an empty PDF
+          await supabase.from("invoices").delete().eq("id", data.id).eq("organization_id", orgId!);
+          throw linesError;
+        }
       }
 
       // Auto-create student formula for pack/forfait
