@@ -62,7 +62,14 @@ export function useInvoices() {
           .insert(lines.map((l) => ({ ...l, invoice_id: data.id })));
         if (linesError) {
           // Rollback the empty invoice — otherwise it becomes a shell that renders an empty PDF
-          await supabase.from("invoices").delete().eq("id", data.id).eq("organization_id", orgId!);
+          const { error: rollbackError } = await supabase.from("invoices").delete().eq("id", data.id).eq("organization_id", orgId!);
+          if (rollbackError) {
+            await supabase
+              .from("invoices")
+              .update({ status: "archivé" as InvoiceStatus, notes: `${input.notes || ""}\nDocument archivé automatiquement : les lignes de facturation n'ont pas été créées.` })
+              .eq("id", data.id)
+              .eq("organization_id", orgId!);
+          }
           throw linesError;
         }
       }
@@ -192,7 +199,14 @@ export function useInvoices() {
         );
         // Rollback the newly created invoice if lines fail — avoids archiving the devis with an incomplete invoice
         if (linesError) {
-          await supabase.from("invoices").delete().eq("id", data.id).eq("organization_id", orgId!);
+          const { error: rollbackError } = await supabase.from("invoices").delete().eq("id", data.id).eq("organization_id", orgId!);
+          if (rollbackError) {
+            await supabase
+              .from("invoices")
+              .update({ status: "archivé" as InvoiceStatus, notes: `${devis.notes || ""}\nDocument archivé automatiquement : les lignes de facturation n'ont pas été créées.` })
+              .eq("id", data.id)
+              .eq("organization_id", orgId!);
+          }
           throw linesError;
         }
       }
