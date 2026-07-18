@@ -395,7 +395,6 @@ export type Database = {
           organization_id: string
           paid_amount: number
           payer_id: string | null
-          public_token: string
           remaining_amount: number
           status: Database["public"]["Enums"]["invoice_status"]
           student_id: string
@@ -416,7 +415,6 @@ export type Database = {
           organization_id: string
           paid_amount?: number
           payer_id?: string | null
-          public_token?: string
           remaining_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"]
           student_id: string
@@ -437,7 +435,6 @@ export type Database = {
           organization_id?: string
           paid_amount?: number
           payer_id?: string | null
-          public_token?: string
           remaining_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"]
           student_id?: string
@@ -1375,10 +1372,6 @@ export type Database = {
       admin_suspend_user: {
         Args: { _suspended: boolean; _user_id: string }
         Returns: undefined
-      }
-      is_super_admin: {
-        Args: { _user_id?: string }
-        Returns: boolean
       }
       check_lesson_conflicts: {
         Args: {
