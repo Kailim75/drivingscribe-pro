@@ -931,6 +931,21 @@ export type Database = {
           },
         ]
       }
+      platform_admins: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1376,10 +1391,6 @@ export type Database = {
         Args: { _suspended: boolean; _user_id: string }
         Returns: undefined
       }
-      is_super_admin: {
-        Args: { _user_id?: string }
-        Returns: boolean
-      }
       check_lesson_conflicts: {
         Args: {
           _date: string
@@ -1421,9 +1432,14 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
       next_document_number: {
         Args: { _org_id: string; _type: string }
         Returns: string
+      }
+      recalc_invoice_totals: {
+        Args: { _invoice_id: string }
+        Returns: undefined
       }
       setup_organization_owner: {
         Args: { _org_id: string; _user_id: string }
