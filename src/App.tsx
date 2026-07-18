@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, type ReactNode } from "react";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { OrgProvider, useOrg } from "@/contexts/OrgContext";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 import AppLayout from "@/components/layout/AppLayout";
 import { Loader2 } from "lucide-react";
 
@@ -59,6 +60,17 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+function AdminRoute({ children }: { children: ReactNode }) {
+  const { user, loading: authLoading } = useAuth();
+  const { isSuperAdmin, loading: adminLoading } = useIsSuperAdmin();
+
+  if (authLoading || (user && adminLoading)) return <FullPageLoader />;
+  if (!user) return <Navigate to="/connexion" replace />;
+  if (!isSuperAdmin) return <Navigate to="/tableau-de-bord" replace />;
+
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<FullPageLoader />}>
@@ -67,7 +79,7 @@ function AppRoutes() {
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/p/facture" element={<PublicInvoice />} />
         <Route path="/" element={<LandingPage />} />
-        <Route path="/admin" element={<SuperAdminPage />} />
+        <Route path="/admin" element={<AdminRoute><SuperAdminPage /></AdminRoute>} />
         <Route path="/suspendu" element={<SuspendedPage />} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/tableau-de-bord" element={<Dashboard />} />

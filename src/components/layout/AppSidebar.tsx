@@ -9,8 +9,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrg } from "@/contexts/OrgContext";
+import { useIsSuperAdmin } from "@/hooks/useIsSuperAdmin";
 
-interface NavItem { label: string; path: string; icon: React.ElementType; roles?: string[] }
+interface NavItem { label: string; path: string; icon: React.ElementType; roles?: string[]; superAdminOnly?: boolean }
 interface NavGroup { title: string; items: NavItem[] }
 type OrganizationBranding = {
   logo_url?: string | null;
@@ -40,7 +41,7 @@ const navGroups: NavGroup[] = [
     { label: "Journal", path: "/journal", icon: ClipboardList, roles: ["owner", "admin"] },
   ]},
   { title: "ADMIN", items: [
-    { label: "Super Admin", path: "/admin", icon: ShieldCheck, roles: ["owner"] },
+    { label: "Super Admin", path: "/admin", icon: ShieldCheck, superAdminOnly: true },
   ]},
 ];
 
@@ -58,8 +59,10 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
   const location = useLocation();
   const { signOut } = useAuth();
   const { organization, userRoles } = useOrg();
+  const { isSuperAdmin } = useIsSuperAdmin();
 
   const canSee = (item: NavItem) => {
+    if (item.superAdminOnly) return isSuperAdmin;
     if (!item.roles) return true;
     return item.roles.some((r) => (userRoles as string[]).includes(r));
   };
