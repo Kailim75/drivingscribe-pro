@@ -76,6 +76,28 @@ export function useSkillCategories() {
   return { ...query, categories: query.data ?? [], create, remove, reorder };
 }
 
+// Toutes les évaluations de l'organisation (score de santé sur le tableau de bord)
+export function useAllSkillEvaluations() {
+  const { organization } = useOrg();
+  const orgId = organization?.id;
+
+  const query = useQuery({
+    queryKey: ["skill_evaluations", orgId, "all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("skill_evaluations")
+        .select("*")
+        .eq("organization_id", orgId!)
+        .order("evaluated_at", { ascending: false });
+      if (error) throw error;
+      return data as SkillEvaluation[];
+    },
+    enabled: !!orgId,
+  });
+
+  return { ...query, evaluations: query.data ?? [] };
+}
+
 export function useSkillEvaluations(studentId?: string) {
   const { organization } = useOrg();
   const orgId = organization?.id;

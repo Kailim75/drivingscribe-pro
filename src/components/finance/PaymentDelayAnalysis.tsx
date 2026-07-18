@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isInvoiceOverdue } from "@/lib/labels";
 
 interface Props {
   invoices: any[];
@@ -31,7 +32,7 @@ export default function PaymentDelayAnalysis({ invoices, payments }: Props) {
     const over60 = delays.filter(d => d > 60).length;
     const total = delays.length || 1;
 
-    const overdueInvoices = invoices.filter(i => i.type === "facture" && i.status === "en_retard");
+    const overdueInvoices = invoices.filter(i => isInvoiceOverdue(i));
     const overdueAmount = overdueInvoices.reduce((s, i) => s + Number(i.remaining_amount), 0);
 
     return { avgDelay: Math.round(avgDelay), maxDelay, under30Pct: (under30 / total) * 100, over30Pct: (over30 / total) * 100, over60Pct: (over60 / total) * 100, sampleSize: delays.length, overdueCount: overdueInvoices.length, overdueAmount };

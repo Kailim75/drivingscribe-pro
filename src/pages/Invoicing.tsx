@@ -21,6 +21,7 @@ import { useStudents } from "@/hooks/useStudents";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { isInvoiceOverdue, invoiceDisplayStatus } from "@/lib/labels";
 import BatchInvoiceDialog from "@/components/invoicing/BatchInvoiceDialog";
 import InvoiceCreateDialog from "@/components/invoicing/InvoiceCreateDialog";
 import GroupedBillingTab from "@/components/invoicing/GroupedBillingTab";
@@ -48,7 +49,7 @@ export default function Invoicing() {
   const { invoices, isLoading, create, update, updateWithLines, convertToInvoice, archive } = useInvoices();
   const { students } = useStudents();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("tous");
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get("statusFilter") || "tous");
   const [typeFilter, setTypeFilter] = useState<"tous" | "devis" | "facture" | "groupee">("tous");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [batchOpen, setBatchOpen] = useState(false);
@@ -64,7 +65,7 @@ export default function Invoicing() {
       totalFacture: factures.reduce((s, i) => s + i.total_ttc, 0),
       totalEncaisse: factures.reduce((s, i) => s + i.paid_amount, 0),
       totalImpaye: factures.filter((i) => i.remaining_amount > 0).reduce((s, i) => s + i.remaining_amount, 0),
-      enRetard: invoices.filter((i) => i.status === "en_retard").length,
+      enRetard: invoices.filter((i) => isInvoiceOverdue(i)).length,
       groupees: invoices.filter((i) => !!(i as any).payer_id).length,
       devisCount: invoices.filter((i) => i.type === "devis").length,
       factureCount: factures.length,
@@ -80,7 +81,7 @@ export default function Invoicing() {
         inv.number.toLowerCase().includes(search.toLowerCase()) ||
         studentName.toLowerCase().includes(search.toLowerCase()) ||
         payerName.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter === "tous" || inv.status === statusFilter;
+      const matchStatus = statusFilter === "tous" || invoiceDisplayStatus(inv) === statusFilter;
       const matchType =
         typeFilter === "tous" ||
         (typeFilter === "groupee" ? !!(inv as any).payer_id : inv.type === typeFilter);
@@ -276,7 +277,7 @@ export default function Invoicing() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filtered.map((inv) => {
-                    const cfg = statusConfig[inv.status] || statusConfig.brouillon;
+                    const cfg = statusConfig[invoiceDisplayStatus(inv)] || statusConfig.brouillon;
                     const hasPayer = !!(inv as any).payer_id;
                     const recipientName = hasPayer && (inv as any).payers?.name
                       ? (inv as any).payers.name
