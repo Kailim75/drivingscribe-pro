@@ -1373,6 +1373,10 @@ export type Database = {
         Args: { _suspended: boolean; _user_id: string }
         Returns: undefined
       }
+      is_super_admin: {
+        Args: { _user_id?: string }
+        Returns: boolean
+      }
       check_lesson_conflicts: {
         Args: {
           _date: string
