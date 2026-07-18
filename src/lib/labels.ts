@@ -50,6 +50,20 @@ export const activityTypeColors: Record<string, string> = {
   vtc: "bg-success/10 text-success", vmdtr: "bg-warning/10 text-warning",
 };
 
+export const invoiceStatusLabels: Record<string, string> = {
+  brouillon: "Brouillon", envoyé: "Envoyé", partiellement_payé: "Partiel", payé: "Payé",
+  en_retard: "En retard", annulé: "Annulé", archivé: "Archivé",
+};
+export const invoiceStatusColors: Record<string, string> = {
+  brouillon: "bg-muted text-muted-foreground",
+  envoyé: "bg-info/10 text-info border-info/20",
+  partiellement_payé: "bg-warning/10 text-warning border-warning/20",
+  payé: "bg-success/10 text-success border-success/20",
+  en_retard: "bg-destructive/10 text-destructive border-destructive/20",
+  annulé: "bg-muted text-muted-foreground",
+  archivé: "bg-muted text-muted-foreground",
+};
+
 export const formatEur = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 

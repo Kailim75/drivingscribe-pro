@@ -53,7 +53,7 @@ export default function Planning() {
   const weekEndDate = addDays(weekStartDate, 6);
   const weekFrom = format(weekStartDate, "yyyy-MM-dd");
   const weekTo = format(weekEndDate, "yyyy-MM-dd");
-  const { lessons, isLoading, checkConflicts, create, update, updateStatus, archive, remove } = useLessons(
+  const { lessons, isLoading, checkConflicts, create, update, updateStatus, bulkUpdateStatus, archive, remove } = useLessons(
     view === "jour" ? { date: dateStr } : view === "semaine" ? { dateFrom: weekFrom, dateTo: weekTo } : undefined
   );
   const { lessons: monthLessons } = useLessons({ dateFrom: monthStart, dateTo: monthEnd });
@@ -77,9 +77,7 @@ export default function Planning() {
   const handleBulkStatusChange = useCallback(async (status: string) => {
     setBulkPending(true);
     try {
-      for (const id of selectedIds) {
-        await updateStatus.mutateAsync({ id, status: status as "prevu" | "effectue" | "annule" | "absent" });
-      }
+      await bulkUpdateStatus.mutateAsync({ ids: selectedIds, status: status as "prevu" | "effectue" | "annule" | "absent" });
       setSelectedIds([]);
       log({ action: "bulk_update_status", entity: "lesson", details: `${selectedIds.length} séances → ${status}` });
     } catch {
@@ -87,7 +85,7 @@ export default function Planning() {
     } finally {
       setBulkPending(false);
     }
-  }, [selectedIds, updateStatus, log]);
+  }, [selectedIds, bulkUpdateStatus, log]);
 
   const handleAiSuggest = async () => {
     if (!aiStudent || !organization?.id) return;
@@ -294,10 +292,10 @@ export default function Planning() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
-                  <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+                  <button onClick={() => navigate(-1)} aria-label="Jour précédent" className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <button onClick={() => navigate(1)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+                  <button onClick={() => navigate(1)} aria-label="Jour suivant" className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>

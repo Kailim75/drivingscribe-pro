@@ -93,7 +93,7 @@ export default function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileCl
             </motion.div>
           )}
         </div>
-        <button onClick={onToggle} className="hidden lg:flex items-center justify-center w-7 h-7 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors">
+        <button onClick={onToggle} aria-label={collapsed ? "Déplier le menu" : "Replier le menu"} className="hidden lg:flex items-center justify-center w-7 h-7 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors">
           <ChevronLeft className={cn("w-4 h-4 transition-transform", collapsed && "rotate-180")} />
         </button>
       </div>

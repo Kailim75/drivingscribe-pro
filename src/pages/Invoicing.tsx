@@ -21,24 +21,21 @@ import { useStudents } from "@/hooks/useStudents";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { isInvoiceOverdue, invoiceDisplayStatus } from "@/lib/labels";
+import { isInvoiceOverdue, invoiceDisplayStatus, invoiceStatusLabels, invoiceStatusColors, formatEur } from "@/lib/labels";
 import BatchInvoiceDialog from "@/components/invoicing/BatchInvoiceDialog";
 import InvoiceCreateDialog from "@/components/invoicing/InvoiceCreateDialog";
 import GroupedBillingTab from "@/components/invoicing/GroupedBillingTab";
 import { useSearchParams } from "react-router-dom";
 
-const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  brouillon: { label: "Brouillon", color: "bg-muted text-muted-foreground", icon: FileText },
-  envoyé: { label: "Envoyé", color: "bg-info/10 text-info border-info/20", icon: ArrowRight },
-  partiellement_payé: { label: "Partiel", color: "bg-warning/10 text-warning border-warning/20", icon: Clock },
-  payé: { label: "Payé", color: "bg-success/10 text-success border-success/20", icon: CheckCircle2 },
-  en_retard: { label: "En retard", color: "bg-destructive/10 text-destructive border-destructive/20", icon: AlertCircle },
-  annulé: { label: "Annulé", color: "bg-muted text-muted-foreground", icon: X },
-  archivé: { label: "Archivé", color: "bg-muted text-muted-foreground", icon: FileText },
+const statusIcons: Record<string, typeof CheckCircle2> = {
+  brouillon: FileText, envoyé: ArrowRight, partiellement_payé: Clock, payé: CheckCircle2,
+  en_retard: AlertCircle, annulé: X, archivé: FileText,
 };
+const statusConfig: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> =
+  Object.fromEntries(Object.keys(invoiceStatusLabels).map((k) => [
+    k, { label: invoiceStatusLabels[k], color: invoiceStatusColors[k], icon: statusIcons[k] },
+  ]));
 
-const formatEur = (n: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 
@@ -349,7 +346,7 @@ export default function Invoicing() {
                             )}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Actions sur le document">
                                   <MoreVertical className="w-4 h-4 text-muted-foreground" />
                                 </Button>
                               </DropdownMenuTrigger>
