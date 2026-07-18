@@ -395,6 +395,7 @@ export type Database = {
           organization_id: string
           paid_amount: number
           payer_id: string | null
+          public_token: string
           remaining_amount: number
           status: Database["public"]["Enums"]["invoice_status"]
           student_id: string
@@ -415,6 +416,7 @@ export type Database = {
           organization_id: string
           paid_amount?: number
           payer_id?: string | null
+          public_token?: string
           remaining_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"]
           student_id: string
@@ -435,6 +437,7 @@ export type Database = {
           organization_id?: string
           paid_amount?: number
           payer_id?: string | null
+          public_token?: string
           remaining_amount?: number
           status?: Database["public"]["Enums"]["invoice_status"]
           student_id?: string

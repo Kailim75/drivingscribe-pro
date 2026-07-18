@@ -138,8 +138,12 @@ export default function Invoicing() {
     }
   };
 
-  const handleCopyPaymentLink = (invoiceId: string) => {
-    const url = `${window.location.origin}/p/facture?id=${invoiceId}`;
+  const handleCopyPaymentLink = (inv: { public_token?: string | null }) => {
+    if (!inv.public_token) {
+      toast.error("Lien indisponible", { description: "Cette facture n'a pas encore de jeton de partage." });
+      return;
+    }
+    const url = `${window.location.origin}/p/facture?t=${inv.public_token}`;
     navigator.clipboard.writeText(url);
     toast.success("Lien copié", { description: "Le lien de paiement a été copié" });
   };
@@ -360,7 +364,7 @@ export default function Invoicing() {
                                   {downloadingId === inv.id ? "Génération..." : "Télécharger PDF"}
                                 </DropdownMenuItem>
                                 {inv.type === "facture" && (
-                                  <DropdownMenuItem onClick={() => handleCopyPaymentLink(inv.id)}>
+                                  <DropdownMenuItem onClick={() => handleCopyPaymentLink(inv)}>
                                     <Link2 className="w-3.5 h-3.5 mr-2" />Lien de paiement
                                   </DropdownMenuItem>
                                 )}

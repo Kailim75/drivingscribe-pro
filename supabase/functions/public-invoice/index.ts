@@ -15,9 +15,10 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const invoiceId = url.searchParams.get("id");
-    if (!invoiceId) throw new Error("id required");
-    if (!UUID_RE.test(invoiceId)) throw new Error("invalid id");
+    // Accès par jeton de partage uniquement — jamais par l'identifiant technique de la facture.
+    const token = url.searchParams.get("t");
+    if (!token) throw new Error("token required");
+    if (!UUID_RE.test(token)) throw new Error("invalid token");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
     const { data: invoice, error } = await supabase
       .from("invoices")
       .select("number, type, status, total_ht, tva_amount, total_ttc, paid_amount, remaining_amount, issue_date, due_date, organization_id, invoice_lines(description, quantity, unit_price, total_ht), students(first_name, last_name)")
-      .eq("id", invoiceId)
+      .eq("public_token", token)
       .single();
     if (error || !invoice) throw new Error("Invoice not found");
 
