@@ -17,20 +17,27 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 
 export default function PublicInvoice() {
   const [searchParams] = useSearchParams();
-  const invoiceId = searchParams.get("id");
+  const token = searchParams.get("t");
+  const legacyId = searchParams.get("id");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!invoiceId) { setError("Lien invalide"); setLoading(false); return; }
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-invoice?id=${invoiceId}`;
+    if (!token) {
+      setError(legacyId
+        ? "Ce lien n'est plus valide — demandez un nouveau lien de paiement."
+        : "Lien invalide");
+      setLoading(false);
+      return;
+    }
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-invoice?t=${token}`;
     fetch(url, { headers: { "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } })
       .then((r) => r.json())
       .then((d) => { if (d.error) throw new Error(d.error); setData(d); })
-      .catch((e) => setError(e.message))
+      .catch(() => setError("Document introuvable — demandez un nouveau lien de paiement."))
       .finally(() => setLoading(false));
-  }, [invoiceId]);
+  }, [token, legacyId]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
   if (error || !data) return (

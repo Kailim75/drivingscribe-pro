@@ -6,37 +6,9 @@ import { toast } from "sonner";
 import type { Database, TablesUpdate } from "@/integrations/supabase/types";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
-type InvoiceStatus = Database["public"]["Enums"]["invoice_status"];
 
-async function recalcInvoice(invoiceId: string, orgId: string) {
-  // Get all payments for this invoice
-  const { data: payments } = await supabase
-    .from("payments")
-    .select("amount")
-    .eq("invoice_id", invoiceId)
-    .eq("organization_id", orgId);
-  const totalPaid = (payments || []).reduce((s, p) => s + p.amount, 0);
-
-  const { data: inv } = await supabase
-    .from("invoices")
-    .select("total_ttc")
-    .eq("id", invoiceId)
-    .eq("organization_id", orgId)
-    .single();
-  if (!inv) return;
-
-  const remaining = inv.total_ttc - totalPaid;
-  const newStatus: InvoiceStatus | undefined =
-    remaining <= 0 ? "payé" : totalPaid > 0 ? "partiellement_payé" : undefined;
-
-  const updateData: TablesUpdate<"invoices"> = {
-    paid_amount: totalPaid,
-    remaining_amount: Math.max(0, remaining),
-    ...(newStatus ? { status: newStatus } : {}),
-  };
-  await supabase.from("invoices").update(updateData).eq("id", invoiceId).eq("organization_id", orgId);
-}
-
+// Les totaux de facture (payé / reste dû / statut) sont recalculés par le trigger
+// trg_payments_recalc_invoice en base : aucun recalcul côté client.
 export function usePayments() {
   const { organization } = useOrg();
   const orgId = organization?.id;
@@ -82,10 +54,6 @@ export function usePayments() {
         .select()
         .single();
       if (error) throw error;
-
-      if (input.invoice_id) {
-        await recalcInvoice(input.invoice_id, orgId!);
-      }
       return data;
     },
     onSuccess: (data, input) => {
@@ -121,11 +89,6 @@ export function usePayments() {
         .select()
         .single();
       if (error) throw error;
-
-      // Recalc old and new invoices
-      if (_old_invoice_id) await recalcInvoice(_old_invoice_id, orgId!);
-      if (data.invoice_id && data.invoice_id !== _old_invoice_id) await recalcInvoice(data.invoice_id, orgId!);
-
       return data;
     },
     onSuccess: (data) => {
@@ -145,10 +108,6 @@ export function usePayments() {
         .eq("id", payment.id)
         .eq("organization_id", orgId!);
       if (error) throw error;
-
-      if (payment.invoice_id) {
-        await recalcInvoice(payment.invoice_id, orgId!);
-      }
     },
     onSuccess: (_, input) => {
       qc.invalidateQueries({ queryKey: ["payments"] });
