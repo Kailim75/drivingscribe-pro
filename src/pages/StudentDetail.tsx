@@ -178,7 +178,10 @@ export default function StudentDetail() {
             <div className="p-4">
               {lessons.length === 0 ? (<p className="text-sm text-muted-foreground text-center py-4">Aucune séance</p>) : (
                 <div className="space-y-1">
-                  {lessons.slice(0, 10).map((l: any) => (
+                  {[...lessons]
+                    .sort((a: any, b: any) => (b.date || "").localeCompare(a.date || "") || (b.start_time || "").localeCompare(a.start_time || ""))
+                    .slice(0, 10)
+                    .map((l: any) => (
                     <div key={l.id} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-muted/40 transition-colors">
                       <div className="flex items-center gap-3">
                         <div className="text-center w-14"><p className="text-xs font-medium text-foreground">{new Date(l.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</p><p className="text-[10px] text-muted-foreground">{l.start_time?.slice(0, 5)}</p></div>

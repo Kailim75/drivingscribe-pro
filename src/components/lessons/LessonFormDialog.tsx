@@ -259,7 +259,7 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
                         : "bg-success/10 border border-success/20 text-success"
                     }`}>
                       <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                      <span>Formule liée automatiquement — <span className="font-semibold">{remaining}h</span> restantes sur {matchingFormula.hours_bought}h</span>
+                      <span>Formule liée automatiquement — <span className="font-semibold">{remaining}h</span> restantes à planifier sur {matchingFormula.hours_bought}h (séances prévues comprises)</span>
                     </div>
                   );
                 } else {
@@ -337,8 +337,8 @@ export default function LessonFormDialog({ open, onClose, onSubmit, onCheckConfl
                 }`}>
                   <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <span className="font-semibold">{selectedFormulaRemaining}h</span> restantes sur {selectedFormula.hours_bought}h
-                    <span className="text-muted-foreground ml-1">({selectedFormulaConsumed}h consommées)</span>
+                    <span className="font-semibold">{selectedFormulaRemaining}h</span> restantes à planifier sur {selectedFormula.hours_bought}h
+                    <span className="text-muted-foreground ml-1">({selectedFormulaConsumed}h effectuées ou prévues)</span>
                   </div>
                 </div>
               )}

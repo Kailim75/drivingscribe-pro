@@ -52,3 +52,24 @@ export const activityTypeColors: Record<string, string> = {
 
 export const formatEur = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
+
+// Le statut « en_retard » n'est jamais posé automatiquement en base :
+// le retard se calcule toujours dynamiquement depuis l'échéance et le reste dû.
+export interface OverdueCheckable {
+  type: string;
+  status: string;
+  due_date: string;
+  remaining_amount: number;
+}
+
+export const isInvoiceOverdue = (
+  inv: OverdueCheckable,
+  today: string = new Date().toISOString().split("T")[0]
+): boolean =>
+  inv.type === "facture" &&
+  Number(inv.remaining_amount) > 0 &&
+  !["brouillon", "payé", "annulé", "archivé"].includes(inv.status) &&
+  (inv.due_date < today || inv.status === "en_retard");
+
+export const invoiceDisplayStatus = (inv: OverdueCheckable): string =>
+  isInvoiceOverdue(inv) ? "en_retard" : inv.status;

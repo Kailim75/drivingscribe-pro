@@ -10,13 +10,13 @@ import { useInvoices } from "@/hooks/useInvoices";
 import { usePayments } from "@/hooks/usePayments";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useStudentFormulas } from "@/hooks/useStudentFormulas";
-import { lessonStatusLabels, lessonStatusColors, formatEur } from "@/lib/labels";
+import { lessonStatusLabels, lessonStatusColors, formatEur, isInvoiceOverdue } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import DashboardCharts from "@/components/dashboard/DashboardCharts";
 import AtRiskStudentsAlert from "@/components/dashboard/AtRiskStudentsAlert";
 import QuickActions from "@/components/dashboard/QuickActions";
 import MicroSummary, { getDashboardSummaries } from "@/components/dashboard/MicroSummary";
-import { useSkillCategories } from "@/hooks/useSkills";
+import { useSkillCategories, useAllSkillEvaluations } from "@/hooks/useSkills";
 import { Progress } from "@/components/ui/progress";
 import { AnimatedCurrency, AnimatedNumber } from "@/components/dashboard/AnimatedValue";
 
@@ -58,6 +58,10 @@ export default function Dashboard() {
   const { expenses } = useExpenses();
   const { formulas } = useStudentFormulas();
   const { categories } = useSkillCategories();
+  const { evaluations: allEvaluations } = useAllSkillEvaluations();
+  // Historique complet : indispensable pour les soldes d'heures et le score de santé,
+  // qui seraient faux s'ils étaient calculés sur la seule période affichée.
+  const { lessons: lifetimeLessons } = useLessons({});
 
   const next30 = useMemo(() => {
     const now = new Date();
@@ -91,9 +95,9 @@ export default function Dashboard() {
   const periodExpenseTotal = periodExpenses.reduce((s, e) => s + e.amount, 0);
   const unpaidInvoices = invoices.filter((i) => i.type === "facture" && i.remaining_amount > 0);
   const totalUnpaid = unpaidInvoices.reduce((s, i) => s + i.remaining_amount, 0);
-  const overdueCount = invoices.filter((i) => i.status === "en_retard").length;
+  const overdueCount = invoices.filter((i) => isInvoiceOverdue(i)).length;
 
-  const allLessons = periodLessonsRaw;
+  const allLessons = lifetimeLessons;
   const studentsLowHours = useMemo(() => {
     const activeStudentsList = students.filter(s => s.status === "actif");
     return activeStudentsList.map(student => {
@@ -422,9 +426,9 @@ export default function Dashboard() {
 
       <AtRiskStudentsAlert
         students={students}
-        allLessons={periodLessonsRaw}
+        allLessons={lifetimeLessons}
         allFormulas={formulas}
-        evaluations={[]}
+        evaluations={allEvaluations}
         categoryCount={categories.length}
       />
 
