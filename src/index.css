@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
-
+/* Polices auto-hébergées (@fontsource, importées dans main.tsx) :
+   pas de requête vers Google Fonts — performance et conformité RGPD/CNIL. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -97,6 +97,20 @@ export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?
     onError: () => toast.error("Erreur lors de la mise à jour"),
   });
 
+  // Une seule requête et un seul toast pour tout le lot sélectionné
+  const bulkUpdateStatus = useMutation({
+    mutationFn: async ({ ids, status }: { ids: string[]; status: LessonStatus }) => {
+      const update: TablesUpdate<"lessons"> = { status };
+      const { error } = await supabase.from("lessons").update(update).in("id", ids).eq("organization_id", orgId!);
+      if (error) throw error;
+    },
+    onSuccess: (_, { ids }) => {
+      qc.invalidateQueries({ queryKey: ["lessons"] });
+      toast.success(`${ids.length} séance${ids.length > 1 ? "s" : ""} mise${ids.length > 1 ? "s" : ""} à jour`);
+    },
+    onError: () => toast.error("Erreur lors de la mise à jour groupée"),
+  });
+
   const archive = useMutation({
     mutationFn: async (id: string) => {
       const status: LessonStatus = "annule";
@@ -116,5 +130,5 @@ export function useLessons(filters?: { date?: string; dateFrom?: string; dateTo?
     onError: () => toast.error("Erreur lors de la suppression"),
   });
 
-  return { ...query, lessons: query.data ?? [], checkConflicts, create, update, updateStatus, archive, remove };
+  return { ...query, lessons: query.data ?? [], checkConflicts, create, update, updateStatus, bulkUpdateStatus, archive, remove };
 }

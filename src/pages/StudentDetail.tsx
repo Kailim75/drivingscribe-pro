@@ -10,7 +10,7 @@ import { useInvoices } from "@/hooks/useInvoices";
 import { useDocuments } from "@/hooks/useDocuments";
 import { computeHealthScore } from "@/hooks/useStudentHealthScore";
 import StudentHealthBadge from "@/components/students/StudentHealthBadge";
-import { studentStatusLabels, studentStatusColors, activityTypeLabels, lessonStatusLabels, lessonStatusColors, offerTypeLabels } from "@/lib/labels";
+import { studentStatusLabels, studentStatusColors, activityTypeLabels, lessonStatusLabels, lessonStatusColors, offerTypeLabels, formatEur, invoiceStatusLabels, invoiceStatusColors, invoiceDisplayStatus } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 import StudentFormDialog from "@/components/students/StudentFormDialog";
 import SkillRadarChart from "@/components/students/SkillRadarChart";
@@ -19,18 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-
-const statusConfig: Record<string, { label: string; color: string }> = {
-  brouillon: { label: "Brouillon", color: "bg-muted text-muted-foreground" },
-  envoyé: { label: "Envoyé", color: "bg-info/10 text-info" },
-  partiellement_payé: { label: "Partiel", color: "bg-warning/10 text-warning" },
-  payé: { label: "Payé", color: "bg-success/10 text-success" },
-  en_retard: { label: "En retard", color: "bg-destructive/10 text-destructive" },
-  annulé: { label: "Annulé", color: "bg-muted text-muted-foreground" },
-  archivé: { label: "Archivé", color: "bg-muted text-muted-foreground" },
-};
 
 export default function StudentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -87,7 +76,7 @@ export default function StudentDetail() {
     <div className="p-4 md:p-6 lg:p-8 max-w-[1000px] mx-auto space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate("/eleves")} className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
+        <button onClick={() => navigate("/eleves")} aria-label="Retour à la liste des élèves" className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
@@ -231,7 +220,11 @@ export default function StudentDetail() {
                   <thead><tr><th>N°</th><th>Type</th><th>Date</th><th className="text-right">Montant TTC</th><th className="text-right">Reste dû</th><th>Statut</th></tr></thead>
                   <tbody>
                     {studentInvoices.map((inv) => {
-                      const cfg = statusConfig[inv.status] || statusConfig.brouillon;
+                      const ds = invoiceDisplayStatus(inv);
+                      const cfg = {
+                        label: invoiceStatusLabels[ds] || invoiceStatusLabels.brouillon,
+                        color: invoiceStatusColors[ds] || invoiceStatusColors.brouillon,
+                      };
                       return (
                         <tr key={inv.id}>
                           <td className="font-mono text-xs font-medium text-foreground">{inv.number}</td>
@@ -274,7 +267,7 @@ export default function StudentDetail() {
                         <td className="text-xs text-muted-foreground">{doc.file_size}</td>
                         <td className="text-xs text-muted-foreground">{formatDate(doc.created_at)}</td>
                         <td>
-                          <button onClick={() => handleDownloadDoc(doc.file_path, doc.name)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+                          <button onClick={() => handleDownloadDoc(doc.file_path, doc.name)} aria-label={`Télécharger ${doc.name}`} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
                             <Download className="w-4 h-4" />
                           </button>
                         </td>

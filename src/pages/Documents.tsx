@@ -100,7 +100,7 @@ export default function Documents() {
               <span className="text-xs text-muted-foreground hidden sm:block">{formatDate(doc.created_at)}</span>
               {doc.file_path && (
                 <button onClick={() => handleDownload(doc.file_path, doc.name)} className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground transition-colors">
-                  <Download className="w-4 h-4" />
+                  <Download className="w-4 h-4" aria-hidden="true" />
                 </button>
               )}
             </div>

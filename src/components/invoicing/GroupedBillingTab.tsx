@@ -15,7 +15,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
+import { formatEur } from "@/lib/labels";
+
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 type LessonBillingStatus = "prevu" | "effectue" | "annule" | "absent";
 const lessonBillingLabels: Record<LessonBillingStatus, string> = {
