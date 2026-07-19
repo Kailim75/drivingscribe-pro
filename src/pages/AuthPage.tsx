@@ -3,8 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useNoIndex } from "@/hooks/useNoIndex";
 
 export default function AuthPage() {
+  useNoIndex();
   const { user, loading } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
 

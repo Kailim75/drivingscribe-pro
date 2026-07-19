@@ -1,14 +1,31 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# https://drivflow.fr/robots.txt
 
 User-agent: *
 Allow: /
+
+# Pages privées et données clients : ne pas explorer.
+# /p/ = factures partagées par lien — ne doivent jamais être indexées.
+Disallow: /p/
+Disallow: /admin
+Disallow: /connexion
+Disallow: /onboarding
+Disallow: /suspendu
+Disallow: /tableau-de-bord
+Disallow: /eleves
+Disallow: /formateurs
+Disallow: /vehicules
+Disallow: /planning
+Disallow: /offres
+Disallow: /facturation
+Disallow: /facturation-groupee
+Disallow: /paiements
+Disallow: /depenses
+Disallow: /rentabilite
+Disallow: /documents
+Disallow: /rappels
+Disallow: /import
+Disallow: /journal
+Disallow: /parametres
+Disallow: /portail-formateur
+
+Sitemap: https://drivflow.fr/sitemap.xml

@@ -7,10 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOrg } from "@/contexts/OrgContext";
 import { seedDemoData } from "@/lib/seedDemoData";
 import type { Database } from "@/integrations/supabase/types";
+import { useNoIndex } from "@/hooks/useNoIndex";
 
 type OrgMode = Database["public"]["Enums"]["org_mode"];
 
 export default function OnboardingPage() {
+  useNoIndex();
   const { user } = useAuth();
   const { organization, refreshOrg } = useOrg();
   const navigate = useNavigate();
