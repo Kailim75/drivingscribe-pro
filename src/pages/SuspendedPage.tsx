@@ -1,8 +1,10 @@
 import { ShieldOff, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOrg } from "@/contexts/OrgContext";
+import { useNoIndex } from "@/hooks/useNoIndex";
 
 export default function SuspendedPage() {
+  useNoIndex();
   const { signOut } = useAuth();
   const { userSuspended, orgSuspended } = useOrg();
 

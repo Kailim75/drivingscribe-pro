@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
+import { useNoIndex } from "@/hooks/useNoIndex";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,6 +74,7 @@ type ConfirmAction = {
 };
 
 export default function SuperAdminPage() {
+  useNoIndex();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<GlobalStats | null>(null);

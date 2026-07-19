@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { FileText, Loader2, CreditCard, Building2 } from "lucide-react";
+import { useNoIndex } from "@/hooks/useNoIndex";
 
 const formatEur = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
@@ -16,6 +17,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default function PublicInvoice() {
+  useNoIndex();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("t");
   const legacyId = searchParams.get("id");
