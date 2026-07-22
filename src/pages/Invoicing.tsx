@@ -316,9 +316,15 @@ export default function Invoicing() {
                         </td>
                         <td className="px-4 py-3 hidden md:table-cell">
                           <span className="text-xs text-muted-foreground">{formatDate(inv.issue_date)}</span>
-                          {inv.due_date && (
-                            <span className="block text-[11px] text-muted-foreground/70">Éch. {formatDate(inv.due_date)}</span>
-                          )}
+                          {inv.due_date && (() => {
+                            const overdue = isInvoiceOverdue(inv);
+                            const days = overdue ? Math.max(1, Math.floor((Date.now() - new Date(inv.due_date).getTime()) / 86400000)) : 0;
+                            return (
+                              <span className={cn("block text-[11px]", overdue ? "text-destructive font-medium" : "text-muted-foreground/70")}>
+                                Éch. {formatDate(inv.due_date)}{overdue ? ` · +${days} j` : ""}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <span className="text-sm font-semibold text-foreground">{formatEur(inv.total_ttc)}</span>
