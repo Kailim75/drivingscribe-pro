@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Plus, Search, FileText, ArrowRight, Download, Link2, MoreVertical,
   Loader2, Users, Zap, TrendingUp, Clock, AlertCircle, CheckCircle2,
-  Filter, X, Pencil,
+  Filter, X, Pencil, Trash2,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ export default function Invoicing() {
   const [searchParams, setSearchParams] = useSearchParams();
   const mainTab = searchParams.get("tab") === "groupee" ? "groupee" : "standard";
 
-  const { invoices, isLoading, create, update, updateWithLines, convertToInvoice, archive } = useInvoices();
+  const { invoices, isLoading, create, update, updateWithLines, convertToInvoice, archive, removeDraft } = useInvoices();
   const { students } = useStudents();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get("statusFilter") || "tous");
@@ -53,6 +53,7 @@ export default function Invoicing() {
   const [docType, setDocType] = useState<"devis" | "facture">("facture");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [sendConfirm, setSendConfirm] = useState<string | null>(null);
+  const [deleteDraftConfirm, setDeleteDraftConfirm] = useState<{ id: string; number: string } | null>(null);
   const [editInvoice, setEditInvoice] = useState<any>(null);
 
   // Computed stats
@@ -376,6 +377,11 @@ export default function Invoicing() {
                                     <X className="w-3.5 h-3.5 mr-2" />Archiver
                                   </DropdownMenuItem>
                                 )}
+                                {inv.status === "brouillon" && Number(inv.paid_amount) === 0 && (
+                                  <DropdownMenuItem onClick={() => setDeleteDraftConfirm({ id: inv.id, number: inv.number })} className="text-destructive focus:text-destructive">
+                                    <Trash2 className="w-3.5 h-3.5 mr-2" />Supprimer le brouillon
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -425,6 +431,27 @@ export default function Invoicing() {
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction onClick={() => { if (sendConfirm) { update.mutate({ id: sendConfirm, status: "envoyé" }); setSendConfirm(null); } }}>Confirmer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteDraftConfirm} onOpenChange={(v) => !v && setDeleteDraftConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le brouillon {deleteDraftConfirm?.number} ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Le brouillon sera définitivement supprimé. Les séances et forfaits qu'il contenait
+              redeviendront facturables dans la facturation groupée. Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteDraftConfirm) { removeDraft.mutate(deleteDraftConfirm.id); setDeleteDraftConfirm(null); } }}
+            >
+              Supprimer définitivement
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

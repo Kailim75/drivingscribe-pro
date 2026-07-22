@@ -229,6 +229,33 @@ export function useInvoices() {
     onError: () => toast.error("Erreur", { description: "Impossible de convertir le devis" }),
   });
 
+  // Suppression définitive : réservée aux brouillons sans paiement.
+  // Les lignes partent en cascade (FK ON DELETE CASCADE), donc les séances
+  // et formules rattachées redeviennent immédiatement facturables.
+  const removeDraft = useMutation({
+    mutationFn: async (id: string) => {
+      const inv = invoicesQuery.data?.find((i) => i.id === id);
+      if (!inv) throw new Error("Document introuvable");
+      if (inv.status !== "brouillon") throw new Error("Seuls les brouillons peuvent être supprimés — archivez les autres documents.");
+      if (Number(inv.paid_amount) > 0) throw new Error("Des paiements sont rattachés à ce document.");
+      const { error, count } = await supabase
+        .from("invoices")
+        .delete({ count: "exact" })
+        .eq("id", id)
+        .eq("organization_id", orgId!)
+        .eq("status", "brouillon");
+      if (error) throw error;
+      if (!count) throw new Error("Suppression refusée par la base.");
+      return inv.number;
+    },
+    onSuccess: (number, id) => {
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+      log({ action: "Brouillon supprimé", entity: "invoice", entity_id: id, details: number });
+      toast.success("Brouillon supprimé", { description: "Les séances et forfaits liés redeviennent facturables." });
+    },
+    onError: (err: Error) => toast.error("Suppression impossible", { description: err.message }),
+  });
+
   const archive = useMutation({
     mutationFn: async (id: string) => {
       const status: InvoiceStatus = "archivé";
@@ -241,5 +268,5 @@ export function useInvoices() {
     },
   });
 
-  return { invoices: invoicesQuery.data || [], isLoading: invoicesQuery.isLoading, create, update, updateWithLines, convertToInvoice, archive };
+  return { invoices: invoicesQuery.data || [], isLoading: invoicesQuery.isLoading, create, update, updateWithLines, convertToInvoice, archive, removeDraft };
 }

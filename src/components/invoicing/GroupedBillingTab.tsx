@@ -93,6 +93,7 @@ export default function GroupedBillingTab() {
   const [generated, setGenerated] = useState<Set<string>>(new Set());
   const [generatedNumbers, setGeneratedNumbers] = useState<Record<string, string>>({});
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
+  const [selectedPayers, setSelectedPayers] = useState<Set<string>>(new Set());
   const [payerDialogOpen, setPayerDialogOpen] = useState(false);
   const [editingPayer, setEditingPayer] = useState<string | null>(null);
   const [payerForm, setPayerForm] = useState({ name: "", email: "", phone: "", siret: "", address: "" });
@@ -190,6 +191,8 @@ export default function GroupedBillingTab() {
 
       const results = Array.from(payerMap.values()).filter((p) => p.lessons.length > 0 || p.formulas.length > 0 || p.covered.count > 0);
       setPreviews(results);
+      // Tous sélectionnés par défaut : la sélection sert à en écarter certains
+      setSelectedPayers(new Set(results.map((r) => r.payer_id)));
 
       // Compute unassigned students with billable activity in the period
       const unassignedMap = new Map<string, { student_id: string; student_name: string; lessons_count: number; formulas_count: number; total: number }>();
@@ -431,6 +434,7 @@ export default function GroupedBillingTab() {
     try {
       for (let i = 0; i < previews.length; i++) {
         const p = previews[i];
+        if (!selectedPayers.has(p.payer_id)) continue;
         if (generated.has(p.payer_id)) continue;
         if (p.lessons.filter((l) => !l.excluded).length === 0 && p.formulas.filter((f) => !f.excluded).length === 0) continue;
         await handleGenerate(p, i);
@@ -604,15 +608,32 @@ export default function GroupedBillingTab() {
 
       {previews.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="text-sm font-semibold text-foreground">{previews.length} payeur{previews.length > 1 ? "s" : ""} éligible{previews.length > 1 ? "s" : ""}</h2>
-            {previews.some((p) => !generated.has(p.payer_id)) && (
-              <Button onClick={handleBulkGenerate} disabled={bulkGenerating} size="sm" className="gap-2">
-                {bulkGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                Tout facturer en un clic
-              </Button>
-            )}
-          </div>
+          {(() => {
+            const selectable = previews.filter((p) => !generated.has(p.payer_id));
+            const selectedCount = selectable.filter((p) => selectedPayers.has(p.payer_id)).length;
+            return (
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h2 className="text-sm font-semibold text-foreground">{previews.length} payeur{previews.length > 1 ? "s" : ""} éligible{previews.length > 1 ? "s" : ""}</h2>
+                  {selectable.length > 1 && (
+                    <div className="flex items-center gap-1.5 text-[11px]">
+                      <span className="text-muted-foreground">{selectedCount}/{selectable.length} sélectionné{selectedCount > 1 ? "s" : ""}</span>
+                      <span className="text-muted-foreground">·</span>
+                      <button onClick={() => setSelectedPayers(new Set(previews.map((p) => p.payer_id)))} className="font-medium text-primary hover:underline">Tous</button>
+                      <span className="text-muted-foreground">·</span>
+                      <button onClick={() => setSelectedPayers(new Set())} className="font-medium text-muted-foreground hover:text-foreground hover:underline">Aucun</button>
+                    </div>
+                  )}
+                </div>
+                {selectable.length > 0 && (
+                  <Button onClick={handleBulkGenerate} disabled={bulkGenerating || selectedCount === 0} size="sm" className="gap-2">
+                    {bulkGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                    Facturer la sélection ({selectedCount})
+                  </Button>
+                )}
+              </div>
+            );
+          })()}
           {previews.map((preview, payerIdx) => {
             const isExpanded = expandedPayer === preview.payer_id;
             const isGenerated = generated.has(preview.payer_id);
@@ -624,8 +645,22 @@ export default function GroupedBillingTab() {
             const tvaAmount = isFranchise ? 0 : preview.total_ht * (tvaRate / 100);
 
             return (
-              <motion.div key={preview.payer_id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={cn("glass-card rounded-xl overflow-hidden", isGenerated && "border-success/30")}>
-                <button onClick={() => setExpandedPayer(isExpanded ? null : preview.payer_id)} className="w-full flex items-center justify-between p-4 hover:bg-accent/30 transition-colors text-left">
+              <motion.div key={preview.payer_id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={cn("glass-card rounded-xl overflow-hidden", isGenerated && "border-success/30", !isGenerated && !selectedPayers.has(preview.payer_id) && "opacity-60")}>
+                <div className="flex items-center">
+                {!isGenerated && (
+                  <label className="pl-4 py-4 flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      checked={selectedPayers.has(preview.payer_id)}
+                      onCheckedChange={(v) => setSelectedPayers((prev) => {
+                        const next = new Set(prev);
+                        if (v) next.add(preview.payer_id); else next.delete(preview.payer_id);
+                        return next;
+                      })}
+                      aria-label={`Inclure ${preview.payer_name} dans la facturation`}
+                    />
+                  </label>
+                )}
+                <button onClick={() => setExpandedPayer(isExpanded ? null : preview.payer_id)} className="flex-1 flex items-center justify-between p-4 hover:bg-accent/30 transition-colors text-left">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Building2 className="w-5 h-5 text-primary" /></div>
                     <div>
@@ -647,6 +682,7 @@ export default function GroupedBillingTab() {
                     )}
                   </div>
                 </button>
+                </div>
                 {isExpanded && (
                   <div className="border-t border-border px-4 pb-4 pt-3 space-y-3">
                     {/* Students with checkboxes — compact au-delà de 12 apprenants */}
