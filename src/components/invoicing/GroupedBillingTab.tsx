@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Users, FileText, Calendar, ChevronRight, ChevronDown, Check, Loader2, AlertCircle, Plus, Building2, Pencil, X, UserPlus, Search, Zap } from "lucide-react";
@@ -32,6 +33,32 @@ const normalizeLessonBillingStatus = (status: string): LessonBillingStatus => {
   return "prevu";
 };
 
+// Badges colorés dans la préview (les libellés longs restent utilisés sur la facture)
+const lessonShortLabels: Record<LessonBillingStatus, string> = {
+  prevu: "Prévue", effectue: "Validée", annule: "Annulée", absent: "Absence",
+};
+const lessonBadgeColors: Record<LessonBillingStatus, string> = {
+  prevu: "bg-info/10 text-info",
+  effectue: "bg-success/10 text-success",
+  annule: "bg-muted text-muted-foreground",
+  absent: "bg-warning/10 text-warning",
+};
+
+const fmtLocalDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+type PeriodPreset = "month" | "lastMonth" | "last30";
+const presetLabels: Record<PeriodPreset, string> = {
+  month: "Ce mois", lastMonth: "Mois dernier", last30: "30 derniers jours",
+};
+const presetRange = (preset: PeriodPreset): { from: string; to: string } => {
+  const now = new Date();
+  if (preset === "month") return { from: fmtLocalDate(new Date(now.getFullYear(), now.getMonth(), 1)), to: fmtLocalDate(now) };
+  if (preset === "lastMonth") return { from: fmtLocalDate(new Date(now.getFullYear(), now.getMonth() - 1, 1)), to: fmtLocalDate(new Date(now.getFullYear(), now.getMonth(), 0)) };
+  const from = new Date(now); from.setDate(from.getDate() - 30);
+  return { from: fmtLocalDate(from), to: fmtLocalDate(now) };
+};
+
 interface BillableLesson {
   id: string; date: string; duration_hours: number; billable_amount: number; student_id: string; student_name: string; status: LessonBillingStatus; excluded?: boolean;
 }
@@ -50,9 +77,12 @@ export default function GroupedBillingTab() {
   const { create: createInvoice } = useInvoices();
   const { organization } = useOrg();
   const qc = useQueryClient();
+  const [, setSearchParams] = useSearchParams();
 
-  const [dateFrom, setDateFrom] = useState(() => { const d = new Date(); d.setDate(1); return d.toISOString().split("T")[0]; });
-  const [dateTo, setDateTo] = useState(() => new Date().toISOString().split("T")[0]);
+  const [dateFrom, setDateFrom] = useState(() => presetRange("month").from);
+  const [dateTo, setDateTo] = useState(() => presetRange("month").to);
+  const [activePreset, setActivePreset] = useState<PeriodPreset | null>("month");
+  const [searched, setSearched] = useState(false);
   const [previews, setPreviews] = useState<PayerPreview[]>([]);
   const [unassigned, setUnassigned] = useState<{ student_id: string; student_name: string; lessons_count: number; formulas_count: number; total: number }[]>([]);
   const [assigningStudent, setAssigningStudent] = useState<string | null>(null);
@@ -61,6 +91,8 @@ export default function GroupedBillingTab() {
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [expandedPayer, setExpandedPayer] = useState<string | null>(null);
   const [generated, setGenerated] = useState<Set<string>>(new Set());
+  const [generatedNumbers, setGeneratedNumbers] = useState<Record<string, string>>({});
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
   const [payerDialogOpen, setPayerDialogOpen] = useState(false);
   const [editingPayer, setEditingPayer] = useState<string | null>(null);
   const [payerForm, setPayerForm] = useState({ name: "", email: "", phone: "", siret: "", address: "" });
@@ -74,17 +106,21 @@ export default function GroupedBillingTab() {
 
   const studentsWithPayer = useMemo(() => students.filter((s) => (s as any).payer_id), [students]);
 
-  const handleSearch = async () => {
+  const handleSearch = async (fromArg?: string, toArg?: string) => {
     if (!organization?.id) return;
+    const from = fromArg ?? dateFrom;
+    const to = toArg ?? dateTo;
     setLoading(true);
     setPreviews([]);
     setUnassigned([]);
     setGenerated(new Set());
+    setGeneratedNumbers({});
+    setExpandedStudents(new Set());
     try {
       const { data: lessons, error: lErr } = await supabase
         .from("lessons").select("id, date, duration_hours, billable_amount, student_id, billing_rule, status, formula_id")
         .eq("organization_id", organization.id).neq("billing_rule", "non_facturee")
-        .gte("date", dateFrom).lte("date", dateTo)
+        .gte("date", from).lte("date", to)
         .order("date", { ascending: true });
       if (lErr) throw lErr;
 
@@ -146,6 +182,9 @@ export default function GroupedBillingTab() {
       }
 
       for (const entry of payerMap.values()) {
+        // Regroupées par apprenant puis par date : lecture naturelle de la préview
+        entry.lessons.sort((a, b) => a.student_name.localeCompare(b.student_name) || a.date.localeCompare(b.date));
+        entry.formulas.sort((a, b) => a.student_name.localeCompare(b.student_name));
         entry.total_ht = entry.lessons.filter((l) => !l.excluded).reduce((s, l) => s + l.billable_amount, 0) + entry.formulas.filter((f) => !f.excluded).reduce((s, f) => s + f.total_price, 0);
       }
 
@@ -165,14 +204,20 @@ export default function GroupedBillingTab() {
       const unassignedList = Array.from(unassignedMap.values()).sort((a, b) => b.total - a.total);
       setUnassigned(unassignedList);
 
-      if (results.length === 0 && unassignedList.length === 0) {
-        toast.info("Aucun élément à facturer", { description: "Aucune séance du planning ou formule éligible trouvée pour cette période." });
-      }
+      setSearched(true);
     } catch (err: any) {
       toast.error("Erreur", { description: err.message });
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyPreset = (preset: PeriodPreset) => {
+    const { from, to } = presetRange(preset);
+    setDateFrom(from);
+    setDateTo(to);
+    setActivePreset(preset);
+    handleSearch(from, to);
   };
 
   const handleQuickAssignPayer = async (studentId: string, payerId: string) => {
@@ -214,6 +259,41 @@ export default function GroupedBillingTab() {
       }
       const total_ht = updatedLessons.filter((l) => !l.excluded).reduce((s, l) => s + l.billable_amount, 0) + updatedFormulas.filter((f) => !f.excluded).reduce((s, f) => s + f.total_price, 0);
       return { ...p, lessons: updatedLessons, formulas: updatedFormulas, total_ht };
+    }));
+  };
+
+  const recomputeTotal = (p: PayerPreview): number =>
+    p.lessons.filter((l) => !l.excluded).reduce((s, l) => s + l.billable_amount, 0) +
+    p.formulas.filter((f) => !f.excluded).reduce((s, f) => s + f.total_price, 0);
+
+  /** Tout inclure / tout exclure au niveau des apprenants d'un payeur. */
+  const setAllStudents = (payerIdx: number, excluded: boolean) => {
+    setPreviews((prev) => prev.map((p, i) => {
+      if (i !== payerIdx) return p;
+      const updated: PayerPreview = {
+        ...p,
+        students: p.students.map((s) => ({ ...s, excluded })),
+        // Réinclure repart des règles par défaut (prévues/annulées décochées)
+        lessons: p.lessons.map((l) => ({ ...l, excluded: excluded ? true : isExcludedByDefault(l) })),
+        formulas: p.formulas.map((f) => ({ ...f, excluded })),
+      };
+      updated.total_ht = recomputeTotal(updated);
+      return updated;
+    }));
+  };
+
+  /** Tout cocher / tout décocher au niveau des lignes d'un payeur. */
+  const setAllLines = (payerIdx: number, excluded: boolean) => {
+    setPreviews((prev) => prev.map((p, i) => {
+      if (i !== payerIdx) return p;
+      const excludedStudentIds = new Set(p.students.filter((s) => s.excluded).map((s) => s.id));
+      const updated: PayerPreview = {
+        ...p,
+        lessons: p.lessons.map((l) => ({ ...l, excluded: excludedStudentIds.has(l.student_id) ? true : excluded })),
+        formulas: p.formulas.map((f) => ({ ...f, excluded: excludedStudentIds.has(f.student_id) ? true : excluded })),
+      };
+      updated.total_ht = recomputeTotal(updated);
+      return updated;
     }));
   };
 
@@ -281,6 +361,7 @@ export default function GroupedBillingTab() {
 
       qc.invalidateQueries({ queryKey: ["invoices"] });
       setGenerated((prev) => new Set([...prev, preview.payer_id]));
+      setGeneratedNumbers((prev) => ({ ...prev, [preview.payer_id]: number as string }));
       toast.success("Facture brouillon créée", { description: `${number} — ${formatEur(totalTtc)}${isFranchise ? "" : " TTC"}` });
     } catch (err: any) {
       if (err.message?.includes("déjà rattachée") || err.message?.includes("unique") || err.code === "23505") {
@@ -421,10 +502,27 @@ export default function GroupedBillingTab() {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card rounded-xl p-5 space-y-4">
         <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" /> Période de facturation</h2>
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(presetLabels) as PeriodPreset[]).map((preset) => (
+            <button
+              key={preset}
+              onClick={() => applyPreset(preset)}
+              disabled={loading}
+              className={cn(
+                "px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors",
+                activePreset === preset
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/40"
+              )}
+            >
+              {presetLabels[preset]}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-col sm:flex-row gap-3 items-end">
-          <div className="flex-1"><Label className="text-xs">Du</Label><Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} /></div>
-          <div className="flex-1"><Label className="text-xs">Au</Label><Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} /></div>
-          <Button onClick={handleSearch} disabled={loading} className="gap-2">
+          <div className="flex-1"><Label className="text-xs">Du</Label><Input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setActivePreset(null); }} /></div>
+          <div className="flex-1"><Label className="text-xs">Au</Label><Input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setActivePreset(null); }} /></div>
+          <Button onClick={() => handleSearch()} disabled={loading} className="gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />} Rechercher
           </Button>
         </div>
@@ -441,6 +539,17 @@ export default function GroupedBillingTab() {
           </div>
         )}
       </motion.div>
+
+      {searched && !loading && previews.length === 0 && unassigned.length === 0 && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-8 text-center space-y-2">
+          <FileText className="w-8 h-8 text-muted-foreground/40 mx-auto" />
+          <p className="text-sm font-medium text-foreground">Aucun élément à facturer sur cette période</p>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            Aucune séance du planning ni formule éligible entre le {formatDate(dateFrom)} et le {formatDate(dateTo)}.
+            Élargissez la période, ou vérifiez que les apprenants sont bien rattachés à un tiers payeur et que leurs séances sont validées dans le planning.
+          </p>
+        </motion.div>
+      )}
 
       {unassigned.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="glass-card rounded-xl p-4 space-y-3 border-warning/30">
@@ -486,7 +595,7 @@ export default function GroupedBillingTab() {
             ))}
           </div>
           {unassigned.length > 0 && previews.length === 0 && (
-            <Button onClick={handleSearch} variant="outline" size="sm" className="w-full gap-2">
+            <Button onClick={() => handleSearch()} variant="outline" size="sm" className="w-full gap-2">
               <FileText className="w-4 h-4" /> Relancer la recherche après rattachement
             </Button>
           )}
@@ -530,7 +639,9 @@ export default function GroupedBillingTab() {
                       {!isFranchise && <span className="block text-[11px] text-muted-foreground">{formatEur(preview.total_ht + tvaAmount)} TTC</span>}
                     </div>
                     {isGenerated ? (
-                      <span className="status-badge rounded-md bg-success/10 text-success flex items-center gap-1"><Check className="w-3 h-3" /> Généré</span>
+                      <span className="status-badge rounded-md bg-success/10 text-success flex items-center gap-1">
+                        <Check className="w-3 h-3" /> {generatedNumbers[preview.payer_id] || "Généré"}
+                      </span>
                     ) : (
                       isExpanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />
                     )}
@@ -538,30 +649,66 @@ export default function GroupedBillingTab() {
                 </button>
                 {isExpanded && (
                   <div className="border-t border-border px-4 pb-4 pt-3 space-y-3">
-                    {/* Students with checkboxes */}
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-2">Apprenants inclus</p>
-                      <div className="flex flex-wrap gap-2">
-                        {preview.students.map((s) => (
-                          <label
-                            key={s.id}
-                            className={cn(
-                              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-colors text-xs font-medium",
-                              s.excluded
-                                ? "border-border bg-muted/30 text-muted-foreground line-through"
-                                : "border-primary/20 bg-primary/5 text-primary"
+                    {/* Students with checkboxes — compact au-delà de 12 apprenants */}
+                    {(() => {
+                      const excludedCount = preview.students.filter((s) => s.excluded).length;
+                      const isStudentsExpanded = expandedStudents.has(preview.payer_id) || preview.students.length <= 12;
+                      // Repliée, la liste garde visibles les exceptions (exclus) + le début de la liste
+                      const visibleStudents = isStudentsExpanded
+                        ? preview.students
+                        : [...preview.students.filter((s) => s.excluded), ...preview.students.filter((s) => !s.excluded)].slice(0, 12);
+                      const hiddenCount = preview.students.length - visibleStudents.length;
+                      return (
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Apprenants : {preview.students.length - excludedCount} inclus{excludedCount > 0 ? ` · ${excludedCount} exclu${excludedCount > 1 ? "s" : ""}` : ""}
+                            </p>
+                            <div className="flex gap-1.5">
+                              <button onClick={() => setAllStudents(payerIdx, false)} className="text-[11px] font-medium text-primary hover:underline">Tout inclure</button>
+                              <span className="text-[11px] text-muted-foreground">·</span>
+                              <button onClick={() => setAllStudents(payerIdx, true)} className="text-[11px] font-medium text-muted-foreground hover:text-foreground hover:underline">Tout exclure</button>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {visibleStudents.map((s) => (
+                              <label
+                                key={s.id}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border cursor-pointer transition-colors text-xs font-medium",
+                                  s.excluded
+                                    ? "border-border bg-muted/30 text-muted-foreground line-through"
+                                    : "border-primary/20 bg-primary/5 text-primary"
+                                )}
+                              >
+                                <Checkbox
+                                  checked={!s.excluded}
+                                  onCheckedChange={() => toggleStudentExclusion(payerIdx, s.id)}
+                                  className="w-3.5 h-3.5"
+                                />
+                                <Users className="w-3 h-3" /> {s.name}
+                              </label>
+                            ))}
+                            {hiddenCount > 0 && (
+                              <button
+                                onClick={() => setExpandedStudents((prev) => new Set([...prev, preview.payer_id]))}
+                                className="px-2.5 py-1.5 rounded-lg border border-dashed border-border text-xs font-medium text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                              >
+                                +{hiddenCount} autres…
+                              </button>
                             )}
-                          >
-                            <Checkbox
-                              checked={!s.excluded}
-                              onCheckedChange={() => toggleStudentExclusion(payerIdx, s.id)}
-                              className="w-3.5 h-3.5"
-                            />
-                            <Users className="w-3 h-3" /> {s.name}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
+                            {isStudentsExpanded && preview.students.length > 12 && (
+                              <button
+                                onClick={() => setExpandedStudents((prev) => { const next = new Set(prev); next.delete(preview.payer_id); return next; })}
+                                className="px-2.5 py-1.5 rounded-lg border border-dashed border-border text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                Réduire la liste
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Séances couvertes par un forfait : informées, jamais facturées */}
                     {preview.covered.count > 0 && (
@@ -576,38 +723,59 @@ export default function GroupedBillingTab() {
                     {/* Lines table with individual exclusion */}
                     {(preview.lessons.length > 0 || preview.formulas.length > 0) && (
                     <div className="rounded-lg border border-border overflow-hidden">
+                      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-muted/30 border-b border-border flex-wrap">
+                        <p className="text-[11px] text-muted-foreground">
+                          {includedLessons.length + includedFormulas.length}/{preview.lessons.length + preview.formulas.length} ligne{preview.lessons.length + preview.formulas.length > 1 ? "s" : ""} cochée{includedLessons.length + includedFormulas.length > 1 ? "s" : ""}
+                        </p>
+                        <div className="flex gap-1.5">
+                          <button onClick={() => setAllLines(payerIdx, false)} className="text-[11px] font-medium text-primary hover:underline">Tout cocher</button>
+                          <span className="text-[11px] text-muted-foreground">·</span>
+                          <button onClick={() => setAllLines(payerIdx, true)} className="text-[11px] font-medium text-muted-foreground hover:text-foreground hover:underline">Tout décocher</button>
+                        </div>
+                      </div>
+                      <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="bg-muted/50">
                             <th className="w-8 px-2 py-2" />
-                            <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Description</th>
-                            <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground hidden sm:table-cell">Apprenant</th>
+                            <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Apprenant</th>
+                            <th className="text-left px-3 py-2 text-xs font-medium text-muted-foreground">Séance / Forfait</th>
                             <th className="text-right px-3 py-2 text-xs font-medium text-muted-foreground">{isFranchise ? "Montant" : "Montant HT"}</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {preview.lessons.map((l) => (
-                            <tr key={l.id} className={cn("border-t border-border/50", l.excluded && "opacity-40")}>
+                          {preview.lessons.map((l, li) => {
+                            const firstOfStudent = li === 0 || preview.lessons[li - 1].student_id !== l.student_id;
+                            return (
+                            <tr key={l.id} className={cn("border-t border-border/50", l.excluded && "opacity-40", firstOfStudent && li > 0 && "border-t-2 border-t-border")}>
                               <td className="px-2 py-2 text-center">
                                 <Checkbox checked={!l.excluded} onCheckedChange={() => toggleLineExclusion(payerIdx, "lesson", l.id)} className="w-3.5 h-3.5" />
                               </td>
-                              <td className="px-3 py-2 text-foreground">{getLessonBillingLabel(l.status)} – {formatDate(l.date)} ({l.duration_hours}h)</td>
-                              <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">{l.student_name}</td>
-                              <td className="px-3 py-2 text-right font-medium text-foreground">{formatEur(l.billable_amount)}</td>
+                              <td className={cn("px-3 py-2 whitespace-nowrap", firstOfStudent ? "text-foreground font-medium" : "text-transparent select-none")}>{l.student_name}</td>
+                              <td className="px-3 py-2 text-foreground">
+                                <span className={cn("inline-block px-1.5 py-0.5 rounded text-[11px] font-semibold mr-2 align-middle", lessonBadgeColors[l.status])}>{lessonShortLabels[l.status]}</span>
+                                <span className="align-middle">{formatDate(l.date)} · {l.duration_hours}h</span>
+                              </td>
+                              <td className="px-3 py-2 text-right font-medium text-foreground tabular-nums">{formatEur(l.billable_amount)}</td>
                             </tr>
-                          ))}
+                            );
+                          })}
                           {preview.formulas.map((f) => (
                             <tr key={f.id} className={cn("border-t border-border/50", f.excluded && "opacity-40")}>
                               <td className="px-2 py-2 text-center">
                                 <Checkbox checked={!f.excluded} onCheckedChange={() => toggleLineExclusion(payerIdx, "formula", f.id)} className="w-3.5 h-3.5" />
                               </td>
-                              <td className="px-3 py-2 text-foreground">{f.offer_name}</td>
-                              <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">{f.student_name}</td>
-                              <td className="px-3 py-2 text-right font-medium text-foreground">{formatEur(f.total_price)}</td>
+                              <td className="px-3 py-2 text-foreground font-medium whitespace-nowrap">{f.student_name}</td>
+                              <td className="px-3 py-2 text-foreground">
+                                <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-semibold mr-2 align-middle bg-primary/10 text-primary">Forfait</span>
+                                <span className="align-middle">{f.offer_name}</span>
+                              </td>
+                              <td className="px-3 py-2 text-right font-medium text-foreground tabular-nums">{formatEur(f.total_price)}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
+                      </div>
                     </div>
                     )}
 
@@ -661,10 +829,19 @@ export default function GroupedBillingTab() {
                       </div>
                     )}
 
-                    {!isGenerated && (
+                    {!isGenerated ? (
                       <Button onClick={() => handleGenerate(preview, payerIdx)} disabled={isGenerating || !hasIncluded} className="w-full gap-2">
                         {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />} Générer la facture brouillon
                       </Button>
+                    ) : (
+                      <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-success/5 border border-success/20 flex-wrap">
+                        <p className="text-sm text-success font-medium flex items-center gap-2">
+                          <Check className="w-4 h-4" /> Facture brouillon {generatedNumbers[preview.payer_id] || ""} créée
+                        </p>
+                        <Button variant="outline" size="sm" onClick={() => setSearchParams({})} className="gap-1.5 h-8">
+                          Voir dans Factures <ChevronRight className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}
