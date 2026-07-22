@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from "sonner";
 
 import { formatEur } from "@/lib/labels";
+import { isCoveredByFormula, isBillableLesson, isExcludedByDefault, chunk } from "@/lib/groupedBilling";
 
 const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 type LessonBillingStatus = "prevu" | "effectue" | "annule" | "absent";
@@ -39,6 +40,8 @@ interface BillableFormula {
 }
 interface PayerPreview {
   payer_id: string; payer_name: string; students: { id: string; name: string; excluded?: boolean }[]; lessons: BillableLesson[]; formulas: BillableFormula[]; total_ht: number;
+  /** Séances liées à un forfait (0 €) : informatives, jamais facturées. */
+  covered: { count: number; hours: number };
 }
 
 export default function GroupedBillingTab() {
@@ -79,31 +82,42 @@ export default function GroupedBillingTab() {
     setGenerated(new Set());
     try {
       const { data: lessons, error: lErr } = await supabase
-        .from("lessons").select("id, date, duration_hours, billable_amount, student_id, billing_rule, status")
+        .from("lessons").select("id, date, duration_hours, billable_amount, student_id, billing_rule, status, formula_id")
         .eq("organization_id", organization.id).neq("billing_rule", "non_facturee")
         .gte("date", dateFrom).lte("date", dateTo)
         .order("date", { ascending: true });
       if (lErr) throw lErr;
-
-      // Récupère uniquement les factures non archivées de l'organisation
-      const { data: activeInvoices } = await supabase
-        .from("invoices").select("id")
-        .eq("organization_id", organization.id)
-        .neq("status", "archivé");
-      const activeInvoiceIds = new Set((activeInvoices || []).map((i) => i.id));
-
-      const { data: invoicedLessons, error: ilErr } = await supabase.from("invoice_lines").select("source_lesson_id, invoice_id").not("source_lesson_id", "is", null);
-      if (ilErr) throw ilErr;
-      const invoicedLessonIds = new Set((invoicedLessons || []).filter((il) => activeInvoiceIds.has(il.invoice_id)).map((il) => il.source_lesson_id));
 
       const { data: formulas, error: fErr } = await supabase
         .from("student_formulas").select("id, offer_name, total_price, student_id, active")
         .eq("organization_id", organization.id).eq("active", true);
       if (fErr) throw fErr;
 
-      const { data: invoicedFormulas, error: ifErr } = await supabase.from("invoice_lines").select("source_formula_id, invoice_id").not("source_formula_id", "is", null);
-      if (ifErr) throw ifErr;
-      const invoicedFormulaIds = new Set((invoicedFormulas || []).filter((il) => activeInvoiceIds.has(il.invoice_id)).map((il) => il.source_formula_id));
+      // « Déjà facturé ? » : requêtes ciblées sur les ids de la période, par paquets.
+      // (L'ancienne version téléchargeait TOUTES les lignes de facture : Supabase plafonne
+      // à 1000 lignes → au-delà, des séances déjà facturées réapparaissaient dans la
+      // préview et la génération échouait en « Doublon détecté ».)
+      const invoicedLessonIds = new Set<string>();
+      for (const ids of chunk((lessons || []).map((l) => l.id), 200)) {
+        const { data, error } = await supabase
+          .from("invoice_lines")
+          .select("source_lesson_id, invoices!inner(status)")
+          .in("source_lesson_id", ids)
+          .neq("invoices.status", "archivé");
+        if (error) throw error;
+        (data || []).forEach((r: any) => r.source_lesson_id && invoicedLessonIds.add(r.source_lesson_id));
+      }
+
+      const invoicedFormulaIds = new Set<string>();
+      for (const ids of chunk((formulas || []).map((f) => f.id), 200)) {
+        const { data, error } = await supabase
+          .from("invoice_lines")
+          .select("source_formula_id, invoices!inner(status)")
+          .in("source_formula_id", ids)
+          .neq("invoices.status", "archivé");
+        if (error) throw error;
+        (data || []).forEach((r: any) => r.source_formula_id && invoicedFormulaIds.add(r.source_formula_id));
+      }
 
       const payerMap = new Map<string, PayerPreview>();
       for (const s of studentsWithPayer) {
@@ -111,30 +125,38 @@ export default function GroupedBillingTab() {
         const payer = payers.find((p) => p.id === payerId);
         if (!payer) continue;
         if (!payerMap.has(payerId)) {
-          payerMap.set(payerId, { payer_id: payerId, payer_name: payer.name, students: [], lessons: [], formulas: [], total_ht: 0 });
+          payerMap.set(payerId, { payer_id: payerId, payer_name: payer.name, students: [], lessons: [], formulas: [], total_ht: 0, covered: { count: 0, hours: 0 } });
         }
         const entry = payerMap.get(payerId)!;
         if (!entry.students.find((st) => st.id === s.id)) {
           entry.students.push({ id: s.id, name: `${s.first_name} ${s.last_name}` });
         }
-        const studentLessons = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id)).map((l) => ({ ...l, billable_amount: Number(l.billable_amount) || 0, duration_hours: Number(l.duration_hours) || 0, status: normalizeLessonBillingStatus(l.status), student_name: `${s.first_name} ${s.last_name}` }));
+        const notInvoiced = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id));
+        // Séances couvertes par un forfait : informatives, jamais des lignes de facture
+        for (const l of notInvoiced.filter(isCoveredByFormula)) {
+          entry.covered.count += 1;
+          entry.covered.hours += Number(l.duration_hours) || 0;
+        }
+        const studentLessons = notInvoiced
+          .filter(isBillableLesson)
+          .map((l) => ({ ...l, billable_amount: Number(l.billable_amount) || 0, duration_hours: Number(l.duration_hours) || 0, status: normalizeLessonBillingStatus(l.status), student_name: `${s.first_name} ${s.last_name}`, excluded: isExcludedByDefault(l) }));
         entry.lessons.push(...studentLessons);
         const studentFormulas = (formulas || []).filter((f) => f.student_id === s.id && !invoicedFormulaIds.has(f.id)).map((f) => ({ ...f, total_price: Number(f.total_price) || 0, student_name: `${s.first_name} ${s.last_name}` }));
         entry.formulas.push(...studentFormulas);
       }
 
       for (const entry of payerMap.values()) {
-        entry.total_ht = entry.lessons.reduce((s, l) => s + l.billable_amount, 0) + entry.formulas.reduce((s, f) => s + f.total_price, 0);
+        entry.total_ht = entry.lessons.filter((l) => !l.excluded).reduce((s, l) => s + l.billable_amount, 0) + entry.formulas.filter((f) => !f.excluded).reduce((s, f) => s + f.total_price, 0);
       }
 
-      const results = Array.from(payerMap.values()).filter((p) => p.lessons.length > 0 || p.formulas.length > 0);
+      const results = Array.from(payerMap.values()).filter((p) => p.lessons.length > 0 || p.formulas.length > 0 || p.covered.count > 0);
       setPreviews(results);
 
       // Compute unassigned students with billable activity in the period
       const unassignedMap = new Map<string, { student_id: string; student_name: string; lessons_count: number; formulas_count: number; total: number }>();
       for (const s of students) {
         if ((s as any).payer_id) continue;
-        const sLessons = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id));
+        const sLessons = (lessons || []).filter((l) => l.student_id === s.id && !invoicedLessonIds.has(l.id) && isBillableLesson(l));
         const sFormulas = (formulas || []).filter((f) => f.student_id === s.id && !invoicedFormulaIds.has(f.id));
         if (sLessons.length === 0 && sFormulas.length === 0) continue;
         const total = sLessons.reduce((sum, l) => sum + (Number(l.billable_amount) || 0), 0) + sFormulas.reduce((sum, f) => sum + (Number(f.total_price) || 0), 0);
@@ -171,8 +193,10 @@ export default function GroupedBillingTab() {
       if (i !== payerIdx) return p;
       const updatedStudents = p.students.map((s) => s.id === studentId ? { ...s, excluded: !s.excluded } : s);
       const excludedStudentIds = new Set(updatedStudents.filter((s) => s.excluded).map((s) => s.id));
-      const updatedLessons = p.lessons.map((l) => ({ ...l, excluded: excludedStudentIds.has(l.student_id) }));
-      const updatedFormulas = p.formulas.map((f) => ({ ...f, excluded: excludedStudentIds.has(f.student_id) }));
+      // Un élève exclu exclut ses lignes ; le réinclure NE force PAS les lignes
+      // décochées individuellement (séances prévues/annulées restent décochées).
+      const updatedLessons = p.lessons.map((l) => ({ ...l, excluded: excludedStudentIds.has(l.student_id) ? true : (l.student_id === studentId ? isExcludedByDefault(l) : l.excluded) }));
+      const updatedFormulas = p.formulas.map((f) => ({ ...f, excluded: excludedStudentIds.has(f.student_id) ? true : (f.student_id === studentId ? false : f.excluded) }));
       const total_ht = updatedLessons.filter((l) => !l.excluded).reduce((s, l) => s + l.billable_amount, 0) + updatedFormulas.filter((f) => !f.excluded).reduce((s, f) => s + f.total_price, 0);
       return { ...p, students: updatedStudents, lessons: updatedLessons, formulas: updatedFormulas, total_ht };
     }));
@@ -223,6 +247,11 @@ export default function GroupedBillingTab() {
       }
 
       const totalHt = lines.reduce((s, l) => s + l.total_ht, 0);
+      if (totalHt <= 0) {
+        toast.error("Rien à facturer", { description: "Les lignes incluses totalisent 0 € : ces séances sont couvertes par un forfait déjà facturé." });
+        setGenerating(null);
+        return;
+      }
       const tvaAmount = isFranchise ? 0 : totalHt * (tvaRate / 100);
       const totalTtc = totalHt + tvaAmount;
 
@@ -254,8 +283,9 @@ export default function GroupedBillingTab() {
       setGenerated((prev) => new Set([...prev, preview.payer_id]));
       toast.success("Facture brouillon créée", { description: `${number} — ${formatEur(totalTtc)}${isFranchise ? "" : " TTC"}` });
     } catch (err: any) {
-      if (err.message?.includes("unique") || err.code === "23505") {
-        toast.error("Doublon détecté", { description: "Certaines séances ou formules sont déjà facturées." });
+      if (err.message?.includes("déjà rattachée") || err.message?.includes("unique") || err.code === "23505") {
+        toast.error("Doublon détecté", { description: "Certaines séances ou formules ont déjà été facturées entre-temps. La liste vient d'être actualisée : relancez la génération." });
+        await handleSearch();
       } else {
         toast.error("Erreur", { description: err.message });
       }
@@ -533,7 +563,18 @@ export default function GroupedBillingTab() {
                       </div>
                     </div>
 
+                    {/* Séances couvertes par un forfait : informées, jamais facturées */}
+                    {preview.covered.count > 0 && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-info/5 border border-info/15">
+                        <Check className="w-4 h-4 text-info flex-shrink-0" />
+                        <p className="text-xs text-info">
+                          {preview.covered.count} séance{preview.covered.count > 1 ? "s" : ""} ({preview.covered.hours}h) couverte{preview.covered.count > 1 ? "s" : ""} par un forfait déjà facturé — non refacturée{preview.covered.count > 1 ? "s" : ""}.
+                        </p>
+                      </div>
+                    )}
+
                     {/* Lines table with individual exclusion */}
+                    {(preview.lessons.length > 0 || preview.formulas.length > 0) && (
                     <div className="rounded-lg border border-border overflow-hidden">
                       <table className="w-full text-sm">
                         <thead>
@@ -568,6 +609,7 @@ export default function GroupedBillingTab() {
                         </tbody>
                       </table>
                     </div>
+                    )}
 
                     {/* Sub-totals per student */}
                     {subtotals.filter((s) => !s.excluded && s.total > 0).length > 1 && (
@@ -606,10 +648,16 @@ export default function GroupedBillingTab() {
                     </div>
 
                     {/* Warnings */}
-                    {!hasIncluded && (
+                    {!hasIncluded && (preview.lessons.length > 0 || preview.formulas.length > 0) && (
                       <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive/10">
                         <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0" />
-                        <p className="text-xs text-destructive">Toutes les lignes ont été exclues. Incluez au moins une ligne pour générer la facture.</p>
+                        <p className="text-xs text-destructive">Aucune ligne cochée. Cochez au moins une ligne (les séances prévues ou annulées sont décochées par défaut) pour générer la facture.</p>
+                      </div>
+                    )}
+                    {preview.lessons.length === 0 && preview.formulas.length === 0 && preview.covered.count > 0 && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/40 border border-border">
+                        <Check className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <p className="text-xs text-muted-foreground">Rien à facturer sur la période : toutes les séances sont couvertes par un forfait déjà facturé.</p>
                       </div>
                     )}
 
