@@ -7,10 +7,11 @@ export interface BillableLessonInput {
 }
 
 /**
- * Séance couverte par un forfait : liée à une formule et valorisée à 0 €
- * (le trigger DB compute_lesson_billable_amount met billable_amount à 0
- * quand formula_id est renseigné — le forfait est facturé séparément).
- * Ces séances ne doivent JAMAIS devenir des lignes de facture : elles
+ * Séance couverte par un forfait : liée à une formule et valorisée à 0 €.
+ * Le trigger DB compute_lesson_billable_amount ne met 0 que pour les offres
+ * pack/forfait (heures prépayées, facturées une fois à l'achat) ; une offre
+ * « à l'heure » valorise chaque séance au tarif de l'offre de l'élève.
+ * Ces séances à 0 € ne doivent JAMAIS devenir des lignes de facture : elles
  * produisaient des factures « vides » pleines de lignes à 0,00 €.
  */
 export const isCoveredByFormula = (l: BillableLessonInput): boolean =>
